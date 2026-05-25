@@ -142,7 +142,7 @@ begin
   perform 1 from public.organizations where id = v_org_id for update;
 
   select coalesce(
-    max(nullif(regexp_replace(invoice_no, '\D', '', 'g'), '')::int),
+    max(nullif(regexp_replace(invoices.invoice_no, '\D', '', 'g'), '')::int),
     0
   ) + 1
     into v_seq
@@ -222,6 +222,15 @@ begin
         v_total_cost numeric := 0;
         v_unit_cost numeric;
       begin
+        -- Insert into invoice items first with placeholder purchase price to avoid FK constraint violation
+        insert into public.invoice_items (
+          id, organization_id, invoice_id, product_id, product_name, product_type,
+          quantity, purchase_price, unit_price, item_discount, line_total
+        ) values (
+          v_item_id, v_org_id, v_invoice_id, v_product.id, v_product.name, v_product.type,
+          v_qty, 0, v_unit_price, v_line_discount, v_line_total
+        );
+
         -- Lock product lots in FIFO order
         for v_lot in 
           select id, quantity_remaining, unit_cost 
@@ -266,17 +275,12 @@ begin
             v_product.name, v_qty, v_qty_needed using errcode = 'P0001';
         end if;
 
-        -- Calculate weighted average purchase price
+        -- Calculate weighted average purchase price and update the invoice item row
         v_unit_cost := v_total_cost / v_qty;
 
-        -- Insert into invoice items
-        insert into public.invoice_items (
-          id, organization_id, invoice_id, product_id, product_name, product_type,
-          quantity, purchase_price, unit_price, item_discount, line_total
-        ) values (
-          v_item_id, v_org_id, v_invoice_id, v_product.id, v_product.name, v_product.type,
-          v_qty, v_unit_cost, v_unit_price, v_line_discount, v_line_total
-        );
+        update public.invoice_items
+        set purchase_price = v_unit_cost
+        where id = v_item_id;
 
         -- Update product global stock quantity
         update public.products
