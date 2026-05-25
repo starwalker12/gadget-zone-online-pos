@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
-import { Boxes, ReceiptText, TrendingUp, Users, Wrench } from "lucide-react";
+import { AlertTriangle, Boxes, ReceiptText, Tag, TrendingUp, Truck, Users, Wrench } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageCard } from "@/components/ui/page-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { getCurrentContext } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { catalogCounts } from "@/lib/data/catalog";
+import { formatNumber } from "@/lib/formatters";
 
 async function countRows(table: string, organizationId: string) {
   const supabase = await createClient();
@@ -33,8 +35,8 @@ export default async function DashboardPage() {
   if (!profile?.organization_id) redirect("/setup");
 
   const orgId = profile.organization_id;
-  const [productsCount, customersCount, invoicesCount, repairsCount] = await Promise.all([
-    countRows("products", orgId),
+  const [catalog, customersCount, invoicesCount, repairsCount] = await Promise.all([
+    catalogCounts(orgId),
     countRows("customers", orgId),
     countRows("invoices", orgId),
     countRows("repairs", orgId),
@@ -56,26 +58,47 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Products"
-          value={String(productsCount)}
-          detail={productsCount === 0 ? "No products yet." : "Total products in catalog."}
+          label="Active products"
+          value={formatNumber(catalog.productsActive)}
+          detail={catalog.productsActive === 0 ? "No active products yet." : `${formatNumber(catalog.productsTotal)} total including archived.`}
           icon={<Boxes className="size-5" />}
         />
         <StatCard
+          label="Low stock"
+          value={formatNumber(catalog.lowStock)}
+          detail={catalog.lowStock === 0 ? "All stock above reorder level." : "At or below reorder level."}
+          icon={<AlertTriangle className="size-5" />}
+        />
+        <StatCard
+          label="Categories"
+          value={formatNumber(catalog.categories)}
+          detail={catalog.categories === 0 ? "Add your first category." : "Active categories."}
+          icon={<Tag className="size-5" />}
+        />
+        <StatCard
+          label="Suppliers"
+          value={formatNumber(catalog.suppliers)}
+          detail={catalog.suppliers === 0 ? "Add suppliers for restocking." : "Active suppliers."}
+          icon={<Truck className="size-5" />}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard
           label="Customers"
-          value={String(customersCount)}
+          value={formatNumber(customersCount)}
           detail={customersCount === 0 ? "No customers yet." : "Total customers."}
           icon={<Users className="size-5" />}
         />
         <StatCard
           label="Invoices"
-          value={String(invoicesCount)}
+          value={formatNumber(invoicesCount)}
           detail={invoicesCount === 0 ? "No invoices yet." : "Total invoices to date."}
           icon={<ReceiptText className="size-5" />}
         />
         <StatCard
           label="Repairs"
-          value={String(repairsCount)}
+          value={formatNumber(repairsCount)}
           detail={repairsCount === 0 ? "No repair jobs yet." : "Repair jobs on record."}
           icon={<Wrench className="size-5" />}
         />
