@@ -70,6 +70,33 @@ Layout: products + cart side by side on `xl:` screens, stacked on smaller.
 
 `AppShell` now accepts a `pageTitle` prop. Each page sets a friendly title (Dashboard, Catalog, New sale, Invoices, Customers, Repairs, Reports, Settings).
 
+## Service profit rule (must never regress)
+
+The offline app defines: **profit for a service line = commission only**. The principal (e.g. the Rs. 500 a customer hands over for an EasyPaisa cash-in) is pass-through money and must never be subtracted from profit.
+
+How we enforce that today, in the simplest possible way:
+
+- `saveProductAction` (server) forces `purchase_price = 0` for any product with `is_service = true`. The UI also disables the cost field and relabels "Sale price" as "Commission" for services.
+- The `pos_checkout` RPC snapshots the product's `purchase_price` (which is 0 for services) onto each `invoice_items` row. Profit later = `line_total - purchase_price * quantity` = the commission the cashier entered.
+
+When the full service-transaction UI lands (next service milestone), we will start populating the `service_*` columns on `invoice_items` (already present in migration 0001): `service_provider`, `service_direction`, `service_account_number`, `service_receiver_account`, `service_reference_no`, `service_transaction_amount`, `service_commission`, `service_total_charged`, `service_note`. Until then, the cashier should enter **only the commission** as the service line price.
+
+## Customer credit limitations (MVP)
+
+`payment_method='customer_credit'` is accepted, but the full customer ledger is **not** implemented yet:
+
+- No `customer_ledger_entries` are written.
+- No settlement / "pay off old balance" flow exists.
+- The only signal of outstanding amount is `invoices.balance_due`, which the customer detail page can sum later.
+
+Cashier guidance for the MVP: prefer `cash` / `card` / `easypaisa` / `jazzcash` / `bank_transfer` for the actual payment, and rely on `amount_paid < grand_total` to leave a `balance_due`. Treat `customer_credit` as a future feature; using it today won't break anything but it also won't create a proper ledger row.
+
+## Inventory (MVP)
+
+Current behavior: `products.stock_quantity` is decremented atomically inside `pos_checkout` for `type='product'` rows only. Services never touch stock.
+
+The offline app uses FIFO across **`product_stock_lots`** with **`bill_item_batch_allocations`** snapshotted per sale, and a separate **`stock_movements`** ledger. None of those tables exist yet online — they're planned in migration `0004_stock_lots.sql`. When they land, `pos_checkout` will be updated to consume from oldest active lot first and write allocation rows; until then, single-column stock decrement is the documented simplification.
+
 ## What's intentionally NOT in this milestone
 
 - Per-payment receipts beyond the invoice view.

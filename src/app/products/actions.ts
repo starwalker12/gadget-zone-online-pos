@@ -168,7 +168,9 @@ export async function saveProductAction(
     category_id: parsed.data.category_id ?? null,
     supplier_id: parsed.data.supplier_id ?? null,
     type: isService ? ("service" as const) : ("product" as const),
-    purchase_price: parsed.data.purchase_price,
+    // Services must keep purchase_price = 0 so reports compute profit as
+    // (line_total - 0) = commission only. See docs/pos.md "Service profit rule".
+    purchase_price: isService ? 0 : parsed.data.purchase_price,
     sale_price: parsed.data.sale_price,
     stock_quantity: isService ? 0 : parsed.data.stock_quantity,
     minimum_stock: isService ? 0 : parsed.data.minimum_stock,

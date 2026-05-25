@@ -76,6 +76,14 @@ Important:
 - Supabase auth callback: `https://gadget-zone-online-pos.vercel.app/auth/callback`
 - First owner exists. Public registration is now **closed** — see `docs/auth-onboarding.md`.
 
+## Offline → Online parity
+
+The online app is being built module-by-module against the offline desktop spec (`GadgetZonePOS_Full_Project_Documentation.md`). The current status of every module is tracked in [`docs/offline-feature-parity.md`](docs/offline-feature-parity.md). PR #3 ships the first checkout MVP; full offline parity (FIFO inventory, customer ledger, returns, reports, audit log, 80mm receipt, WhatsApp, repairs, etc.) is planned in subsequent milestones.
+
+Two rules that must never regress as parity grows:
+- **Service profit = commission only.** Never subtract the principal. Enforced by forcing `purchase_price = 0` on every service product.
+- **POS totals are recomputed server-side.** The browser cart is hints only; the `pos_checkout` Postgres function re-fetches and re-totals.
+
 ## Authentication and First-Owner Setup
 
 See `docs/auth-onboarding.md` for the full flow. Short version:
