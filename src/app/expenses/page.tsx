@@ -177,22 +177,22 @@ export default async function ExpensesPage({
             </details>
           )}
 
-          <form className="flex flex-wrap items-end gap-3" action="/expenses">
-            <label className="block">
+          <form className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/expenses">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</span>
               <input
                 name="q"
                 defaultValue={params.q ?? ""}
                 placeholder="Category, vendor, notes"
-                className="mt-1 h-10 w-56 max-w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-56"
               />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Category</span>
               <select
                 name="category"
                 defaultValue={params.category ?? ""}
-                className="mt-1 h-10 rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-44"
               >
                 <option value="">All</option>
                 {knownCategories.map((c) => (
@@ -202,12 +202,12 @@ export default async function ExpensesPage({
                 ))}
               </select>
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Method</span>
               <select
                 name="payment_method"
                 defaultValue={params.payment_method ?? ""}
-                className="mt-1 h-10 rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-44"
               >
                 <option value="">All</option>
                 {EXPENSE_PAYMENT_METHODS.map((m) => (
@@ -217,25 +217,25 @@ export default async function ExpensesPage({
                 ))}
               </select>
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">From</span>
               <input
                 type="date"
                 name="from"
                 defaultValue={params.from ?? ""}
-                className="mt-1 h-10 rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-auto"
               />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">To</span>
               <input
                 type="date"
                 name="to"
                 defaultValue={params.to ?? ""}
-                className="mt-1 h-10 rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-auto"
               />
             </label>
-            <label className="flex items-center gap-2 pb-2">
+            <label className="flex min-h-10 items-center gap-2">
               <input
                 type="checkbox"
                 name="archived"
@@ -254,7 +254,7 @@ export default async function ExpensesPage({
               params.from ||
               params.to ||
               params.archived) && (
-              <Link href="/expenses" className="pb-2 text-xs font-semibold text-slate-600 underline">
+              <Link href="/expenses" className="self-center text-xs font-semibold text-slate-600 underline">
                 Reset
               </Link>
             )}
@@ -305,12 +305,12 @@ export default async function ExpensesPage({
                 {expenses.map((e) => (
                   <li key={e.id} className="rounded-xl border border-slate-200 p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-bold text-slate-900">{e.category}</p>
                         <p className="text-xs text-slate-500">{fmtDate(e.spent_at)}</p>
                         <p className="text-xs text-slate-500">{PAYMENT_LABELS[e.payment_method] ?? e.payment_method}{e.vendor_name ? ` · ${e.vendor_name}` : ""}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="shrink-0 text-right">
                         <p className="text-lg font-black text-slate-950">{formatCurrency(e.amount, currency)}</p>
                         <StatusPill status={e.status} />
                       </div>
@@ -334,10 +334,10 @@ export default async function ExpensesPage({
 
 function ExpenseActions({ id, status }: { id: string; status: "active" | "archived" }) {
   return (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       <Link
         href={`/expenses?edit=${id}`}
-        className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
       >
         Edit
       </Link>
@@ -346,7 +346,7 @@ function ExpenseActions({ id, status }: { id: string; status: "active" | "archiv
           <input type="hidden" name="id" value={id} />
           <button
             type="submit"
-            className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+            className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50"
           >
             Void
           </button>
@@ -356,7 +356,7 @@ function ExpenseActions({ id, status }: { id: string; status: "active" | "archiv
           <input type="hidden" name="id" value={id} />
           <button
             type="submit"
-            className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+            className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
           >
             Restore
           </button>

@@ -33,8 +33,8 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
-      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-3 py-8 sm:px-4 sm:py-10">
+      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-8 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -42,10 +42,10 @@ export default async function LoginPage({
             alt="Gadget Zone Logo"
             className="mx-auto mb-4 h-16 w-auto max-w-[120px] object-contain rounded-2xl"
           />
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-blue-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700 sm:tracking-[0.28em]">
             Gadget Zone
           </p>
-          <h1 className="mt-2 text-3xl font-black text-slate-950">Online POS</h1>
+          <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Online POS</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
             Sign in to your account
             {registrationOpen ? ", or create the first owner account during initial setup." : "."}

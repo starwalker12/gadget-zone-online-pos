@@ -120,10 +120,10 @@ export default async function DailyClosingPage({
     <AppShell pageTitle="Daily Closing">
       <form
         action="/daily-closing"
-        className="mb-5 flex flex-wrap items-end justify-between gap-3"
+        className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
       >
-        <div className="flex items-end gap-3">
-          <label className="block">
+        <div className="grid gap-3 min-[380px]:grid-cols-[1fr_auto_auto] min-[380px]:items-end">
+          <label className="block min-w-0">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Closing date
             </span>
@@ -132,7 +132,7 @@ export default async function DailyClosingPage({
               name="date"
               defaultValue={date}
               max={todayLocalDate()}
-              className="mt-1 h-10 rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+              className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
             />
           </label>
           <button
@@ -147,7 +147,7 @@ export default async function DailyClosingPage({
             </Link>
           )}
         </div>
-        <div className="text-right text-xs text-slate-500">
+        <div className="min-w-0 text-left text-xs text-slate-500 sm:text-right">
           <p>{branch?.name ? `Branch: ${branch.name}` : ""}</p>
           <p>{fmtDay(date)}</p>
         </div>
@@ -155,8 +155,8 @@ export default async function DailyClosingPage({
 
       {/* Status banner */}
       <div className={`mb-5 rounded-2xl border p-4 ${isClosed ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white"}`}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-3">
             <span
               className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
                 isClosed ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"
