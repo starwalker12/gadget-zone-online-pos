@@ -155,8 +155,8 @@ export default async function ReportsPage({
       ` }} />
 
       {/* Header and Controls */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden">
-        <div>
+      <div className="mb-6 flex flex-col gap-4 print:hidden sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-xl font-black text-slate-950">Management Reports</h2>
           <p className="mt-1 text-sm text-slate-500">
             Branch: <strong>{branch?.name ?? "All Branches"}</strong> · Range: {fmtDay(start)} to {fmtDay(end)}
@@ -171,13 +171,13 @@ export default async function ReportsPage({
         method="GET"
         className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
           <div className="flex flex-wrap items-center gap-2">
             {quickRanges.map((qr) => (
               <Link
                 key={qr.value}
                 href={`/reports?range=${qr.value}`}
-                className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                className={`min-h-10 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
                   range === qr.value
                     ? "bg-blue-600 text-white shadow-sm"
                     : "bg-slate-50 text-slate-700 hover:bg-slate-100"
@@ -188,9 +188,9 @@ export default async function ReportsPage({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
             <input type="hidden" name="range" value="custom" />
-            <label className="block text-left">
+            <label className="block min-w-0 text-left">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
                 Start Date
               </span>
@@ -198,10 +198,10 @@ export default async function ReportsPage({
                 type="date"
                 name="startDate"
                 defaultValue={start}
-                className="h-10 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-600"
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-600"
               />
             </label>
-            <label className="block text-left">
+            <label className="block min-w-0 text-left">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
                 End Date
               </span>
@@ -209,12 +209,12 @@ export default async function ReportsPage({
                 type="date"
                 name="endDate"
                 defaultValue={end}
-                className="h-10 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-600"
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-600"
               />
             </label>
             <button
               type="submit"
-              className="h-10 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-sm hover:bg-slate-900 transition-colors"
+              className="h-10 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-slate-900"
             >
               Apply Filter
             </button>
@@ -286,42 +286,42 @@ export default async function ReportsPage({
       {/* Main Breakdown Grids */}
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         {/* Sales & Profit Section */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <TrendingUp className="size-5 text-blue-600" />
             Profitability Summary
           </h3>
           <p className="text-xs text-slate-500 mt-1">Direct margins on product trade and service delivery.</p>
           <div className="mt-4 space-y-3">
-            <div className="flex justify-between border-b border-slate-100 py-2">
+            <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
               <span className="text-sm font-semibold text-slate-600">Sales Revenue (Net Sales)</span>
               <span className="text-sm font-bold text-slate-900">{formatCurrency(data.profit.salesRevenue, currency)}</span>
             </div>
-            <div className="flex justify-between border-b border-slate-100 py-2">
+            <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
               <span className="text-sm font-semibold text-slate-600">Product Cost of Sales (FIFO/Lots)</span>
               <span className="text-sm font-bold text-red-700">-{formatCurrency(data.profit.productCost, currency)}</span>
             </div>
-            <div className="flex justify-between border-b border-slate-100 py-2">
+            <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
               <span className="text-sm font-black text-slate-900">Gross Profit (Product Trade)</span>
               <span className="text-sm font-black text-emerald-700">{formatCurrency(data.profit.grossProfit, currency)}</span>
             </div>
-            <div className="flex justify-between border-b border-slate-100 py-2">
+            <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
               <span className="text-sm font-semibold text-slate-600">Service Commissions (Shop Income)</span>
               <span className="text-sm font-bold text-slate-900">+{formatCurrency(data.profit.serviceProfit, currency)}</span>
             </div>
-            <div className="flex justify-between border-b border-slate-100 py-2 text-slate-500 italic bg-slate-50/50 px-2 rounded-lg">
+            <div className="flex flex-wrap justify-between gap-2 rounded-lg border-b border-slate-100 bg-slate-50/50 px-2 py-2 italic text-slate-500">
               <span className="text-xs font-semibold">Service Principal Handled (Pass-through)</span>
               <span className="text-xs font-semibold">{formatCurrency(data.profit.servicePrincipalHandled, currency)}</span>
             </div>
-            <div className="flex justify-between border-b border-slate-100 py-2">
+            <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
               <span className="text-sm font-semibold text-slate-600">Total Operating Expenses</span>
               <span className="text-sm font-bold text-red-700">-{formatCurrency(data.expenses.totalExpenses, currency)}</span>
             </div>
-            <div className="flex justify-between border-b border-slate-100 py-2">
+            <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
               <span className="text-sm font-semibold text-slate-600">Refund/Return Outflow Impact</span>
               <span className="text-sm font-bold text-red-700">-{formatCurrency(data.returns.refundTotal, currency)}</span>
             </div>
-            <div className="flex justify-between pt-2 border-t-2 border-dashed border-slate-200">
+            <div className="flex flex-wrap justify-between gap-2 border-t-2 border-dashed border-slate-200 pt-2">
               <span className="text-base font-black text-slate-950">Estimated Net Profit</span>
               <span className="text-base font-black text-emerald-800">{formatCurrency(data.profit.estimatedNetProfit, currency)}</span>
             </div>
@@ -329,7 +329,7 @@ export default async function ReportsPage({
         </section>
 
         {/* Payment Summary Section */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <CreditCard className="size-5 text-blue-600" />
             Payment Methods Breakdown
@@ -347,7 +347,7 @@ export default async function ReportsPage({
               const sharePercent = data.payments.total > 0 ? (method.value / data.payments.total) * 100 : 0;
               return (
                 <div key={method.label}>
-                  <div className="flex items-center justify-between text-sm mb-1">
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span className="font-semibold text-slate-700">{method.label}</span>
                     <span className="font-bold text-slate-900">
                       {formatCurrency(method.value, currency)}
@@ -374,7 +374,7 @@ export default async function ReportsPage({
       {/* Details Tables Grid */}
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         {/* Expenses Summary */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <Wallet className="size-5 text-blue-600" />
             Operating Expenses Breakdown
@@ -388,7 +388,7 @@ export default async function ReportsPage({
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">By Category</h4>
                 <div className="space-y-2">
                   {data.expenses.expensesByCategory.map((c) => (
-                    <div key={c.category} className="flex justify-between border-b border-slate-50 py-1.5 text-sm">
+                    <div key={c.category} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1.5 text-sm">
                       <span className="text-slate-600 font-semibold">{c.category}</span>
                       <span className="font-bold text-slate-950">{formatCurrency(c.amount, currency)}</span>
                     </div>
@@ -399,7 +399,7 @@ export default async function ReportsPage({
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">By Payment Method</h4>
                 <div className="space-y-2">
                   {data.expenses.expensesByPaymentMethod.map((m) => (
-                    <div key={m.method} className="flex justify-between border-b border-slate-50 py-1.5 text-sm">
+                    <div key={m.method} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1.5 text-sm">
                       <span className="text-slate-600 font-semibold capitalize">{m.method}</span>
                       <span className="font-bold text-slate-950">{formatCurrency(m.amount, currency)}</span>
                     </div>
@@ -411,14 +411,14 @@ export default async function ReportsPage({
         </section>
 
         {/* Returns & Refunds */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <RotateCcw className="size-5 text-blue-600" />
             Returns & Refunds Summary
           </h3>
           <p className="text-xs text-slate-500 mt-1">Returned merchandise statistics and cash refunds.</p>
           <div className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Return Tickets</p>
                 <p className="mt-1 text-2xl font-black text-slate-900">{formatNumber(data.returns.returnCount)}</p>
@@ -437,12 +437,12 @@ export default async function ReportsPage({
               ) : (
                 <div className="space-y-2">
                   {data.returns.refundsByMethod.map((rm) => (
-                    <div key={rm.method} className="flex justify-between border-b border-slate-50 py-1.5 text-sm">
+                    <div key={rm.method} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1.5 text-sm">
                       <span className="text-slate-600 font-semibold capitalize">{rm.method}</span>
                       <span className="font-bold text-red-600">-{formatCurrency(rm.amount, currency)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-black">
+                  <div className="flex flex-wrap justify-between gap-2 border-t border-slate-200 pt-2 text-sm font-black">
                     <span>Total Cash/Credit Refunded</span>
                     <span className="text-red-700">{formatCurrency(data.returns.refundTotal, currency)}</span>
                   </div>
@@ -456,14 +456,14 @@ export default async function ReportsPage({
       {/* Customer Ledger & Top Performers */}
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         {/* Customer Ledger */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <Scale className="size-5 text-blue-600" />
             Customer Outstanding Ledger
           </h3>
           <p className="text-xs text-slate-500 mt-1">Outstanding debt books and settlement recovery cycles.</p>
           <div className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Debtor Accounts</p>
                 <p className="mt-1 text-2xl font-black text-slate-900">{formatNumber(data.ledger.debtorCount)}</p>
@@ -482,15 +482,15 @@ export default async function ReportsPage({
               ) : (
                 <div className="space-y-2">
                   {data.ledger.topDebtors.map((d) => (
-                    <div key={d.name} className="flex justify-between border-b border-slate-50 py-1.5 text-sm">
-                      <div>
-                        <p className="font-semibold text-slate-800">{d.name}</p>
+                    <div key={d.name} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1.5 text-sm">
+                      <div className="min-w-0">
+                        <p className="break-words font-semibold text-slate-800">{d.name}</p>
                         <p className="text-xs text-slate-400">{d.phone ?? "No phone"}</p>
                       </div>
                       <span className="font-bold text-slate-950">{formatCurrency(d.balance, currency)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between pt-3 border-t border-slate-200 text-sm font-black">
+                  <div className="flex flex-wrap justify-between gap-2 border-t border-slate-200 pt-3 text-sm font-black">
                     <span>Total Debts Outstanding</span>
                     <span className="text-slate-950">{formatCurrency(data.ledger.totalOutstandingBalance, currency)}</span>
                   </div>
@@ -501,7 +501,7 @@ export default async function ReportsPage({
         </section>
 
         {/* Top Performers */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <Award className="size-5 text-blue-600" />
             Top Performing Catalog Lines
@@ -515,9 +515,9 @@ export default async function ReportsPage({
               ) : (
                 <div className="space-y-2">
                   {data.topItems.topProductsQty.map((item) => (
-                    <div key={item.name} className="flex justify-between border-b border-slate-50 py-1 text-sm">
-                      <span className="text-slate-700 font-semibold truncate max-w-[280px]">{item.name}</span>
-                      <span className="font-bold text-slate-900">{formatNumber(item.quantity)} units <span className="text-xs font-normal text-slate-400 ml-1">({formatCurrency(item.revenue, currency)})</span></span>
+                    <div key={item.name} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1 text-sm">
+                      <span className="min-w-0 break-words font-semibold text-slate-700 sm:max-w-[280px] sm:truncate">{item.name}</span>
+                      <span className="font-bold text-slate-900">{formatNumber(item.quantity)} units <span className="ml-1 text-xs font-normal text-slate-400">({formatCurrency(item.revenue, currency)})</span></span>
                     </div>
                   ))}
                 </div>
@@ -530,8 +530,8 @@ export default async function ReportsPage({
               ) : (
                 <div className="space-y-2">
                   {data.topItems.topServicesRevenue.map((item) => (
-                    <div key={item.name} className="flex justify-between border-b border-slate-50 py-1 text-sm">
-                      <span className="text-slate-700 font-semibold truncate max-w-[280px]">{item.name}</span>
+                    <div key={item.name} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1 text-sm">
+                      <span className="min-w-0 break-words font-semibold text-slate-700 sm:max-w-[280px] sm:truncate">{item.name}</span>
                       <span className="font-bold text-emerald-800">+{formatCurrency(item.revenue, currency)}</span>
                     </div>
                   ))}
@@ -545,14 +545,14 @@ export default async function ReportsPage({
       {/* FIFO Stock Valuation & Daily Closings Audit */}
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         {/* Stock Valuation */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <Boxes className="size-5 text-blue-600" />
             FIFO Stock Lots Valuation
           </h3>
           <p className="text-xs text-slate-500 mt-1">Capital stock valuation computed at lot purchase cost.</p>
           <div className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Physical Catalog Lines</p>
                 <p className="mt-1 text-2xl font-black text-slate-900">{formatNumber(data.inventory.activeProductCount)}</p>
@@ -570,16 +570,16 @@ export default async function ReportsPage({
               ) : (
                 <div className="space-y-2">
                   {data.inventory.topStockValueProducts.map((item) => (
-                    <div key={item.name} className="flex justify-between border-b border-slate-50 py-1.5 text-sm">
-                      <span className="text-slate-700 font-semibold truncate max-w-[280px]">{item.name}</span>
-                      <span className="font-bold text-slate-900">{formatCurrency(item.cost_value, currency)} <span className="text-xs font-normal text-slate-400 ml-1">({formatNumber(item.quantity)} units)</span></span>
+                    <div key={item.name} className="flex flex-wrap justify-between gap-2 border-b border-slate-50 py-1.5 text-sm">
+                      <span className="min-w-0 break-words font-semibold text-slate-700 sm:max-w-[280px] sm:truncate">{item.name}</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(item.cost_value, currency)} <span className="ml-1 text-xs font-normal text-slate-400">({formatNumber(item.quantity)} units)</span></span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="grid gap-4 pt-2 sm:grid-cols-2">
               <div>
                 <h4 className="text-xs font-bold text-red-500 uppercase tracking-wide mb-2">Out of Stock Warnings</h4>
                 {data.inventory.outOfStockProducts.length === 0 ? (
@@ -611,14 +611,14 @@ export default async function ReportsPage({
         </section>
 
         {/* Daily Closings Audit */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 text-left">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm sm:p-6">
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <CalendarCheck className="size-5 text-blue-600" />
             Daily closings Auditor
           </h3>
           <p className="text-xs text-slate-500 mt-1">Audit status of business days and physical cash discrepancies.</p>
           <div className="mt-4 space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Closed Days</p>
                 <p className="mt-1 text-xl font-black text-slate-900">{formatNumber(data.closing.closedDaysCount)}</p>
@@ -643,7 +643,7 @@ export default async function ReportsPage({
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full min-w-[520px] text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 font-semibold text-slate-500 uppercase">
                         <th className="py-2">Date</th>

@@ -122,8 +122,8 @@ export default async function RepairsPage({
 
         {/* Filter Toolbar */}
         <div className="border-b border-slate-100 bg-slate-50/50 p-4">
-          <form method="get" className="flex flex-wrap items-end gap-3 text-xs font-bold text-slate-700">
-            <div className="w-full sm:max-w-xs">
+          <form method="get" className="grid gap-3 text-xs font-bold text-slate-700 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end">
+            <div className="min-w-0 sm:col-span-2 lg:w-full lg:max-w-xs">
               <label className="mb-1 block text-slate-500">Search</label>
               <input
                 type="text"
@@ -134,12 +134,12 @@ export default async function RepairsPage({
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="mb-1 block text-slate-500">Status</label>
               <select
                 name="status"
                 defaultValue={params.status ?? ""}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none transition focus:border-blue-600"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none transition focus:border-blue-600 lg:w-auto"
               >
                 <option value="">All statuses</option>
                 <option value="received">Received</option>
@@ -151,28 +151,28 @@ export default async function RepairsPage({
               </select>
             </div>
 
-            <div className="flex gap-2">
-              <div>
+            <div className="grid gap-2 min-[380px]:grid-cols-2 sm:col-span-2 lg:col-span-1">
+              <div className="min-w-0">
                 <label className="mb-1 block text-slate-500">From</label>
                 <input
                   type="date"
                   name="from"
                   defaultValue={params.from ?? ""}
-                  className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none"
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="mb-1 block text-slate-500">To</label>
                 <input
                   type="date"
                   name="to"
                   defaultValue={params.to ?? ""}
-                  className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none"
                 />
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
                 className="h-9 rounded-lg bg-slate-900 px-4 font-bold text-white hover:bg-slate-800 transition"
@@ -274,7 +274,7 @@ export default async function RepairsPage({
 
                 return (
                   <div key={r.id} className="pt-4 first:pt-0 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="text-sm font-black text-slate-900">{r.job_no}</span>
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                         r.status === "delivered"
@@ -301,7 +301,7 @@ export default async function RepairsPage({
                       <p className="text-slate-500">
                         <span className="font-bold text-slate-600">Fault:</span> {r.problem_description}
                       </p>
-                      <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 mt-2 font-bold">
+                      <div className="grid gap-2 border-t border-slate-100 pt-2 mt-2 font-bold min-[380px]:grid-cols-3">
                         <div>
                           <p className="text-[10px] text-slate-400">Est. Cost</p>
                           <p className="text-slate-700">{formatCurrency(r.estimated_cost, currency)}</p>

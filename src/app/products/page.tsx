@@ -204,23 +204,23 @@ async function ProductsTab({
         </details>
       )}
 
-      <form className="flex flex-wrap items-end gap-3" action="/products">
+      <form className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/products">
         <input type="hidden" name="tab" value="products" />
-        <label className="block">
+        <label className="block min-w-0">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</span>
           <input
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Name, SKU, barcode"
-            className="mt-1 h-10 w-64 max-w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+            className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-64"
           />
         </label>
-        <label className="block">
+        <label className="block min-w-0">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Category</span>
           <select
             name="category"
             defaultValue={params.category ?? ""}
-            className="mt-1 h-10 rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+            className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-48"
           >
             <option value="">All</option>
             {categories.map((c) => (
@@ -230,11 +230,11 @@ async function ProductsTab({
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 pb-2">
+        <label className="flex min-h-10 items-center gap-2">
           <input type="checkbox" name="lowstock" value="1" defaultChecked={params.lowstock === "1"} className="size-4" />
           <span className="text-sm font-semibold text-slate-700">Low stock only</span>
         </label>
-        <label className="flex items-center gap-2 pb-2">
+        <label className="flex min-h-10 items-center gap-2">
           <input type="checkbox" name="inactive" value="1" defaultChecked={params.inactive === "1"} className="size-4" />
           <span className="text-sm font-semibold text-slate-700">Show archived</span>
         </label>
@@ -242,7 +242,7 @@ async function ProductsTab({
           Apply
         </button>
         {(params.q || params.category || params.lowstock || params.inactive) && (
-          <Link href="/products?tab=products" className="pb-2 text-xs font-semibold text-slate-600 underline">
+          <Link href="/products?tab=products" className="self-center text-xs font-semibold text-slate-600 underline">
             Reset filters
           </Link>
         )}
@@ -506,7 +506,8 @@ function CategoriesTab({
           <p className="text-sm font-semibold text-slate-600">No categories yet.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
               <tr>
@@ -564,6 +565,69 @@ function CategoriesTab({
             </tbody>
           </table>
         </div>
+        <div className="space-y-3 md:hidden">
+          {categories.map((c) => (
+            <CategoryCard key={c.id} category={c} canWrite={canWrite} />
+          ))}
+        </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function CategoryCard({ category, canWrite }: { category: CategoryRow; canWrite: boolean }) {
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="break-words font-black text-slate-950">{category.name}</h3>
+          <p className="mt-1 text-sm text-slate-600">{category.description ?? "No description"}</p>
+        </div>
+        {category.is_active ? (
+          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+            Active
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
+            Archived
+          </span>
+        )}
+      </div>
+      <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+        {formatNumber(category.product_count ?? 0)} products
+      </div>
+      <div className="mt-3">
+        <CategoryActions category={category} canWrite={canWrite} />
+      </div>
+    </article>
+  );
+}
+
+function CategoryActions({ category, canWrite }: { category: CategoryRow; canWrite: boolean }) {
+  if (!canWrite) return <span className="text-xs text-slate-400">View only</span>;
+  return (
+    <div className="flex flex-wrap justify-end gap-2">
+      <Link
+        href={`/products?tab=categories&edit=${category.id}`}
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Edit
+      </Link>
+      {category.is_active ? (
+        <form action={archiveCategoryAction}>
+          <input type="hidden" name="id" value={category.id} />
+          <button type="submit" className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50">
+            Archive
+          </button>
+        </form>
+      ) : (
+        <form action={unarchiveCategoryAction}>
+          <input type="hidden" name="id" value={category.id} />
+          <button type="submit" className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+            Restore
+          </button>
+        </form>
       )}
     </div>
   );
@@ -605,7 +669,8 @@ function SuppliersTab({
           <p className="text-sm font-semibold text-slate-600">No suppliers yet.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
               <tr>
@@ -667,6 +732,80 @@ function SuppliersTab({
             </tbody>
           </table>
         </div>
+        <div className="space-y-3 md:hidden">
+          {suppliers.map((s) => (
+            <SupplierCard key={s.id} supplier={s} canWrite={canWrite} />
+          ))}
+        </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SupplierCard({ supplier, canWrite }: { supplier: SupplierRow; canWrite: boolean }) {
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="break-words font-black text-slate-950">{supplier.name}</h3>
+          <p className="mt-1 text-sm text-slate-600">{supplier.company ?? "No company"}</p>
+        </div>
+        {supplier.is_active ? (
+          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+            Active
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
+            Archived
+          </span>
+        )}
+      </div>
+      <dl className="mt-3 grid gap-2 text-sm min-[380px]:grid-cols-2">
+        <div>
+          <dt className="text-xs font-semibold uppercase text-slate-400">Phone</dt>
+          <dd className="break-words text-slate-700">{supplier.phone ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase text-slate-400">Email</dt>
+          <dd className="break-words text-slate-700">{supplier.email ?? "—"}</dd>
+        </div>
+        <div className="min-[380px]:col-span-2">
+          <dt className="text-xs font-semibold uppercase text-slate-400">Address</dt>
+          <dd className="break-words text-slate-700">{supplier.address ?? "—"}</dd>
+        </div>
+      </dl>
+      <div className="mt-3">
+        <SupplierActions supplier={supplier} canWrite={canWrite} />
+      </div>
+    </article>
+  );
+}
+
+function SupplierActions({ supplier, canWrite }: { supplier: SupplierRow; canWrite: boolean }) {
+  if (!canWrite) return <span className="text-xs text-slate-400">View only</span>;
+  return (
+    <div className="flex flex-wrap justify-end gap-2">
+      <Link
+        href={`/products?tab=suppliers&edit=${supplier.id}`}
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Edit
+      </Link>
+      {supplier.is_active ? (
+        <form action={archiveSupplierAction}>
+          <input type="hidden" name="id" value={supplier.id} />
+          <button type="submit" className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50">
+            Archive
+          </button>
+        </form>
+      ) : (
+        <form action={unarchiveSupplierAction}>
+          <input type="hidden" name="id" value={supplier.id} />
+          <button type="submit" className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+            Restore
+          </button>
+        </form>
       )}
     </div>
   );

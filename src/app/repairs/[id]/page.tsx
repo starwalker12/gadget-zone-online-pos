@@ -109,10 +109,10 @@ export default async function RepairDetailPage({
         </div>
 
         {/* Header Title Section */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">
+        <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700 sm:tracking-[0.24em]">
                 Repair Job Number
               </span>
               <span
@@ -123,13 +123,13 @@ export default async function RepairDetailPage({
                 {STATUS_LABELS[repair.status] || repair.status}
               </span>
             </div>
-            <h2 className="mt-1.5 text-2xl font-black text-slate-950">{repair.job_no}</h2>
+            <h2 className="mt-1.5 break-words text-2xl font-black text-slate-950">{repair.job_no}</h2>
             <p className="mt-1 text-sm text-slate-500">
               Intake recorded by <span className="font-bold">{repair.created_by_name || "Staff"}</span> on {fmtDate(repair.created_at)} at {fmtTime(repair.created_at)}
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <PrintButton />
           </div>
         </div>

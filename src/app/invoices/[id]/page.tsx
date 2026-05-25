@@ -73,8 +73,8 @@ export default async function InvoiceDetailPage({
         <PrintButton />
       </div>
 
-      <article id="invoice-print" className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm print:max-w-none print:border-0 print:shadow-none">
-        <header className="flex items-start justify-between gap-6 border-b border-slate-200 pb-6">
+      <article id="invoice-print" className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8 print:max-w-none print:border-0 print:shadow-none">
+        <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">{orgName}</p>
             <h1 className="text-2xl font-black text-slate-950">{invoice.branch?.name ?? "Main Branch"}</h1>
@@ -85,7 +85,7 @@ export default async function InvoiceDetailPage({
               <p className="text-sm text-slate-600">{invoice.branch.phone}</p>
             )}
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className="text-xs font-bold uppercase text-slate-500">Invoice</p>
             <p className="text-xl font-black text-slate-950">{invoice.invoice_no}</p>
             <p className="mt-1 text-xs text-slate-500">{fmtDate(invoice.invoice_date)}</p>
