@@ -1,0 +1,101 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentContext } from "@/lib/auth/session";
+import { canUsePos, canWriteCatalog } from "@/lib/permissions";
+import {
+  checkoutSchema,
+  quickCustomerSchema,
+  type CheckoutInput,
+  type QuickCustomerInput,
+} from "@/lib/validation/pos";
+
+export type CheckoutResult = {
+  ok: boolean;
+  error: string | null;
+  invoice_id?: string;
+  invoice_no?: string;
+};
+
+export type QuickCustomerResult = {
+  ok: boolean;
+  error: string | null;
+  customer?: { id: string; name: string; phone: string | null };
+};
+
+export async function checkoutAction(input: CheckoutInput): Promise<CheckoutResult> {
+  const ctx = await getCurrentContext();
+  if (!ctx.user) redirect("/login");
+  if (!ctx.profile?.organization_id) redirect("/setup");
+  if (!canUsePos(ctx.profile.role)) {
+    return { ok: false, error: "You do not have permission to use the POS." };
+  }
+
+  const parsed = checkoutSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("pos_checkout", {
+    p_branch_id: ctx.profile.branch_id,
+    p_customer_id: parsed.data.customer_id ?? null,
+    p_cart: parsed.data.cart,
+    p_discount_total: parsed.data.discount_total,
+    p_payment_method: parsed.data.payment_method,
+    p_amount_paid: parsed.data.amount_paid,
+    p_payment_ref: parsed.data.payment_reference ?? null,
+    p_note: parsed.data.note ?? null,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.invoice_id) {
+    return { ok: false, error: "Checkout returned no invoice." };
+  }
+
+  revalidatePath("/pos");
+  revalidatePath("/invoices");
+  revalidatePath("/dashboard");
+  revalidatePath("/products");
+
+  return { ok: true, error: null, invoice_id: row.invoice_id, invoice_no: row.invoice_no };
+}
+
+export async function quickCreateCustomerAction(
+  input: QuickCustomerInput,
+): Promise<QuickCustomerResult> {
+  const ctx = await getCurrentContext();
+  if (!ctx.user) redirect("/login");
+  if (!ctx.profile?.organization_id) redirect("/setup");
+  // Anyone who can run POS can create a walk-in customer; otherwise restrict to catalog writers.
+  if (!canUsePos(ctx.profile.role) && !canWriteCatalog(ctx.profile.role)) {
+    return { ok: false, error: "You do not have permission to create customers." };
+  }
+
+  const parsed = quickCustomerSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("customers")
+    .insert({
+      organization_id: ctx.profile.organization_id,
+      branch_id: ctx.profile.branch_id,
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+    })
+    .select("id, name, phone")
+    .single();
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/customers");
+  return { ok: true, error: null, customer: data as { id: string; name: string; phone: string | null } };
+}

@@ -3,8 +3,9 @@ import { Bell, LogOut, Search } from "lucide-react";
 import { getCurrentContext } from "@/lib/auth/session";
 import { signOutAction } from "@/app/(auth)/actions";
 
-export async function Topbar() {
+export async function Topbar({ pageTitle }: { pageTitle?: string }) {
   const { user, profile, organization, branch } = await getCurrentContext();
+  const title = pageTitle ?? (branch?.name ? `${branch.name} dashboard` : "Dashboard");
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -12,10 +13,9 @@ export async function Topbar() {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">
             {organization?.name ?? "Gadget Zone Online POS"}
+            {branch?.name && pageTitle ? ` · ${branch.name}` : ""}
           </p>
-          <h1 className="text-2xl font-black text-slate-950">
-            {branch?.name ? `${branch.name} dashboard` : "Dashboard"}
-          </h1>
+          <h1 className="text-2xl font-black text-slate-950">{title}</h1>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <label className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">

@@ -7,17 +7,17 @@ const mobileLinks = [
   ["Dashboard", "/dashboard"],
   ["POS", "/pos"],
   ["Products", "/products"],
+  ["Invoices", "/invoices"],
   ["Customers", "/customers"],
-  ["Reports", "/reports"],
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, pageTitle }: { children: ReactNode; pageTitle?: string }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="flex min-h-screen">
         <Sidebar />
         <div className="min-w-0 flex-1">
-          <Topbar />
+          <Topbar pageTitle={pageTitle} />
           <div className="border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
             <nav className="flex gap-2 overflow-x-auto">
               {mobileLinks.map(([label, href]) => (
