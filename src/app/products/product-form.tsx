@@ -77,20 +77,24 @@ export function ProductForm({
         </select>
       </label>
 
-      <label className="block">
-        <span className="text-sm font-semibold text-slate-700">Cost price (PKR)</span>
+      <label className={`block ${isService ? "opacity-50" : ""}`}>
+        <span className="text-sm font-semibold text-slate-700">
+          Cost price (PKR){isService ? " — kept at 0 for services" : ""}
+        </span>
         <input
           type="number"
           min={0}
           step="0.01"
           name="purchase_price"
-          defaultValue={initialValues?.purchase_price ?? 0}
-          disabled={!canWrite}
+          defaultValue={isService ? 0 : initialValues?.purchase_price ?? 0}
+          disabled={!canWrite || isService}
           className={input}
         />
       </label>
       <label className="block">
-        <span className="text-sm font-semibold text-slate-700">Sale price (PKR)</span>
+        <span className="text-sm font-semibold text-slate-700">
+          {isService ? "Commission (PKR)" : "Sale price (PKR)"}
+        </span>
         <input
           type="number"
           min={0}

@@ -7,7 +7,8 @@ import { getCurrentContext } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { catalogCounts } from "@/lib/data/catalog";
-import { formatNumber } from "@/lib/formatters";
+import { invoiceCounts } from "@/lib/data/invoices";
+import { formatCurrency, formatNumber } from "@/lib/formatters";
 
 async function countRows(table: string, organizationId: string) {
   const supabase = await createClient();
@@ -35,12 +36,13 @@ export default async function DashboardPage() {
   if (!profile?.organization_id) redirect("/setup");
 
   const orgId = profile.organization_id;
-  const [catalog, customersCount, invoicesCount, repairsCount] = await Promise.all([
+  const [catalog, invoices, customersCount, repairsCount] = await Promise.all([
     catalogCounts(orgId),
+    invoiceCounts(orgId),
     countRows("customers", orgId),
-    countRows("invoices", orgId),
     countRows("repairs", orgId),
   ]);
+  const currency = organization?.currency_code ?? "PKR";
 
   return (
     <AppShell>
@@ -83,18 +85,24 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Invoices"
+          value={formatNumber(invoices.invoicesTotal)}
+          detail={invoices.invoicesTotal === 0 ? "No invoices yet." : "Total invoices to date."}
+          icon={<ReceiptText className="size-5" />}
+        />
+        <StatCard
+          label="Open balances"
+          value={formatNumber(invoices.openInvoices)}
+          detail={invoices.openInvoices === 0 ? "All invoices fully paid." : "Partial or unpaid."}
+          icon={<TrendingUp className="size-5" />}
+        />
         <StatCard
           label="Customers"
           value={formatNumber(customersCount)}
           detail={customersCount === 0 ? "No customers yet." : "Total customers."}
           icon={<Users className="size-5" />}
-        />
-        <StatCard
-          label="Invoices"
-          value={formatNumber(invoicesCount)}
-          detail={invoicesCount === 0 ? "No invoices yet." : "Total invoices to date."}
-          icon={<ReceiptText className="size-5" />}
         />
         <StatCard
           label="Repairs"
@@ -106,28 +114,32 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <PageCard
-          title="Next: build the cashier POS flow"
-          description="Authentication and onboarding are now live. The next milestone is product/category CRUD and the POS checkout workflow."
+          title="Today sales"
+          description={
+            invoices.todayCount === 0
+              ? "No sales recorded today yet. Start a new sale in the POS."
+              : `${formatNumber(invoices.todayCount)} invoice${invoices.todayCount === 1 ? "" : "s"} recorded today.`
+          }
+        >
+          <p className="text-3xl font-black text-slate-950">
+            {formatCurrency(invoices.todaySalesTotal, currency)}
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            <TrendingUp className="mr-1 inline size-4 text-emerald-600" />
+            Sum of grand totals from invoices dated today.
+          </p>
+        </PageCard>
+        <PageCard
+          title="What's next"
+          description="POS checkout is live. Repairs, reports, and printable receipts can come next."
         >
           <div className="grid gap-3 sm:grid-cols-3">
-            {["Auth ready", "RLS enforced", "Owner setup"].map((item) => (
+            {["Catalog ready", "POS live", "RLS enforced"].map((item) => (
               <div key={item} className="rounded-xl bg-blue-50 p-4 text-sm font-bold text-blue-800">
                 {item}
               </div>
             ))}
           </div>
-        </PageCard>
-        <PageCard
-          title="Today sales"
-          description="Sales analytics will populate as invoices and payments are recorded."
-        >
-          <p className="text-3xl font-black text-slate-950">
-            {organization?.currency_code ?? "PKR"} 0
-          </p>
-          <p className="mt-1 text-sm text-slate-500">
-            <TrendingUp className="mr-1 inline size-4 text-emerald-600" />
-            No sales recorded yet.
-          </p>
         </PageCard>
       </div>
     </AppShell>

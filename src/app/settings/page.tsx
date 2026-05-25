@@ -3,7 +3,7 @@ import { PageCard } from "@/components/ui/page-card";
 
 export default function SettingsPage() {
   return (
-    <AppShell>
+    <AppShell pageTitle="Settings">
       <PageCard
         title="Settings"
         description="Organization profile, branch setup, roles, receipt branding, tax/currency preferences, and audit settings will be configured here."

@@ -31,3 +31,27 @@ body {
   max-width: 100%;
   overflow-x: hidden;
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body {
+    background: #fff !important;
+  }
+  aside,
+  nav,
+  header.sticky,
+  .print-hidden {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  #invoice-print {
+    box-shadow: none !important;
+    border: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

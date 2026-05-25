@@ -1,32 +1,34 @@
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { PageCard } from "@/components/ui/page-card";
+import { env } from "@/lib/env";
+import { getCurrentContext } from "@/lib/auth/session";
+import { listCategories } from "@/lib/data/catalog";
+import { listPosCustomers, listPosProducts } from "@/lib/data/pos";
+import { canUsePos } from "@/lib/permissions";
+import { PosClient } from "./pos-client";
 
-export default function PosPage() {
+export default async function PosPage() {
+  if (!env.isSupabaseConfigured) redirect("/login");
+  const { user, profile, organization } = await getCurrentContext();
+  if (!user) redirect("/login");
+  if (!profile?.organization_id) redirect("/setup");
+
+  const orgId = profile.organization_id;
+  const [products, customers, categories] = await Promise.all([
+    listPosProducts(orgId),
+    listPosCustomers(orgId),
+    listCategories(orgId),
+  ]);
+
   return (
-    <AppShell>
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <PageCard
-          title="Product Catalogue"
-          description="Foundation for searchable products, services, categories, and barcode entry."
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {["Accessories", "Phones", "Digital services", "Repair charges"].map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 p-4">
-                <p className="font-bold text-slate-900">{item}</p>
-                <p className="mt-1 text-sm text-slate-500">Supabase data pending.</p>
-              </div>
-            ))}
-          </div>
-        </PageCard>
-        <PageCard
-          title="Active Bill"
-          description="The cashier cart will support discounts, partial payments, customer credit, service commission, and receipts."
-        >
-          <div className="rounded-xl bg-slate-50 p-5 text-sm text-slate-500">
-            Cart foundation ready. Full checkout comes next.
-          </div>
-        </PageCard>
-      </div>
+    <AppShell pageTitle="New sale">
+      <PosClient
+        products={products}
+        customers={customers}
+        categories={categories.filter((c) => c.is_active).map((c) => ({ id: c.id, name: c.name }))}
+        currency={organization?.currency_code ?? "PKR"}
+        canCheckout={canUsePos(profile.role)}
+      />
     </AppShell>
   );
 }
