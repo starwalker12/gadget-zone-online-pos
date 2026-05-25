@@ -2,14 +2,35 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "./login-form";
 import { env } from "@/lib/env";
 import { getCurrentContext } from "@/lib/auth/session";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export default async function LoginPage() {
+async function isRegistrationOpen() {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return true;
+  try {
+    const admin = createAdminClient();
+    const { count } = await admin
+      .from("organizations")
+      .select("id", { count: "exact", head: true });
+    return (count ?? 0) === 0;
+  } catch {
+    return false;
+  }
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   if (env.isSupabaseConfigured) {
     const { user, profile } = await getCurrentContext();
     if (user) {
       redirect(profile?.organization_id ? "/dashboard" : "/setup");
     }
   }
+
+  const registrationOpen = env.isSupabaseConfigured ? await isRegistrationOpen() : true;
+  const { error } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
@@ -23,7 +44,8 @@ export default async function LoginPage() {
           </p>
           <h1 className="mt-2 text-3xl font-black text-slate-950">Online POS</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Sign in to your account, or create the first owner account during initial setup.
+            Sign in to your account
+            {registrationOpen ? ", or create the first owner account during initial setup." : "."}
           </p>
         </div>
         {!env.isSupabaseConfigured && (
@@ -31,7 +53,7 @@ export default async function LoginPage() {
             Supabase is not configured yet. Add credentials to <code>.env.local</code>.
           </p>
         )}
-        <LoginForm />
+        <LoginForm registrationOpen={registrationOpen} callbackError={error ?? null} />
       </section>
     </main>
   );

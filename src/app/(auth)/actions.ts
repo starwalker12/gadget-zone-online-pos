@@ -1,8 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 
 const credentialsSchema = z.object({
@@ -21,6 +23,24 @@ function configError(): AuthState {
     error:
       "Supabase is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.",
   };
+}
+
+async function publicOrigin(): Promise<string> {
+  const h = await headers();
+  const forwardedHost = h.get("x-forwarded-host");
+  const forwardedProto = h.get("x-forwarded-proto") ?? "https";
+  if (forwardedHost) return `${forwardedProto}://${forwardedHost}`;
+  const host = h.get("host");
+  return host ? `${forwardedProto}://${host}` : "http://localhost:3000";
+}
+
+async function organizationsExist(): Promise<boolean> {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return false;
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("organizations")
+    .select("id", { count: "exact", head: true });
+  return (count ?? 0) > 0;
 }
 
 export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
@@ -44,6 +64,13 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   if (!env.isSupabaseConfigured) return configError();
 
+  // Lock public sign-up after the first organization exists. The owner can still sign in.
+  if (await organizationsExist()) {
+    return {
+      error: "Registration is closed. Please contact the owner for access.",
+    };
+  }
+
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -53,15 +80,19 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
+  const origin = await publicOrigin();
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.fullName } },
+    options: {
+      data: { full_name: parsed.data.fullName },
+      emailRedirectTo: `${origin}/auth/callback?next=/setup`,
+    },
   });
   if (error) return { error: error.message };
 
-  // If email confirmation is on, the user will need to confirm; otherwise sign in is automatic.
   redirect("/setup");
 }
 

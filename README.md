@@ -70,6 +70,12 @@ Important:
 - `SUPABASE_SERVICE_ROLE_KEY` must only be used on the server.
 - Browser code must only use `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
+## Production
+
+- App URL: https://gadget-zone-online-pos.vercel.app
+- Supabase auth callback: `https://gadget-zone-online-pos.vercel.app/auth/callback`
+- First owner exists. Public registration is now **closed** — see `docs/auth-onboarding.md`.
+
 ## Authentication and First-Owner Setup
 
 See `docs/auth-onboarding.md` for the full flow. Short version:

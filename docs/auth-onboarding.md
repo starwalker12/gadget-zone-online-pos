@@ -64,9 +64,48 @@ The existing policies in `supabase/migrations/0001_initial_schema.sql` rely on t
 - First-owner setup is allowed only when **zero** organizations exist. Once the first organization exists, the setup page is locked and additional users must be invited (invite flow is a future milestone).
 - Password sign-up is open by default. Once the first owner exists, consider disabling self-signup in the Supabase Auth dashboard so random users cannot create dead accounts.
 
+## Auth callback (email confirmation)
+
+The route `src/app/auth/callback/route.ts` handles Supabase email-confirmation links. It:
+
+1. Reads the `code` (and optional `next`) query params.
+2. Calls `supabase.auth.exchangeCodeForSession(code)` to set the session cookie.
+3. Redirects to `next` if it's a safe relative path, otherwise to `/dashboard`.
+4. On failure, redirects to `/login?error=auth_callback_failed`.
+
+The callback always rebuilds the origin from `x-forwarded-host` / `x-forwarded-proto` (Vercel injects these), so a confirmation email opened on a different machine still lands on the public site — not localhost.
+
+For sign-up, `signUpAction` passes `emailRedirectTo: ${origin}/auth/callback?next=/setup` so the user lands in `/setup` after confirming.
+
+### Supabase dashboard settings (one-time)
+
+In the Supabase dashboard → **Authentication → URL Configuration**, set:
+
+- **Site URL:** `https://gadget-zone-online-pos.vercel.app`
+- **Redirect URLs (allow list):**
+  - `https://gadget-zone-online-pos.vercel.app/auth/callback`
+  - `http://localhost:3000/auth/callback`
+
+Without those, Supabase rejects the email link's redirect and falls back to its Site URL.
+
+## Registration lock (after first owner)
+
+Once at least one organization exists, public registration is locked:
+
+- The `/login` page hides the **Sign up** tab and shows "Registration is closed. Please contact the owner for access.".
+- `signUpAction` server-side rejects any new sign-up attempt with the same message (using the service-role count as the source of truth, so the lock can't be bypassed by manipulating the client).
+- `/setup` is also locked when any organization exists (`completeSetupAction` enforces this server-side too).
+
+Existing users (the first owner) sign in normally.
+
+## Status
+
+- First owner profile created (role = `owner`).
+- Public sign-up: **closed**.
+- Future task: admin invite flow (generate signed invite links, link new auth users to the existing organization with a non-owner role).
+
 ## Remaining tasks
 
-- Email confirmation flow polish (currently relies on Supabase project defaults).
 - Invite + role-assignment flow for additional staff (admins, cashiers, technicians).
 - Password reset / forgot password.
 - Branch switcher for multi-branch organizations.
