@@ -15,8 +15,8 @@ Statuses: **Done** · **Partial** · **Not started** · **Planned**
 | 7 | Invoice A4 print | **Partial** | Browser-print invoice detail page (`@media print` CSS). **Missing**: dedicated A4 PDF template with shop logo, polished header/footer. |
 | 8 | 80mm thermal receipt | **Not started** | Planned: separate `/invoices/[id]/receipt` route with 80mm-width CSS + thermal-friendly layout. |
 | 9 | WhatsApp invoice sharing | **Not started** | Planned: `wa.me/<phone>?text=…` link with invoice URL once invoices are public per-org or accessible via signed link. |
-| 10 | Customers | **Partial** | List + quick-add from POS. **Missing**: edit, archive, customer detail page, transaction history, credit limit enforcement UI. |
-| 11 | Customer credit / ledger | **Partial / fragile** | Schema has `customers.credit_limit` and `payment_method='customer_credit'`. POS accepts it as a payment method, but **no ledger entry is created and no settlement flow exists**. *Recommended*: until ledger lands, treat `customer_credit` like any other payment method and rely on `invoice.balance_due` for outstanding amounts. Planned tables: `customer_ledger_entries`, `credit_payments`. |
+| 10 | Customers | **Done** | CRUD with search/filter, archive/restore, and customer detail profile page. |
+| 11 | Customer credit / ledger | **Done** | Ledger entries are created automatically for invoice balances; general settlements are supported via `record_credit_payment` RPC; cached balance with double-entry audit history is live. |
 | 12 | Returns / refunds | **Not started** | Planned tables: `return_refunds`, `return_items`. Will need to reverse stock and create negative payment / customer credit. |
 | 13 | Expenses | **Partial (schema only)** | Table `expenses` exists in migration 0001. No UI yet. |
 | 14 | Suppliers | **Done (MVP)** | CRUD with archive/restore. **Missing**: supplier purchase entry that creates stock lots. |

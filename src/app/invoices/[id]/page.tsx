@@ -79,9 +79,18 @@ export default async function InvoiceDetailPage({
             <p className="text-xs font-bold uppercase text-slate-500">Bill to</p>
             {invoice.customer ? (
               <>
-                <p className="mt-1 font-bold text-slate-900">{invoice.customer.name}</p>
+                <p className="mt-1 font-bold text-slate-900">
+                  <Link href={`/customers/${invoice.customer.id}`} className="text-blue-700 hover:underline">
+                    {invoice.customer.name}
+                  </Link>
+                </p>
                 {invoice.customer.phone && <p className="text-sm text-slate-600">{invoice.customer.phone}</p>}
                 {invoice.customer.address && <p className="text-sm text-slate-600">{invoice.customer.address}</p>}
+                {invoice.balance_due > 0 && (
+                  <div className="print-hidden mt-3 inline-block rounded-lg bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700">
+                    ⚠️ Customer balance due
+                  </div>
+                )}
               </>
             ) : (
               <p className="mt-1 font-bold text-slate-900">Walk-in customer</p>

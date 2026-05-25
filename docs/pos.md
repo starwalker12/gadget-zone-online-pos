@@ -81,15 +81,12 @@ How we enforce that today, in the simplest possible way:
 
 When the full service-transaction UI lands (next service milestone), we will start populating the `service_*` columns on `invoice_items` (already present in migration 0001): `service_provider`, `service_direction`, `service_account_number`, `service_receiver_account`, `service_reference_no`, `service_transaction_amount`, `service_commission`, `service_total_charged`, `service_note`. Until then, the cashier should enter **only the commission** as the service line price.
 
-## Customer credit limitations (MVP)
+## Customer credit & Ledger
 
-`payment_method='customer_credit'` is accepted, but the full customer ledger is **not** implemented yet:
-
-- No `customer_ledger_entries` are written.
-- No settlement / "pay off old balance" flow exists.
-- The only signal of outstanding amount is `invoices.balance_due`, which the customer detail page can sum later.
-
-Cashier guidance for the MVP: prefer `cash` / `card` / `easypaisa` / `jazzcash` / `bank_transfer` for the actual payment, and rely on `amount_paid < grand_total` to leave a `balance_due`. Treat `customer_credit` as a future feature; using it today won't break anything but it also won't create a proper ledger row.
+The full customer ledger is live:
+- Unpaid or partial invoices with linked customers automatically create a `debit` entry of type `invoice_credit` in `customer_ledger_entries` and increment `customers.outstanding_balance` atomically inside `pos_checkout`.
+- Walk-in checkouts with any `balance_due > 0` are blocked atomically.
+- Cashiers can record direct customer credit settlements via a clean "Receive Settlement" form on the customer detail page. This triggers the `record_credit_payment` Supabase RPC which atomically inserts a `credit_payments` row, creates a corresponding `credit` ledger entry, and decrements `outstanding_balance`, ensuring the balance never drops below zero.
 
 ## Inventory (MVP)
 
