@@ -1,0 +1,149 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentContext } from "@/lib/auth/session";
+import { canWriteCatalog } from "@/lib/permissions";
+import {
+  customerSchema,
+  creditPaymentSchema,
+  type CreditPaymentMethod,
+} from "@/lib/validation/customers";
+
+export type ActionState = { error: string | null; success: string | null };
+const ok = (msg: string): ActionState => ({ error: null, success: msg });
+const err = (msg: string): ActionState => ({ error: msg, success: null });
+
+async function requireAuthorizedUser() {
+  const ctx = await getCurrentContext();
+  if (!ctx.user) redirect("/login");
+  if (!ctx.profile?.organization_id) redirect("/setup");
+  // General management requires admin/owner/manager roles, which match catalog write permissions.
+  if (!canWriteCatalog(ctx.profile.role)) {
+    return { ctx, denied: true as const };
+  }
+  return { ctx, denied: false as const };
+}
+
+function flatten(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Invalid input.";
+}
+
+function fd(formData: FormData) {
+  return Object.fromEntries(formData.entries());
+}
+
+export async function saveCustomerAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const w = await requireAuthorizedUser();
+  if (w.denied) return err("You do not have permission to manage customers.");
+
+  // Convert checkbox value to boolean
+  const raw = fd(formData);
+  const dataToValidate = {
+    ...raw,
+    is_archived: raw.is_archived === "true" || raw.is_archived === "on",
+  };
+
+  const parsed = customerSchema.safeParse(dataToValidate);
+  if (!parsed.success) return err(flatten(parsed.error));
+
+  const id = (formData.get("id") as string | null) || null;
+  const supabase = await createClient();
+  const payload = {
+    organization_id: w.ctx.profile!.organization_id!,
+    branch_id: w.ctx.profile!.branch_id ?? null,
+    name: parsed.data.name,
+    phone: parsed.data.phone ?? null,
+    email: parsed.data.email ?? null,
+    address: parsed.data.address ?? null,
+    notes: parsed.data.notes ?? null,
+    credit_limit: parsed.data.credit_limit,
+    is_archived: parsed.data.is_archived,
+    archived_at: parsed.data.is_archived ? new Date().toISOString() : null,
+  };
+
+  if (id) {
+    const { error } = await supabase.from("customers").update(payload).eq("id", id);
+    if (error) return err(error.message);
+  } else {
+    const { error } = await supabase.from("customers").insert(payload);
+    if (error) return err(error.message);
+  }
+
+  revalidatePath("/customers");
+  if (id) {
+    revalidatePath(`/customers/${id}`);
+  }
+  revalidatePath("/dashboard");
+  return ok(id ? "Customer details updated." : "Customer profile created.");
+}
+
+export async function archiveCustomerAction(formData: FormData) {
+  const w = await requireAuthorizedUser();
+  if (w.denied) return;
+  const id = formData.get("id") as string;
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase
+    .from("customers")
+    .update({ is_archived: true, archived_at: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${id}`);
+  revalidatePath("/dashboard");
+}
+
+export async function restoreCustomerAction(formData: FormData) {
+  const w = await requireAuthorizedUser();
+  if (w.denied) return;
+  const id = formData.get("id") as string;
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("customers").update({ is_archived: false, archived_at: null }).eq("id", id);
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${id}`);
+  revalidatePath("/dashboard");
+}
+
+export async function recordCreditPaymentAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const ctx = await getCurrentContext();
+  if (!ctx.user) redirect("/login");
+  if (!ctx.profile?.organization_id) redirect("/setup");
+  
+  // Viewers cannot modify balances or log payments.
+  if (ctx.profile.role === "technician") {
+    return err("You do not have permission to log payments.");
+  }
+
+  const customerId = formData.get("customer_id") as string;
+  if (!customerId) return err("Customer ID is missing.");
+
+  const parsed = creditPaymentSchema.safeParse(fd(formData));
+  if (!parsed.success) return err(flatten(parsed.error));
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("record_credit_payment", {
+    p_customer_id: customerId,
+    p_amount: parsed.data.amount,
+    p_method: parsed.data.method as CreditPaymentMethod,
+    p_reference_number: parsed.data.reference_number ?? null,
+    p_notes: parsed.data.notes ?? null,
+  });
+
+  if (error) {
+    return err(error.message);
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/dashboard");
+  return ok("Credit payment recorded successfully.");
+}

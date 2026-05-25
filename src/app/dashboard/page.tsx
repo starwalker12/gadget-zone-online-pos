@@ -19,6 +19,19 @@ async function countRows(table: string, organizationId: string) {
   return count ?? 0;
 }
 
+async function debtorStats(organizationId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("customers")
+    .select("outstanding_balance")
+    .eq("organization_id", organizationId)
+    .gt("outstanding_balance", 0);
+  if (error) return { totalDebt: 0, debtorCount: 0 };
+  const debtorCount = data?.length ?? 0;
+  const totalDebt = data?.reduce((acc, c) => acc + Number(c.outstanding_balance ?? 0), 0) ?? 0;
+  return { totalDebt, debtorCount };
+}
+
 export default async function DashboardPage() {
   if (!env.isSupabaseConfigured) {
     return (
@@ -36,11 +49,12 @@ export default async function DashboardPage() {
   if (!profile?.organization_id) redirect("/setup");
 
   const orgId = profile.organization_id;
-  const [catalog, invoices, customersCount, repairsCount] = await Promise.all([
+  const [catalog, invoices, customersCount, repairsCount, debt] = await Promise.all([
     catalogCounts(orgId),
     invoiceCounts(orgId),
     countRows("customers", orgId),
     countRows("repairs", orgId),
+    debtorStats(orgId),
   ]);
   const currency = organization?.currency_code ?? "PKR";
 
@@ -94,14 +108,14 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Open balances"
-          value={formatNumber(invoices.openInvoices)}
-          detail={invoices.openInvoices === 0 ? "All invoices fully paid." : "Partial or unpaid."}
+          value={formatCurrency(debt.totalDebt, currency)}
+          detail={invoices.openInvoices === 0 ? "All invoices fully paid." : `${formatNumber(invoices.openInvoices)} unpaid invoice(s).`}
           icon={<TrendingUp className="size-5" />}
         />
         <StatCard
           label="Customers"
           value={formatNumber(customersCount)}
-          detail={customersCount === 0 ? "No customers yet." : "Total customers."}
+          detail={debt.debtorCount === 0 ? "All accounts fully settled." : `${formatNumber(debt.debtorCount)} debtor profile(s).`}
           icon={<Users className="size-5" />}
         />
         <StatCard
