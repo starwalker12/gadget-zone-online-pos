@@ -36,6 +36,10 @@ body {
   @page {
     margin: 12mm;
   }
+  @page thermalReceipt {
+    size: 80mm auto;
+    margin: 4mm;
+  }
   body {
     background: #fff !important;
   }
@@ -53,5 +57,30 @@ body {
     border: 0 !important;
     max-width: none !important;
     padding: 0 !important;
+  }
+  .thermal-print {
+    display: none !important;
+  }
+  body[data-print-mode="thermal"] {
+    width: 80mm;
+  }
+  body[data-print-mode="thermal"] main {
+    width: 80mm !important;
+    max-width: 80mm !important;
+  }
+  body[data-print-mode="thermal"] .a4-print,
+  body[data-print-mode="thermal"] #invoice-print {
+    display: none !important;
+  }
+  body[data-print-mode="thermal"] .thermal-print {
+    display: block !important;
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    page: thermalReceipt;
   }
 }

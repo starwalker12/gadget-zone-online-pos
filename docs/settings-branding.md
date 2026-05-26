@@ -14,6 +14,7 @@ The Settings module lets owners and admins maintain the real shop profile used a
 - Invoice detail print header and footer.
 - Repair receipt print header, footer, and intake terms.
 - Reports print letterhead.
+- Invoice and repair 80mm receipt layouts and WhatsApp share messages.
 - App shell and dashboard continue to read organization and branch profile data.
 
 ## Storage approach
@@ -35,6 +36,6 @@ Only `owner` and `admin` can save changes. Other roles can view the settings pag
 ## Deferred
 
 - Logo upload/file storage.
-- 80mm thermal receipt route.
-- WhatsApp invoice sharing.
+- Direct ESC/POS printer integration.
+- Return/refund receipt detail printing after a dedicated return detail page exists.
 - Tax and discount policy automation.

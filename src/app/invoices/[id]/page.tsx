@@ -20,6 +20,8 @@ const PAYMENT_LABELS: Record<string, string> = {
   customer_credit: "Customer credit",
 };
 
+const PRODUCTION_URL = "https://gadget-zone-online-pos.vercel.app";
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("en-PK", {
     year: "numeric",
@@ -28,6 +30,16 @@ function fmtDate(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function whatsappLink(phone: string | null | undefined, message: string) {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  const target = digits ? `https://wa.me/${digits}` : "https://wa.me/";
+  return `${target}?text=${encodeURIComponent(message)}`;
+}
+
+function hasServiceSplit(item: { service_transaction_amount: number; service_commission: number; service_total_charged: number }) {
+  return item.service_transaction_amount > 0 || item.service_commission > 0 || item.service_total_charged > 0;
 }
 
 export default async function InvoiceDetailPage({
@@ -68,6 +80,15 @@ export default async function InvoiceDetailPage({
   const grossMargin =
     invoice.grand_total > 0 ? (grossProfit / invoice.grand_total) * 100 : 0;
   const canReturn = canProcessReturns(profile.role);
+  const invoiceUrl = `${PRODUCTION_URL}/invoices/${invoice.id}`;
+  const whatsappMessage = [
+    `${orgName} invoice ${invoice.invoice_no}`,
+    `Total: ${formatCurrency(invoice.grand_total, currency)}`,
+    `Paid: ${formatCurrency(invoice.amount_paid, currency)}`,
+    `Balance: ${formatCurrency(invoice.balance_due, currency)}`,
+    `View invoice: ${invoiceUrl}`,
+  ].join("\n");
+  const whatsappHref = whatsappLink(invoice.customer?.phone, whatsappMessage);
 
   return (
     <AppShell pageTitle={`Invoice ${invoice.invoice_no}`}>
@@ -75,10 +96,10 @@ export default async function InvoiceDetailPage({
         <Link href="/invoices" className="text-sm font-semibold text-blue-700 underline">
           ← Back to invoices
         </Link>
-        <PrintButton />
+        <PrintButton whatsappHref={whatsappHref} />
       </div>
 
-      <article id="invoice-print" className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8 print:max-w-none print:border-0 print:shadow-none">
+      <article id="invoice-print" className="a4-print mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8 print:max-w-none print:border-0 print:shadow-none">
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0">
             {branding.logoUrl && (
@@ -159,6 +180,18 @@ export default async function InvoiceDetailPage({
                   <td className="py-2 pr-3">
                     <div className="font-semibold text-slate-900">{it.product_name}</div>
                     <div className="text-xs text-slate-500">{it.product_type === "service" ? "Service" : "Product"}</div>
+                    {it.product_type === "service" && hasServiceSplit(it) && (
+                      <div className="mt-1 space-y-0.5 text-[11px] text-slate-500">
+                        {it.service_provider && <p>Provider: {it.service_provider}</p>}
+                        {it.service_transaction_amount > 0 && (
+                          <p>Principal: {formatCurrency(it.service_transaction_amount, currency)}</p>
+                        )}
+                        {it.service_commission > 0 && (
+                          <p>Commission: {formatCurrency(it.service_commission, currency)}</p>
+                        )}
+                        {it.service_reference_no && <p>Ref: {it.service_reference_no}</p>}
+                      </div>
+                    )}
                   </td>
                   <td className="py-2 px-3 text-right">{it.quantity}</td>
                   {isPrivileged && (
@@ -302,6 +335,85 @@ export default async function InvoiceDetailPage({
 
         <footer className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">
           {branding.invoiceFooter || `Thank you for shopping at ${orgName}.`}
+        </footer>
+      </article>
+
+      <article className="thermal-print hidden bg-white text-black">
+        <header className="text-center">
+          {branding.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={branding.logoUrl} alt={`${orgName} logo`} className="mx-auto mb-2 h-12 w-auto max-w-[42mm] object-contain" />
+          )}
+          <h1 className="text-[13px] font-black uppercase leading-tight">{orgName}</h1>
+          <p className="text-[10px] font-semibold">{branchName}</p>
+          {branchAddress && <p className="text-[9px] leading-tight">{branchAddress}</p>}
+          {branchPhone && <p className="text-[9px]">Phone: {branchPhone}</p>}
+          {branding.whatsappSupport && <p className="text-[9px]">WhatsApp: {branding.whatsappSupport}</p>}
+        </header>
+
+        <div className="my-2 border-y border-dashed border-black py-1 text-[10px]">
+          <div className="flex justify-between gap-2"><span>Invoice</span><strong>{invoice.invoice_no}</strong></div>
+          <div className="flex justify-between gap-2"><span>Date</span><span className="text-right">{fmtDate(invoice.invoice_date)}</span></div>
+          <div className="flex justify-between gap-2"><span>Customer</span><span className="text-right">{invoice.customer?.name ?? "Walk-in"}</span></div>
+          {invoice.customer?.phone && <div className="flex justify-between gap-2"><span>Phone</span><span>{invoice.customer.phone}</span></div>}
+          <div className="flex justify-between gap-2"><span>Cashier</span><span>{invoice.cashier_name ?? "Staff"}</span></div>
+        </div>
+
+        <section className="text-[10px]">
+          {invoice.items.map((it) => (
+            <div key={it.id} className="border-b border-dashed border-slate-400 py-1">
+              <p className="font-bold leading-tight">{it.product_name}</p>
+              <div className="flex justify-between gap-2">
+                <span>{it.quantity} x {formatCurrency(it.unit_price, currency)}</span>
+                <span className="font-bold">{formatCurrency(it.line_total, currency)}</span>
+              </div>
+              {it.item_discount > 0 && (
+                <div className="flex justify-between gap-2 text-[9px]">
+                  <span>Discount</span>
+                  <span>{formatCurrency(it.item_discount, currency)}</span>
+                </div>
+              )}
+              {it.product_type === "service" && hasServiceSplit(it) && (
+                <div className="mt-1 space-y-0.5 text-[9px]">
+                  {it.service_transaction_amount > 0 && <div className="flex justify-between"><span>Principal</span><span>{formatCurrency(it.service_transaction_amount, currency)}</span></div>}
+                  {it.service_commission > 0 && <div className="flex justify-between"><span>Commission</span><span>{formatCurrency(it.service_commission, currency)}</span></div>}
+                  {it.service_reference_no && <p>Ref: {it.service_reference_no}</p>}
+                </div>
+              )}
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-2 space-y-1 border-b border-dashed border-black pb-2 text-[10px]">
+          <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(invoice.subtotal, currency)}</span></div>
+          <div className="flex justify-between"><span>Discount</span><span>{formatCurrency(invoice.discount_total, currency)}</span></div>
+          <div className="flex justify-between text-[12px] font-black"><span>Grand total</span><span>{formatCurrency(invoice.grand_total, currency)}</span></div>
+          <div className="flex justify-between"><span>Paid</span><span>{formatCurrency(invoice.amount_paid, currency)}</span></div>
+          <div className="flex justify-between font-bold"><span>Balance</span><span>{formatCurrency(invoice.balance_due, currency)}</span></div>
+        </section>
+
+        {invoice.payments.length > 0 && (
+          <section className="mt-2 text-[10px]">
+            <p className="font-black uppercase">Payments</p>
+            {invoice.payments.map((p) => (
+              <div key={p.id} className="flex justify-between gap-2">
+                <span>{PAYMENT_LABELS[p.method] ?? p.method}{p.reference_no ? ` / ${p.reference_no}` : ""}</span>
+                <span>{formatCurrency(p.amount, currency)}</span>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {invoice.note && (
+          <section className="mt-2 text-[9px]">
+            <p className="font-bold">Note</p>
+            <p>{invoice.note}</p>
+          </section>
+        )}
+
+        <footer className="mt-3 border-t border-dashed border-black pt-2 text-center text-[9px] leading-tight">
+          <p>{branding.invoiceFooter || `Thank you for shopping at ${orgName}.`}</p>
+          <p className="mt-1">Powered by Gadget Zone Online POS</p>
         </footer>
       </article>
     </AppShell>
