@@ -173,3 +173,9 @@ begin
   return v_results;
 end;
 $$;
+
+-- Hardening Access Tightening
+revoke all on function public.reset_organization_to_factory_defaults(uuid, uuid, boolean) from public;
+revoke all on function public.reset_organization_to_factory_defaults(uuid, uuid, boolean) from anon;
+grant execute on function public.reset_organization_to_factory_defaults(uuid, uuid, boolean) to authenticated;
+alter function public.reset_organization_to_factory_defaults(uuid, uuid, boolean) set search_path = public, pg_temp;
