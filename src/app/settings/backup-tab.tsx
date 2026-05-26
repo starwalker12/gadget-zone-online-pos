@@ -5,7 +5,9 @@ import {
   fetchExportDataAction,
   startImportJobAction,
   importTableChunkAction,
-  updateImportJobStatusAction
+  updateImportJobStatusAction,
+  previewFactoryResetAction,
+  restoreFactoryDefaultsAction
 } from "./backup-actions";
 import JSZip from "jszip";
 import {
@@ -77,6 +79,85 @@ export function BackupTab() {
   const [totalChunks, setTotalChunks] = useState(0);
   const [importReportLogs, setImportReportLogs] = useState<string[]>([]);
   const [importError, setImportError] = useState<string | null>(null);
+
+  // Factory Reset modal/stepper states
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetStep, setResetStep] = useState<"preview" | "backup" | "confirm" | "resetting" | "done">("preview");
+  const [previewCounts, setPreviewCounts] = useState<Record<string, number> | null>(null);
+  const [deletedCounts, setDeletedCounts] = useState<Record<string, number> | null>(null);
+  const [isFetchingPreview, setIsFetchingPreview] = useState(false);
+
+  // Checkboxes & inputs
+  const [checkboxBackupDownloaded, setCheckboxBackupDownloaded] = useState(false);
+  const [checkboxCannotBeUndone, setCheckboxCannotBeUndone] = useState(false);
+  const [checkboxDataRemoved, setCheckboxDataRemoved] = useState(false);
+  const [typedShopName, setTypedShopName] = useState("");
+  const [typedPassword, setTypedPassword] = useState("");
+  const [typedConfirmationPhrase, setTypedConfirmationPhrase] = useState("");
+  const [resetBrandingSettings, setResetBrandingSettings] = useState(false);
+  const [resettingError, setResettingError] = useState<string | null>(null);
+
+  // Open Factory Reset and fetch preview details
+  async function openFactoryResetFlow() {
+    setIsResetModalOpen(true);
+    setResetStep("preview");
+    setPreviewCounts(null);
+    setDeletedCounts(null);
+    setCheckboxBackupDownloaded(false);
+    setCheckboxCannotBeUndone(false);
+    setCheckboxDataRemoved(false);
+    setTypedShopName("");
+    setTypedPassword("");
+    setTypedConfirmationPhrase("");
+    setResetBrandingSettings(false);
+    setResettingError(null);
+    await fetchResetPreview();
+  }
+
+  async function fetchResetPreview() {
+    try {
+      setIsFetchingPreview(true);
+      setResettingError(null);
+      const res = await previewFactoryResetAction();
+      if (res.success && res.counts) {
+        setPreviewCounts(res.counts);
+      } else {
+        setResettingError(res.error || "Failed to load database stats.");
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      setResettingError("An unexpected error occurred reading database counts.");
+    } finally {
+      setIsFetchingPreview(false);
+    }
+  }
+
+  // Trigger destructive factory reset
+  async function triggerFactoryReset() {
+    try {
+      setResettingError(null);
+      setResetStep("resetting");
+
+      const res = await restoreFactoryDefaultsAction(
+        typedPassword,
+        typedShopName,
+        resetBrandingSettings
+      );
+
+      if (res.success && res.counts) {
+        setDeletedCounts(res.counts);
+        setResetStep("done");
+      } else {
+        setResettingError(res.error || "Wipe process failed.");
+        setResetStep("confirm");
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred during factory reset.";
+      setResettingError(msg);
+      setResetStep("confirm");
+    }
+  }
 
   // Helpers: Convert array to CSV
   function convertToCSV(array: unknown[]) {
@@ -229,7 +310,7 @@ export function BackupTab() {
       // Lazy import sql.js CDN/wasm in the browser
       const initSqlJs = (await import("sql.js")).default;
       const SQL = await initSqlJs({
-        locateFile: (locateFile) => `https://sql.js.org/dist/${locateFile}`
+        locateFile: (file: string) => `https://sql.js.org/dist/${file}`
       });
 
       const db = new SQL.Database(new Uint8Array(dbArrayBuffer));
@@ -497,7 +578,7 @@ export function BackupTab() {
         </div>
       )}
 
-      {step === "upload" && (
+      {step === "upload" && (<>
         <div className="grid gap-6 md:grid-cols-2">
           {/* Export Card */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -577,7 +658,29 @@ export function BackupTab() {
             </div>
           </div>
         </div>
-      )}
+
+        {/* Danger Zone: Factory Reset Card */}
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/20 p-5 shadow-sm space-y-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="size-6 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-md font-bold text-rose-955">Restore Factory Defaults / Factory Reset</h4>
+              <p className="mt-1 text-xs text-rose-800">
+                Wipes all sales history, repairs, customers, inventory records, and expenses. This action is organization-scoped, completely destructive, and cannot be undone. Pre-reset safety backup export will be created first.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={openFactoryResetFlow}
+              className="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-rose-700 transition cursor-pointer shadow-sm"
+            >
+              Initiate Factory Reset
+            </button>
+          </div>
+        </div>
+      </>)}
 
       {/* Stepper Step 2: Table Counts Preview */}
       {step === "preview" && manifest && (
@@ -920,6 +1023,315 @@ export function BackupTab() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Factory Reset Modal Overlay */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <header className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-5 text-rose-600 animate-pulse" />
+                <h3 className="text-md font-black text-rose-950">Restore Factory Defaults</h3>
+              </div>
+              {resetStep !== "resetting" && resetStep !== "done" && (
+                <button
+                  onClick={() => setIsResetModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </header>
+
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {resetStep === "preview" && (
+                <div className="space-y-4">
+                  <p className="text-slate-600 text-xs">
+                    This step analyzes the current database tables for this organization to show exactly how many records will be wiped.
+                  </p>
+
+                  {isFetchingPreview ? (
+                    <div className="flex items-center justify-center py-12 gap-2 text-slate-500">
+                      <RefreshCw className="size-5 animate-spin text-blue-700" />
+                      <span>Scanning organization database counts...</span>
+                    </div>
+                  ) : previewCounts ? (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <h4 className="font-bold text-slate-700 uppercase tracking-wider text-[10px] mb-2">Affected Business Tables & Counts:</h4>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {Object.entries(previewCounts).map(([table, count]) => (
+                            <div key={table} className="flex justify-between items-center bg-white px-3 py-2 rounded-lg border border-slate-100">
+                              <span className="font-semibold text-slate-600 capitalize">{table.replace(/_/g, " ")}</span>
+                              <span className={`px-2 py-0.5 rounded font-black ${count > 0 ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-400"}`}>
+                                {count}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 flex gap-2.5">
+                        <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="text-amber-900 space-y-1">
+                          <p className="font-bold">What is preserved:</p>
+                          <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-amber-800">
+                            <li>The master Organization profile</li>
+                            <li>Multi-tenant Branch profiles</li>
+                            <li>Your active Owner / Admin logins and staff profiles</li>
+                            <li>Supabase Auth directory accounts</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button
+                          onClick={() => setIsResetModalOpen(false)}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => setResetStep("backup")}
+                          className="rounded-xl bg-rose-600 px-5 py-2.5 font-bold text-white hover:bg-rose-700 cursor-pointer shadow-sm"
+                        >
+                          Next: Safety Backup →
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-rose-600 font-bold">Failed to load preview data.</p>
+                      <button onClick={fetchResetPreview} className="mt-3 rounded-lg bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200">
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {resetStep === "backup" && (
+                <div className="space-y-4">
+                  <div className="rounded-xl bg-rose-50 border border-rose-100 p-4">
+                    <p className="font-bold text-rose-900 text-sm">Step 1: Download Safety Backup</p>
+                    <p className="mt-1 text-rose-800">
+                      Before proceeding, you must generate and download a full pre-reset backup ZIP. This ensures you can restore this {"organization's"} history in the future if needed.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center space-y-4">
+                    <Download className="mx-auto size-12 text-slate-400" />
+                    <div className="space-y-1">
+                      <p className="font-bold text-slate-700">Pre-Reset ZIP Snapshot</p>
+                      <p className="text-[10px] text-slate-500">Includes complete categories, products, invoices, customers, and ledger rows</p>
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        await handleExport();
+                        setCheckboxBackupDownloaded(true);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-6 py-3 font-bold text-white hover:bg-blue-800 shadow-sm cursor-pointer"
+                    >
+                      <Download className="size-4" />
+                      Download Pre-Reset Backup
+                    </button>
+                  </div>
+
+                  {checkboxBackupDownloaded && (
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4 text-emerald-955 flex gap-2">
+                      <CheckCircle className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Backup download triggered successfully!</p>
+                        <p className="text-[10px] text-emerald-700">You may now proceed to the final confirmation screen.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-2">
+                    <button
+                      onClick={() => setResetStep("preview")}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => setResetStep("confirm")}
+                      disabled={!checkboxBackupDownloaded}
+                      className="rounded-xl bg-rose-600 px-5 py-2.5 font-bold text-white hover:bg-rose-700 disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer shadow-sm"
+                    >
+                      Next: Confirm Wipe →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {resetStep === "confirm" && (
+                <div className="space-y-4">
+                  <div className="rounded-xl bg-rose-50 border border-rose-100 p-4">
+                    <p className="font-bold text-rose-955">⚠️ Final Hard Confirmations Required</p>
+                    <p className="mt-1 text-rose-800">
+                      Wiping business data cannot be reversed. Please carefully acknowledge each warning checkmark below.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 p-3.5 hover:bg-slate-50/50">
+                      <input
+                        type="checkbox"
+                        checked={checkboxCannotBeUndone}
+                        onChange={(e) => setCheckboxCannotBeUndone(e.target.checked)}
+                        className="mt-0.5 size-4 rounded accent-rose-600 cursor-pointer"
+                      />
+                      <div className="text-[11px] text-slate-600">
+                        <p className="font-bold text-slate-800">I understand this operation cannot be undone</p>
+                        <p className="mt-0.5">Wiped rows are permanently scrubbed from the active multi-tenant database clusters.</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 p-3.5 hover:bg-slate-50/50">
+                      <input
+                        type="checkbox"
+                        checked={checkboxDataRemoved}
+                        onChange={(e) => setCheckboxDataRemoved(e.target.checked)}
+                        className="mt-0.5 size-4 rounded accent-rose-600 cursor-pointer"
+                      />
+                      <div className="text-[11px] text-slate-600">
+                        <p className="font-bold text-slate-800">I understand all staff logs, repairs, sales, and catalog rows will be removed</p>
+                        <p className="mt-0.5">All physical lots, expenses, return invoices, and active credit ledger entries will delete completely.</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 p-3.5 hover:bg-slate-50/50">
+                      <input
+                        type="checkbox"
+                        checked={resetBrandingSettings}
+                        onChange={(e) => setResetBrandingSettings(e.target.checked)}
+                        className="mt-0.5 size-4 rounded accent-rose-600 cursor-pointer"
+                      />
+                      <div className="text-[11px] text-slate-600">
+                        <p className="font-bold text-slate-800">Also reset shop settings / receipt branding to default state? (Optional)</p>
+                        <p className="mt-0.5">Wipes support phone lines, store address, receipt custom footers, and logo URLs.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="reset-pwd" className="block font-bold text-slate-700">Enter Your Current Password:</label>
+                      <input
+                        id="reset-pwd"
+                        type="password"
+                        value={typedPassword}
+                        onChange={(e) => setTypedPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-rose-600 focus:bg-white text-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="reset-shop" className="block font-bold text-slate-700">Type Your Exact Organization Name:</label>
+                      <input
+                        id="reset-shop"
+                        type="text"
+                        value={typedShopName}
+                        onChange={(e) => setTypedShopName(e.target.value)}
+                        placeholder="Enter organization name"
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-rose-600 focus:bg-white text-slate-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reset-phrase" className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                      To execute wipe, type <span className="text-rose-700 font-bold">RESTORE FACTORY DEFAULTS</span>:
+                    </label>
+                    <input
+                      id="reset-phrase"
+                      type="text"
+                      value={typedConfirmationPhrase}
+                      onChange={(e) => setTypedConfirmationPhrase(e.target.value)}
+                      placeholder="RESTORE FACTORY DEFAULTS"
+                      className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-rose-600 focus:bg-white text-slate-900 font-mono"
+                    />
+                  </div>
+
+                  {resettingError && (
+                    <div className="flex items-center gap-2 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                      <AlertTriangle className="size-4 shrink-0" />
+                      <span>{resettingError}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between gap-2 pt-2">
+                    <button
+                      onClick={() => setResetStep("backup")}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={triggerFactoryReset}
+                      disabled={
+                        !checkboxCannotBeUndone ||
+                        !checkboxDataRemoved ||
+                        typedConfirmationPhrase !== "RESTORE FACTORY DEFAULTS" ||
+                        !typedPassword ||
+                        !typedShopName
+                      }
+                      className="rounded-xl bg-rose-600 px-6 py-2.5 font-bold text-white hover:bg-rose-700 disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer shadow-sm"
+                    >
+                      ☠️ Wipe Data & Restore Factory Defaults
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {resetStep === "resetting" && (
+                <div className="py-12 text-center space-y-4">
+                  <RefreshCw className="mx-auto size-12 text-rose-600 animate-spin" />
+                  <div className="space-y-1">
+                    <p className="font-bold text-slate-800 text-sm">Wiping Organization Business Records...</p>
+                    <p className="text-slate-500">Executing Postgres RLS-hardened safe deletion transaction in correct order...</p>
+                  </div>
+                </div>
+              )}
+
+              {resetStep === "done" && deletedCounts && (
+                <div className="space-y-6 text-center py-4">
+                  <CheckCircle className="mx-auto size-14 text-emerald-600 animate-bounce" />
+                  <div className="space-y-1.5">
+                    <h4 className="text-lg font-black text-emerald-800">Wipe Completed Successfully!</h4>
+                    <p className="text-xs text-emerald-700">The shop has been successfully restored to pristine factory defaults.</p>
+                  </div>
+
+                  <div className="max-w-md mx-auto rounded-xl border border-slate-200 bg-slate-50 p-4 text-left">
+                    <h5 className="font-bold text-[10px] uppercase text-slate-500 tracking-wider mb-2 border-b border-slate-200 pb-1.5">Deletion Report:</h5>
+                    <div className="max-h-40 overflow-y-auto space-y-1 font-mono text-[10px] text-slate-600">
+                      {Object.entries(deletedCounts).map(([table, count]) => (
+                        <div key={table} className="flex justify-between">
+                          <span className="capitalize">{table.replace(/_/g, " ")}:</span>
+                          <strong className="text-slate-900">{count} removed</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setIsResetModalOpen(false);
+                      window.location.reload();
+                    }}
+                    className="rounded-xl bg-blue-700 px-6 py-3 font-bold text-white hover:bg-blue-800 shadow-sm cursor-pointer"
+                  >
+                    Done & Reload Application
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

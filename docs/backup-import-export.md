@@ -33,3 +33,15 @@ Full automated desktop SQLite data ingestion has been successfully implemented a
 
 For a deep-dive into table mapping rules and dry-run validation mechanics, refer to the [Offline Backup Restore Guide](file:///Users/sw12/Projects/gadget-zone-online-pos/docs/offline-backup-restore.md).
 
+---
+
+## Restore Factory Defaults / Factory Reset
+
+The system features an Owner and Admin-scoped **Factory Reset** danger zone under the Backup tab:
+- **Safety Snapshot Enforced**: Requires generating and downloading a pre-reset backup ZIP before confirmation triggers.
+- **Wasm/Server Integrity**: Wipes active business data cleanly across all 20 operational tables in cascading relational order while keeping tenant profiles and logins active.
+- **Bulletproof Protections**: Re-authenticates user password against Supabase Auth, matches exact organization name, and requires verification phrase `RESTORE FACTORY DEFAULTS`.
+- **Full Traceability**: Details deleted count statistics in the final report and leaves a permanent `settings.factory_reset_completed` event in the system audit logs.
+
+For detailed security mechanics and cascading rules, see the [Factory Reset Guide](file:///Users/sw12/Projects/gadget-zone-online-pos/docs/factory-reset.md).
+

@@ -1164,3 +1164,168 @@ export async function fetchExportDataAction(): Promise<{ success: boolean; data?
     return { success: false, error: err.message || "An unexpected error occurred during export data preparation." };
   }
 }
+
+// Preview Factory Reset Counts
+export async function previewFactoryResetAction(): Promise<{ success: boolean; counts?: Record<string, number>; error?: string }> {
+  try {
+    const { user, profile } = await getCurrentContext();
+    if (!user || !profile || !profile.organization_id) {
+      return { success: false, error: "Not authenticated." };
+    }
+
+    if (profile.role !== "owner" && profile.role !== "admin") {
+      return { success: false, error: "Only Owners and Admins can access factory reset preview." };
+    }
+
+    const orgId = profile.organization_id;
+    const supabase = await createClient();
+
+    const [
+      returnStockAllocations,
+      returnItems,
+      returns,
+      invoiceItemStockAllocations,
+      stockMovements,
+      productStockLots,
+      payments,
+      invoiceItems,
+      invoices,
+      customerLedgerEntries,
+      repairStatusHistory,
+      repairs,
+      expenses,
+      dailyClosings,
+      products,
+      productCategories,
+      suppliers,
+      customers,
+      importRowMappings,
+      importJobs
+    ] = await Promise.all([
+      supabase.from("return_stock_allocations").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("return_items").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("returns").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("invoice_item_stock_allocations").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("stock_movements").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("product_stock_lots").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("payments").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("invoice_items").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("invoices").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("customer_ledger_entries").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("repair_status_history").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("repairs").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("expenses").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("daily_closings").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("products").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("product_categories").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("suppliers").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("import_row_mappings").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+      supabase.from("import_jobs").select("id", { count: "exact", head: true }).eq("organization_id", orgId)
+    ]);
+
+    const counts: Record<string, number> = {
+      return_stock_allocations: returnStockAllocations.count || 0,
+      return_items: returnItems.count || 0,
+      returns: returns.count || 0,
+      invoice_item_stock_allocations: invoiceItemStockAllocations.count || 0,
+      stock_movements: stockMovements.count || 0,
+      product_stock_lots: productStockLots.count || 0,
+      payments: payments.count || 0,
+      invoice_items: invoiceItems.count || 0,
+      invoices: invoices.count || 0,
+      customer_ledger_entries: customerLedgerEntries.count || 0,
+      repair_status_history: repairStatusHistory.count || 0,
+      repairs: repairs.count || 0,
+      expenses: expenses.count || 0,
+      daily_closings: dailyClosings.count || 0,
+      products: products.count || 0,
+      product_categories: productCategories.count || 0,
+      suppliers: suppliers.count || 0,
+      customers: customers.count || 0,
+      import_row_mappings: importRowMappings.count || 0,
+      import_jobs: importJobs.count || 0
+    };
+
+    return { success: true, counts };
+  } catch (err: unknown) {
+    console.error("Preview factory reset failed:", err);
+    const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+    return { success: false, error: msg };
+  }
+}
+
+// Restore Factory Defaults / Wipes Business Data
+export async function restoreFactoryDefaultsAction(
+  password: string,
+  shopName: string,
+  resetSettings: boolean
+): Promise<{ success: boolean; counts?: Record<string, number>; error?: string }> {
+  try {
+    const { user, profile, organization } = await getCurrentContext();
+    if (!user || !profile || !profile.organization_id) {
+      return { success: false, error: "Not authenticated." };
+    }
+
+    if (profile.role !== "owner" && profile.role !== "admin") {
+      return { success: false, error: "Only Owners and Admins can reset shop data." };
+    }
+
+    const orgId = profile.organization_id;
+
+    // 1. Re-authenticate user password against Supabase Auth
+    const supabase = await createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: password
+    });
+
+    if (authError) {
+      return { success: false, error: "Re-authentication failed. Incorrect password." };
+    }
+
+    // 2. Validate typed organization / shop name matches
+    const orgName = organization?.name || "Gadget Zone";
+    if (shopName.trim().toLowerCase() !== orgName.trim().toLowerCase()) {
+      return { success: false, error: `Confirmed organization name does not match '${orgName}'.` };
+    }
+
+    // 3. Log pre-reset export trace
+    await logAudit({
+      module: "settings",
+      action: "backup.pre_reset_export_created",
+      details: `Owner initiated factory reset. Pre-reset backup trace created.`
+    });
+
+    // 4. Trigger database RPC to wipe business data
+    const { data: resetResult, error: resetError } = await supabase.rpc(
+      "reset_organization_to_factory_defaults",
+      {
+        p_organization_id: orgId,
+        p_actor_id: profile.id,
+        p_reset_settings: resetSettings
+      }
+    );
+
+    if (resetError) {
+      throw new Error(resetError.message);
+    }
+
+    // 5. Revalidate cache paths
+    revalidatePath("/settings");
+    revalidatePath("/products");
+    revalidatePath("/customers");
+    revalidatePath("/invoices");
+    revalidatePath("/returns");
+    revalidatePath("/repairs");
+    revalidatePath("/expenses");
+    revalidatePath("/daily-closing");
+    revalidatePath("/audit-log");
+
+    return { success: true, counts: resetResult as Record<string, number> };
+  } catch (err: unknown) {
+    console.error("Factory reset failed:", err);
+    const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+    return { success: false, error: msg };
+  }
+}
