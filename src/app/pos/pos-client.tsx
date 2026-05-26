@@ -7,8 +7,11 @@ import { Minus, Plus, Search, Trash2, UserPlus2 } from "lucide-react";
 import { checkoutAction, quickCreateCustomerAction } from "./actions";
 import {
   PAYMENT_METHODS,
+  SERVICE_DIRECTIONS,
+  SERVICE_DIRECTION_LABELS,
   type CheckoutInput,
   type PaymentMethod,
+  type ServiceDirection,
 } from "@/lib/validation/pos";
 import type { PosCustomer, PosProduct } from "@/lib/data/pos";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
@@ -21,11 +24,44 @@ type Props = {
   canCheckout: boolean;
 };
 
+type ServiceFields = {
+  provider: string;
+  direction: ServiceDirection | "";
+  account_number: string;
+  receiver_account: string;
+  reference_no: string;
+  principal: string;
+  commission: string;
+  total_charged: string;
+  note: string;
+};
+
+const EMPTY_SERVICE: ServiceFields = {
+  provider: "",
+  direction: "",
+  account_number: "",
+  receiver_account: "",
+  reference_no: "",
+  principal: "",
+  commission: "",
+  total_charged: "",
+  note: "",
+};
+
+function defaultServiceForProduct(p: PosProduct): ServiceFields {
+  return {
+    ...EMPTY_SERVICE,
+    direction: (p.service_type ?? "") as ServiceDirection | "",
+    commission: p.default_commission_amount > 0 ? String(p.default_commission_amount) : "",
+  };
+}
+
 type CartLine = {
   product: PosProduct;
   quantity: number;
   unit_price: number;
   discount: number;
+  service?: ServiceFields;
 };
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -105,8 +141,27 @@ export function PosClient({ products: initialProducts, customers: initialCustome
         setError(`${p.name} is out of stock.`);
         return prev;
       }
-      return [...prev, { product: p, quantity: 1, unit_price: p.sale_price, discount: 0 }];
+      return [
+        ...prev,
+        {
+          product: p,
+          quantity: 1,
+          unit_price: p.sale_price,
+          discount: 0,
+          service: p.type === "service" ? defaultServiceForProduct(p) : undefined,
+        },
+      ];
     });
+  }
+
+  function updateLineService(id: string, patch: Partial<ServiceFields>) {
+    setCart((prev) =>
+      prev.map((l) =>
+        l.product.id === id && l.service
+          ? { ...l, service: { ...l.service, ...patch } }
+          : l,
+      ),
+    );
   }
 
   function updateQty(id: string, delta: number) {
@@ -158,12 +213,29 @@ export function PosClient({ products: initialProducts, customers: initialCustome
     setError(null);
     setSuccess(null);
     const input: CheckoutInput = {
-      cart: cart.map((l) => ({
-        product_id: l.product.id,
-        quantity: l.quantity,
-        unit_price: l.unit_price,
-        discount: l.discount,
-      })),
+      cart: cart.map((l) => {
+        const base = {
+          product_id: l.product.id,
+          quantity: l.quantity,
+          unit_price: l.unit_price,
+          discount: l.discount,
+        };
+        if (l.product.type !== "service" || !l.service) return base;
+        const s = l.service;
+        const num = (v: string) => (v.trim() === "" ? undefined : Number(v));
+        return {
+          ...base,
+          service_provider: s.provider || undefined,
+          service_direction: s.direction || undefined,
+          service_account_number: s.account_number || undefined,
+          service_receiver_account: s.receiver_account || undefined,
+          service_reference_no: s.reference_no || undefined,
+          service_transaction_amount: num(s.principal),
+          service_commission: num(s.commission),
+          service_total_charged: num(s.total_charged),
+          service_note: s.note || undefined,
+        };
+      }),
       customer_id: customerId || null,
       discount_total: discountTotal,
       payment_method: paymentMethod,
@@ -429,24 +501,31 @@ export function PosClient({ products: initialProducts, customers: initialCustome
 
                   return (
                     <div className={`mt-2 rounded-lg p-2.5 text-xs font-semibold border ${
-                      isOverrideAllowed 
-                        ? "bg-amber-50 text-amber-900 border-amber-200" 
+                      isOverrideAllowed
+                        ? "bg-amber-50 text-amber-900 border-amber-200"
                         : "bg-red-50 text-red-900 border-red-200"
                     }`}>
                       {isOverrideAllowed ? (
                         <p>
-                          ⚠️ Selling below cost price (Cost: Rs. {totalCost.toLocaleString()}, Effective: Rs. {Math.round(effectiveRevenue).toLocaleString()}). 
+                          ⚠️ Selling below cost price (Cost: Rs. {totalCost.toLocaleString()}, Effective: Rs. {Math.round(effectiveRevenue).toLocaleString()}).
                           <span className="block text-[10px] text-amber-700 mt-0.5">Approved under admin override: &quot;{l.product.sell_at_loss_reason}&quot;</span>
                         </p>
                       ) : (
                         <p>
-                          🚨 Blocked: Selling below cost price (Cost: Rs. {totalCost.toLocaleString()}, Effective: Rs. {Math.round(effectiveRevenue).toLocaleString()}). 
+                          🚨 Blocked: Selling below cost price (Cost: Rs. {totalCost.toLocaleString()}, Effective: Rs. {Math.round(effectiveRevenue).toLocaleString()}).
                           <span className="block text-[10px] text-red-700 mt-0.5">Checkout will be blocked. Reduce discount or ask admin to enable override.</span>
                         </p>
                       )}
                     </div>
                   );
                 })()}
+
+                {l.product.type === "service" && l.service && (
+                  <ServiceLineDetails
+                    line={l}
+                    onChange={(patch) => updateLineService(l.product.id, patch)}
+                  />
+                )}
               </li>
             ))}
           </ul>
@@ -634,5 +713,163 @@ export function PosClient({ products: initialProducts, customers: initialCustome
         </div>
       )}
     </div>
+  );
+}
+
+function ServiceLineDetails({
+  line,
+  onChange,
+}: {
+  line: CartLine;
+  onChange: (patch: Partial<ServiceFields>) => void;
+}) {
+  const s = line.service!;
+  const p = line.product;
+  const requiresProvider = p.requires_provider;
+  const requiresAccount = p.requires_account_number;
+  const requiresReference = p.requires_reference;
+
+  // Auto-fill total charged when both principal and commission are set and total is empty.
+  const principalNum = Number(s.principal || 0);
+  const commissionNum = Number(s.commission || 0);
+  const totalNum = Number(s.total_charged || 0);
+  const totalLessThanCommission =
+    s.total_charged !== "" && commissionNum > 0 && totalNum < commissionNum;
+  const computedTotal = principalNum + commissionNum;
+
+  return (
+    <details className="mt-3 rounded-lg border border-blue-100 bg-blue-50/40 p-3" open>
+      <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-blue-800">
+        Service details
+        <span className="ml-2 font-normal text-blue-700">
+          (principal = pass-through, commission = shop income)
+        </span>
+      </summary>
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <label className="text-xs">
+          <span className="text-slate-600">
+            Provider{requiresProvider ? " *" : ""}
+          </span>
+          <input
+            type="text"
+            value={s.provider}
+            onChange={(e) => onChange({ provider: e.target.value })}
+            placeholder="e.g. EasyPaisa, Jazz, Telenor"
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          />
+        </label>
+        <label className="text-xs">
+          <span className="text-slate-600">Direction / type</span>
+          <select
+            value={s.direction}
+            onChange={(e) =>
+              onChange({ direction: e.target.value as ServiceDirection | "" })
+            }
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          >
+            <option value="">—</option>
+            {SERVICE_DIRECTIONS.map((d) => (
+              <option key={d} value={d}>
+                {SERVICE_DIRECTION_LABELS[d]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs">
+          <span className="text-slate-600">
+            Sender / account #{requiresAccount ? " *" : ""}
+          </span>
+          <input
+            type="text"
+            value={s.account_number}
+            onChange={(e) => onChange({ account_number: e.target.value })}
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          />
+        </label>
+        <label className="text-xs">
+          <span className="text-slate-600">Receiver account #</span>
+          <input
+            type="text"
+            value={s.receiver_account}
+            onChange={(e) => onChange({ receiver_account: e.target.value })}
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          />
+        </label>
+        <label className="text-xs sm:col-span-2">
+          <span className="text-slate-600">
+            Reference #{requiresReference ? " *" : ""}
+          </span>
+          <input
+            type="text"
+            value={s.reference_no}
+            onChange={(e) => onChange({ reference_no: e.target.value })}
+            placeholder="TID / transaction reference"
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          />
+        </label>
+        <label className="text-xs">
+          <span className="text-slate-600">Principal (pass-through)</span>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={s.principal}
+            onChange={(e) => onChange({ principal: e.target.value })}
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          />
+        </label>
+        <label className="text-xs">
+          <span className="text-slate-600">Commission (shop income)</span>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={s.commission}
+            onChange={(e) => onChange({ commission: e.target.value })}
+            className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600"
+          />
+        </label>
+        <label className="text-xs sm:col-span-2">
+          <span className="text-slate-600">
+            Total charged
+            {s.total_charged === "" && computedTotal > 0 && (
+              <span className="ml-1 font-normal text-slate-400">
+                (auto: {computedTotal.toLocaleString("en-PK")})
+              </span>
+            )}
+          </span>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={s.total_charged}
+            onChange={(e) => onChange({ total_charged: e.target.value })}
+            placeholder={String(computedTotal || "")}
+            className={`mt-1 h-9 w-full rounded-md border px-2 outline-none focus:border-blue-600 ${
+              totalLessThanCommission ? "border-red-300" : "border-slate-200"
+            }`}
+          />
+          {totalLessThanCommission && (
+            <span className="mt-1 block text-[10px] text-red-700">
+              Total charged cannot be less than commission.
+            </span>
+          )}
+        </label>
+        <label className="text-xs sm:col-span-2">
+          <span className="text-slate-600">Note (optional)</span>
+          <textarea
+            value={s.note}
+            onChange={(e) => onChange({ note: e.target.value })}
+            rows={2}
+            className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 outline-none focus:border-blue-600"
+          />
+        </label>
+      </div>
+      <p className="mt-2 text-[11px] text-slate-500">
+        The cart line total above is what appears on the invoice. Principal and
+        commission are stored for reporting; commission is profit, principal is
+        pass-through.
+      </p>
+    </details>
   );
 }
