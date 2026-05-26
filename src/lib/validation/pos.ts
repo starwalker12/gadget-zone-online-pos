@@ -10,12 +10,91 @@ export const PAYMENT_METHODS = [
 ] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
-export const cartItemSchema = z.object({
-  product_id: z.string().uuid(),
-  quantity: z.coerce.number().int().min(1, "Quantity must be at least 1."),
-  unit_price: z.coerce.number().min(0, "Unit price must be 0 or more."),
-  discount: z.coerce.number().min(0, "Line discount must be 0 or more.").default(0),
-});
+// Service direction options (free text in the database but a fixed set in the UI).
+export const SERVICE_DIRECTIONS = [
+  "cash_in",
+  "cash_out",
+  "send",
+  "receive",
+  "transfer",
+  "bill_payment",
+  "mobile_load",
+  "other",
+] as const;
+export type ServiceDirection = (typeof SERVICE_DIRECTIONS)[number];
+
+export const SERVICE_DIRECTION_LABELS: Record<ServiceDirection, string> = {
+  cash_in: "Cash In",
+  cash_out: "Cash Out",
+  send: "Send",
+  receive: "Receive",
+  transfer: "Transfer",
+  bill_payment: "Bill Payment",
+  mobile_load: "Mobile Load",
+  other: "Other",
+};
+
+const optionalString = z
+  .preprocess((v) => {
+    if (typeof v !== "string") return v;
+    const trimmed = v.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.string().max(120))
+  .optional();
+
+const optionalNonNegativeNumber = z
+  .preprocess((v) => {
+    if (v === "" || v === null || v === undefined) return undefined;
+    return v;
+  }, z.coerce.number().min(0, "Must be 0 or more."))
+  .optional();
+
+export const cartItemSchema = z
+  .object({
+    product_id: z.string().uuid(),
+    quantity: z.coerce.number().int().min(1, "Quantity must be at least 1."),
+    unit_price: z.coerce.number().min(0, "Unit price must be 0 or more."),
+    discount: z.coerce.number().min(0, "Line discount must be 0 or more.").default(0),
+    // Optional service transaction metadata — only relevant when the product
+    // is a service. Validated again server-side inside pos_checkout.
+    service_provider: optionalString,
+    service_direction: optionalString,
+    service_account_number: optionalString,
+    service_receiver_account: optionalString,
+    service_reference_no: optionalString,
+    service_transaction_amount: optionalNonNegativeNumber,
+    service_commission: optionalNonNegativeNumber,
+    service_total_charged: optionalNonNegativeNumber,
+    service_note: z
+      .preprocess(
+        (v) => (typeof v === "string" && v.trim().length === 0 ? undefined : v),
+        z.string().max(500),
+      )
+      .optional(),
+  })
+  .superRefine((val, ctx) => {
+    const principal = val.service_transaction_amount;
+    const commission = val.service_commission;
+    const totalCharged = val.service_total_charged;
+    if (
+      totalCharged !== undefined &&
+      commission !== undefined &&
+      totalCharged < commission
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Total charged cannot be less than commission.",
+        path: ["service_total_charged"],
+      });
+    }
+    if (principal !== undefined && principal < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Principal must be 0 or more.",
+        path: ["service_transaction_amount"],
+      });
+    }
+  });
 export type CartItemInput = z.infer<typeof cartItemSchema>;
 
 export const checkoutSchema = z.object({

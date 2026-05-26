@@ -12,6 +12,9 @@ export type InvoiceItemReportRow = {
   line_total: number;
   service_commission: number;
   service_transaction_amount: number;
+  service_total_charged: number;
+  service_provider: string | null;
+  service_direction: string | null;
 };
 
 export type SalesSummaryReport = {
@@ -78,6 +81,15 @@ export type TopProductsReport = {
   topServicesRevenue: { name: string; revenue: number }[];
 };
 
+export type ServiceTransactionsReport = {
+  transactionCount: number;
+  commissionEarned: number;
+  principalHandled: number;
+  totalCharged: number;
+  byProvider: { provider: string; count: number; principal: number; commission: number }[];
+  byDirection: { direction: string; count: number; principal: number; commission: number }[];
+};
+
 export type DailyClosingSummaryReport = {
   closedDaysCount: number;
   openDaysCount: number;
@@ -94,6 +106,7 @@ export type ReportsData = {
   ledger: CustomerLedgerSummaryReport;
   inventory: InventorySummaryReport;
   topItems: TopProductsReport;
+  services: ServiceTransactionsReport;
   closing: DailyClosingSummaryReport;
 };
 
@@ -137,7 +150,7 @@ export async function getReportsData(
   if (invoiceIds.length > 0) {
     const { data: items, error: itemsError } = await supabase
       .from("invoice_items")
-      .select("invoice_id, product_name, product_type, quantity, purchase_price, unit_price, item_discount, line_total, service_commission, service_transaction_amount")
+      .select("invoice_id, product_name, product_type, quantity, purchase_price, unit_price, item_discount, line_total, service_commission, service_transaction_amount, service_total_charged, service_provider, service_direction")
       .eq("organization_id", orgId)
       .in("invoice_id", invoiceIds);
 
@@ -487,6 +500,45 @@ export async function getReportsData(
   const topProductsRevenue = [...productQtyMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
   const topServicesRevenue = [...serviceQtyMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
+  // 7b. Service transactions breakdown (count, by-provider, by-direction).
+  const serviceItems = invoiceItems.filter((i) => i.product_type === "service");
+  const serviceTransactionCount = serviceItems.length;
+  const serviceCommissionEarned = serviceItems.reduce(
+    (s, i) => s + (Number(i.service_commission ?? 0) > 0 ? Number(i.service_commission) : Number(i.line_total ?? 0)),
+    0,
+  );
+  const servicePrincipalHandledTotal = serviceItems.reduce(
+    (s, i) => s + Number(i.service_transaction_amount ?? 0),
+    0,
+  );
+  const serviceTotalCharged = serviceItems.reduce(
+    (s, i) => s + (Number(i.service_total_charged ?? 0) > 0 ? Number(i.service_total_charged) : Number(i.line_total ?? 0)),
+    0,
+  );
+
+  function bucket(items: typeof serviceItems, keyFn: (i: (typeof serviceItems)[number]) => string) {
+    const map = new Map<string, { count: number; principal: number; commission: number }>();
+    for (const i of items) {
+      const k = keyFn(i) || "Unspecified";
+      const prev = map.get(k) ?? { count: 0, principal: 0, commission: 0 };
+      prev.count += 1;
+      prev.principal += Number(i.service_transaction_amount ?? 0);
+      const c = Number(i.service_commission ?? 0);
+      prev.commission += c > 0 ? c : Number(i.line_total ?? 0);
+      map.set(k, prev);
+    }
+    return map;
+  }
+
+  const byProviderMap = bucket(serviceItems, (i) => (i.service_provider ?? "").trim());
+  const byDirectionMap = bucket(serviceItems, (i) => (i.service_direction ?? "").trim());
+  const byProvider = [...byProviderMap.entries()]
+    .map(([provider, v]) => ({ provider, ...v }))
+    .sort((a, b) => b.commission - a.commission);
+  const byDirection = [...byDirectionMap.entries()]
+    .map(([direction, v]) => ({ direction, ...v }))
+    .sort((a, b) => b.commission - a.commission);
+
   // 8. Daily Closing calculations
   const closedDaysCount = dailyClosings.filter((c) => c.finalized_by !== null).length;
   const totalCashDifference = dailyClosings.reduce((sum, c) => sum + Number(c.cash_difference ?? 0), 0);
@@ -568,6 +620,14 @@ export async function getReportsData(
       topProductsQty,
       topProductsRevenue,
       topServicesRevenue,
+    },
+    services: {
+      transactionCount: serviceTransactionCount,
+      commissionEarned: serviceCommissionEarned,
+      principalHandled: servicePrincipalHandledTotal,
+      totalCharged: serviceTotalCharged,
+      byProvider,
+      byDirection,
     },
     closing: {
       closedDaysCount,

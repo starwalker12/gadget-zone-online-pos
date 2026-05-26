@@ -15,6 +15,11 @@ export type PosProduct = {
   minimum_stock: number;
   allow_sell_at_loss: boolean;
   sell_at_loss_reason: string;
+  service_type: string | null;
+  default_commission_amount: number;
+  requires_account_number: boolean;
+  requires_provider: boolean;
+  requires_reference: boolean;
 };
 
 export type PosCustomer = {
@@ -29,7 +34,9 @@ export async function listPosProducts(organizationId: string): Promise<PosProduc
     .from("products")
     .select(
       `id, name, sku, barcode, category_id, type, purchase_price, sale_price,
-       stock_quantity, minimum_stock, allow_sell_at_loss, sell_at_loss_reason, product_categories(name)`,
+       stock_quantity, minimum_stock, allow_sell_at_loss, sell_at_loss_reason,
+       service_type, default_commission_amount, requires_account_number, requires_provider, requires_reference,
+       product_categories(name)`,
     )
     .eq("organization_id", organizationId)
     .eq("is_active", true)
@@ -53,6 +60,11 @@ export async function listPosProducts(organizationId: string): Promise<PosProduc
       minimum_stock: Number(r.minimum_stock ?? 0),
       allow_sell_at_loss: Boolean(r.allow_sell_at_loss),
       sell_at_loss_reason: r.sell_at_loss_reason ?? "",
+      service_type: r.service_type ?? null,
+      default_commission_amount: Number(r.default_commission_amount ?? 0),
+      requires_account_number: Boolean(r.requires_account_number),
+      requires_provider: Boolean(r.requires_provider),
+      requires_reference: Boolean(r.requires_reference),
     } satisfies PosProduct;
   });
 }
