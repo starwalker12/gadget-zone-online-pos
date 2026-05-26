@@ -21,6 +21,13 @@ export type InvoiceItemRow = {
   item_discount: number;
   line_total: number;
   purchase_price: number;
+  service_provider: string | null;
+  service_direction: string | null;
+  service_transaction_amount: number;
+  service_commission: number;
+  service_total_charged: number;
+  service_reference_no: string | null;
+  service_note: string | null;
 };
 
 export type InvoicePaymentRow = {
@@ -105,7 +112,11 @@ export async function getInvoiceDetail(
     await Promise.all([
       supabase
         .from("invoice_items")
-        .select("id, product_name, product_type, quantity, unit_price, item_discount, line_total, purchase_price")
+        .select(
+          `id, product_name, product_type, quantity, unit_price, item_discount, line_total,
+           purchase_price, service_provider, service_direction, service_transaction_amount,
+           service_commission, service_total_charged, service_reference_no, service_note`,
+        )
         .eq("invoice_id", invoiceId)
         .order("created_at", { ascending: true }),
       supabase
@@ -165,6 +176,13 @@ export async function getInvoiceDetail(
       item_discount: Number(i.item_discount ?? 0),
       line_total: Number(i.line_total ?? 0),
       purchase_price: Number(i.purchase_price ?? 0),
+      service_provider: i.service_provider,
+      service_direction: i.service_direction,
+      service_transaction_amount: Number(i.service_transaction_amount ?? 0),
+      service_commission: Number(i.service_commission ?? 0),
+      service_total_charged: Number(i.service_total_charged ?? 0),
+      service_reference_no: i.service_reference_no,
+      service_note: i.service_note,
     })),
     payments: (pays ?? []).map((p) => ({
       id: p.id,

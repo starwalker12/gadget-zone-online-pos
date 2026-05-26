@@ -34,6 +34,8 @@ const STATUS_CLASSES: Record<string, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
+const PRODUCTION_URL = "https://gadget-zone-online-pos.vercel.app";
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-PK", {
     year: "numeric",
@@ -47,6 +49,12 @@ function fmtTime(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function whatsappLink(phone: string | null | undefined, message: string) {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  const target = digits ? `https://wa.me/${digits}` : "https://wa.me/";
+  return `${target}?text=${encodeURIComponent(message)}`;
 }
 
 export default async function RepairDetailPage({
@@ -71,6 +79,18 @@ export default async function RepairDetailPage({
 
   const { repair, history } = detail;
   const balanceDue = Math.max((repair.final_cost || repair.estimated_cost) - repair.advance_paid, 0);
+  const repairUrl = `${PRODUCTION_URL}/repairs/${repair.id}`;
+  const whatsappMessage = [
+    `${branding.shopName || organization?.name || "Gadget Zone"} repair update`,
+    `Job: ${repair.job_no}`,
+    `Status: ${STATUS_LABELS[repair.status] || repair.status}`,
+    `Device: ${repair.device_type}${repair.device_model ? ` ${repair.device_model}` : ""}`,
+    `Estimate: ${formatCurrency(repair.estimated_cost, currency)}`,
+    `Advance: ${formatCurrency(repair.advance_paid, currency)}`,
+    `Balance: ${formatCurrency(balanceDue, currency)}`,
+    `View repair: ${repairUrl}`,
+  ].join("\n");
+  const whatsappHref = whatsappLink(repair.customer_phone, whatsappMessage);
   const receiptTerms = branding.receiptTerms
     ? branding.receiptTerms.split(/\r?\n/).filter(Boolean)
     : [
@@ -96,6 +116,12 @@ export default async function RepairDetailPage({
                 background: white !important;
               }
               .print-only {
+                display: block !important;
+              }
+              body[data-print-mode="thermal"] .repair-a4-print {
+                display: none !important;
+              }
+              body[data-print-mode="thermal"] .thermal-print {
                 display: block !important;
               }
               .min-h-screen {
@@ -140,7 +166,7 @@ export default async function RepairDetailPage({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <PrintButton />
+            <PrintButton whatsappHref={whatsappHref} />
           </div>
         </div>
 
@@ -334,7 +360,7 @@ export default async function RepairDetailPage({
       </div>
 
       {/* PRINT-ONLY A4 SHEET INVOICE / RECEIPT (Hidden on Screen, Appears on Print) */}
-      <div className="hidden print-only bg-white text-black p-8 font-sans max-w-[800px] mx-auto text-sm leading-relaxed">
+      <div className="repair-a4-print hidden print-only bg-white text-black p-8 font-sans max-w-[800px] mx-auto text-sm leading-relaxed">
         {/* Letterhead Header */}
         <div className="border-b-2 border-slate-800 pb-6 mb-6 flex justify-between items-start">
           <div>
@@ -470,6 +496,69 @@ export default async function RepairDetailPage({
           {branding.invoiceFooter || `Thank you for choosing ${branding.shopName || organization?.name || "Gadget Zone"} for your device needs!`}
         </div>
       </div>
+
+      <article className="thermal-print hidden bg-white text-black">
+        <header className="text-center">
+          {branding.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={branding.logoUrl}
+              alt={`${branding.shopName} logo`}
+              className="mx-auto mb-2 h-12 w-auto max-w-[42mm] object-contain"
+            />
+          )}
+          <h1 className="text-[13px] font-black uppercase leading-tight">
+            {branding.shopName || organization?.name || "GADGET ZONE"}
+          </h1>
+          <p className="text-[10px] font-semibold">{branding.branchName || branch?.name || "Main Branch"}</p>
+          {(branding.branchPhone || branch?.phone || branding.phone) && (
+            <p className="text-[9px]">Phone: {branding.branchPhone || branch?.phone || branding.phone}</p>
+          )}
+          {branding.whatsappSupport && <p className="text-[9px]">WhatsApp: {branding.whatsappSupport}</p>}
+        </header>
+
+        <section className="my-2 border-y border-dashed border-black py-1 text-[10px]">
+          <div className="flex justify-between gap-2"><span>Repair job</span><strong>{repair.job_no}</strong></div>
+          <div className="flex justify-between gap-2"><span>Status</span><span className="text-right">{STATUS_LABELS[repair.status] || repair.status}</span></div>
+          <div className="flex justify-between gap-2"><span>Intake</span><span>{fmtDate(repair.created_at)} {fmtTime(repair.created_at)}</span></div>
+          <div className="flex justify-between gap-2"><span>Customer</span><strong className="text-right">{repair.customer_name}</strong></div>
+          {repair.customer_phone && <div className="flex justify-between gap-2"><span>Phone</span><span>{repair.customer_phone}</span></div>}
+        </section>
+
+        <section className="space-y-1 border-b border-dashed border-black pb-2 text-[10px]">
+          <p><strong>Device:</strong> {repair.device_type}{repair.device_model ? ` ${repair.device_model}` : ""}</p>
+          {repair.serial_imei && <p><strong>Serial/IMEI:</strong> {repair.serial_imei}</p>}
+          <p><strong>Problem:</strong> {repair.problem_description}</p>
+          {repair.accessories_received && <p><strong>Accessories:</strong> {repair.accessories_received}</p>}
+          {repair.expected_delivery_at && <p><strong>Expected:</strong> {fmtDate(repair.expected_delivery_at)}</p>}
+        </section>
+
+        <section className="mt-2 space-y-1 border-b border-dashed border-black pb-2 text-[10px]">
+          <div className="flex justify-between"><span>Estimate</span><span>{formatCurrency(repair.estimated_cost, currency)}</span></div>
+          {repair.final_cost > 0 && repair.final_cost !== repair.estimated_cost && (
+            <div className="flex justify-between"><span>Final cost</span><span>{formatCurrency(repair.final_cost, currency)}</span></div>
+          )}
+          <div className="flex justify-between"><span>Advance</span><span>{formatCurrency(repair.advance_paid, currency)}</span></div>
+          <div className="flex justify-between text-[12px] font-black"><span>Balance</span><span>{formatCurrency(balanceDue, currency)}</span></div>
+          <div className="flex justify-between"><span>Payment</span><span>{repair.payment_method}</span></div>
+        </section>
+
+        {receiptTerms.length > 0 && (
+          <section className="mt-2 text-[8.5px] leading-tight">
+            <p className="font-black uppercase">Terms</p>
+            <ol className="list-decimal space-y-0.5 pl-3">
+              {receiptTerms.map((term) => (
+                <li key={term}>{term}</li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        <footer className="mt-3 border-t border-dashed border-black pt-2 text-center text-[9px] leading-tight">
+          <p>{branding.invoiceFooter || `Thank you for choosing ${branding.shopName || organization?.name || "Gadget Zone"}.`}</p>
+          <p className="mt-1">Powered by Gadget Zone Online POS</p>
+        </footer>
+      </article>
     </AppShell>
   );
 }
