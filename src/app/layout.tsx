@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   description:
     "SaleDock is a cloud POS platform for shops to manage sales, inventory, repairs, invoices, expenses, and reports.",
   icons: {
-    icon: "/saledock-logo-mark.svg",
+    icon: "/saledock-logo-mark.png",
+    shortcut: "/favicon.ico",
   },
   other: {
     ...(env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION

@@ -62,7 +62,7 @@ export const settingsSchema = z.object({
     .max(3)
     .default("PKR"),
   timezone: z.string().trim().min(2).max(80).default("Asia/Karachi"),
-  logoUrl: optionalUrlPath.default("/saledock-logo.svg"),
+  logoUrl: optionalUrlPath.default("/saledock-logo-full.png"),
   invoiceFooter: optionalText(500),
   receiptTerms: optionalText(1200),
   printFormat: z.enum(PRINT_FORMATS).default("a4"),

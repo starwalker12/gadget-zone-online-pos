@@ -55,7 +55,7 @@ export async function Sidebar() {
       <Link href="/dashboard" className="flex h-20 shrink-0 items-center gap-3 border-b border-slate-200 px-6 dark:border-slate-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/saledock-logo-mark.svg"
+          src="/saledock-logo-mark.png"
           alt="SaleDock Cloud POS"
           className="h-9 w-9 object-contain"
         />
