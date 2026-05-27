@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { sanitizePlainText } from "@/lib/security/sanitize";
 
 const credentialsSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -62,6 +63,18 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   if (!env.isSupabaseConfigured) return configError();
 
+  // Enforce public_signup_enabled platform setting server-side
+  try {
+    const { getPublicPlatformSetting } = await import("@/lib/platform/admin");
+    const raw = await getPublicPlatformSetting("public_signup_enabled");
+    const enabled = raw !== false && raw !== "false" && raw !== null;
+    if (!enabled) {
+      return { error: "New account registration is currently disabled. Contact the platform administrator." };
+    }
+  } catch {
+    return { error: "Could not verify registration settings. Try again later." };
+  }
+
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -78,7 +91,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { full_name: parsed.data.fullName },
+      data: { full_name: sanitizePlainText(parsed.data.fullName, 200) },
       emailRedirectTo: `${origin}${POST_AUTH_PATH}`,
     },
   });

@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/security/sanitize";
 
 export type AuditLogRow = {
   id: string;
@@ -41,7 +42,7 @@ export async function listAuditLogs(
     .eq("organization_id", organizationId);
 
   if (filters?.search) {
-    const term = `%${filters.search}%`;
+    const term = `%${escapeLike(filters.search)}%`;
     query = query.or(`details.ilike.${term},action.ilike.${term},module.ilike.${term}`);
   }
 

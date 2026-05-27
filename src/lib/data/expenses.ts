@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/security/sanitize";
 
 export type ExpenseRow = {
   id: string;
@@ -44,7 +45,7 @@ export async function listExpenses(
   if (filters.to) query = query.lte("spent_at", filters.to);
   if (filters.search) {
     const s = filters.search.replace(/[,()]/g, " ").trim();
-    if (s) query = query.or(`category.ilike.%${s}%,vendor_name.ilike.%${s}%,notes.ilike.%${s}%`);
+    if (s) query = query.or(`category.ilike.%${escapeLike(s)}%,vendor_name.ilike.%${escapeLike(s)}%,notes.ilike.%${escapeLike(s)}%`);
   }
 
   const { data, error } = await query;
