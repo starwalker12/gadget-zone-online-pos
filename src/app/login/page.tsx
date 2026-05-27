@@ -125,6 +125,13 @@ export default async function LoginPage({
             <LoginForm callbackError={error ?? null} publicSignupEnabled={publicSignupEnabled} />
           </>
         )}
+
+        {/* Legal footer */}
+        <div className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">
+          <Link href="/privacy" className="hover:text-blue-700">Privacy Policy</Link>
+          <span className="mx-2">·</span>
+          <Link href="/terms" className="hover:text-blue-700">Terms of Service</Link>
+        </div>
       </section>
     </main>
   );

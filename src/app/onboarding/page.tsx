@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentContext } from "@/lib/auth/session";
 import { env } from "@/lib/env";
@@ -30,6 +31,13 @@ export default async function OnboardingPage() {
           </p>
         </div>
         <OnboardingWizard defaultFullName={defaultFullName} userEmail={user.email ?? ""} />
+
+        {/* Legal footer */}
+        <div className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">
+          <Link href="/privacy" className="hover:text-blue-700">Privacy Policy</Link>
+          <span className="mx-2">·</span>
+          <Link href="/terms" className="hover:text-blue-700">Terms of Service</Link>
+        </div>
       </section>
     </main>
   );

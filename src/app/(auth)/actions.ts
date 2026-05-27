@@ -63,6 +63,18 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   if (!env.isSupabaseConfigured) return configError();
 
+  // Enforce public_signup_enabled platform setting server-side
+  try {
+    const { getPublicPlatformSetting } = await import("@/lib/platform/admin");
+    const raw = await getPublicPlatformSetting("public_signup_enabled");
+    const enabled = raw !== false && raw !== "false" && raw !== null;
+    if (!enabled) {
+      return { error: "New account registration is currently disabled. Contact the platform administrator." };
+    }
+  } catch {
+    return { error: "Could not verify registration settings. Try again later." };
+  }
+
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
