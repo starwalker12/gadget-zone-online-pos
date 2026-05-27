@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/security/sanitize";
 
 export type CategoryRow = {
   id: string;
@@ -116,7 +117,7 @@ export async function listProducts(
   if (filters.search) {
     const s = filters.search.replace(/[,()]/g, " ").trim();
     if (s) {
-      query = query.or(`name.ilike.%${s}%,sku.ilike.%${s}%,barcode.ilike.%${s}%`);
+      query = query.or(`name.ilike.%${escapeLike(s)}%,sku.ilike.%${escapeLike(s)}%,barcode.ilike.%${escapeLike(s)}%`);
     }
   }
 

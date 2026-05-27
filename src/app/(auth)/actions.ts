@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { sanitizePlainText } from "@/lib/security/sanitize";
 
 const credentialsSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -78,7 +79,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { full_name: parsed.data.fullName },
+      data: { full_name: sanitizePlainText(parsed.data.fullName, 200) },
       emailRedirectTo: `${origin}${POST_AUTH_PATH}`,
     },
   });

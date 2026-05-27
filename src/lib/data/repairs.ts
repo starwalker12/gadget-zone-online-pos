@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/security/sanitize";
 
 export type RepairRow = {
   id: string;
@@ -68,7 +69,7 @@ export async function listRepairs(
   }
 
   if (filters?.search) {
-    const term = `%${filters.search}%`;
+    const term = `%${escapeLike(filters.search)}%`;
     query = query.or(`job_no.ilike.${term},customer_name.ilike.${term},customer_phone.ilike.${term},device_type.ilike.${term},device_model.ilike.${term},serial_imei.ilike.${term}`);
   }
 

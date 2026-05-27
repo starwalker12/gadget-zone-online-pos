@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/security/sanitize";
 
 export type SupplierPurchaseStatus = "unpaid" | "partial" | "paid";
 
@@ -95,7 +96,7 @@ export async function listSupplierPurchases(
   if (filters.to) query = query.lte("purchase_date", filters.to);
   if (filters.search) {
     const s = filters.search.replace(/[,()]/g, " ").trim();
-    if (s) query = query.or(`purchase_no.ilike.%${s}%,reference_no.ilike.%${s}%,notes.ilike.%${s}%`);
+    if (s) query = query.or(`purchase_no.ilike.%${escapeLike(s)}%,reference_no.ilike.%${escapeLike(s)}%,notes.ilike.%${escapeLike(s)}%`);
   }
 
   const { data, error } = await query;

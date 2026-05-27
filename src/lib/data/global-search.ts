@@ -8,6 +8,7 @@ import {
   canManageSettings,
   canManageSupplierPurchases,
 } from "@/lib/permissions";
+import { escapeLike } from "@/lib/security/sanitize";
 
 export type SearchResult = {
   id: string;
@@ -233,7 +234,7 @@ export async function searchGlobal(
     return matchingPages;
   }
 
-  const matchesPattern = `%${query}%`;
+  const matchesPattern = `%${escapeLike(query)}%`;
   const dataPromises: Promise<SearchResult[]>[] = [];
 
   // 2. Products & Services

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requirePlatformAdmin, setPlatformSetting } from "@/lib/platform/admin";
+import { sanitizeNullableText } from "@/lib/security/sanitize";
 
 export type PlatformSettingsState = {
   success: boolean;
@@ -39,7 +40,8 @@ export async function updatePlatformSettingsAction(
 
     for (const key of STRING_KEYS) {
       const raw = formData.get(key)?.toString().trim();
-      entries.push({ key, value: raw || null });
+      const cleaned = sanitizeNullableText(raw ?? "", 2000);
+      entries.push({ key, value: cleaned });
     }
 
     for (const { key, value } of entries) {

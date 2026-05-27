@@ -22,11 +22,8 @@ export default async function OnboardingPage() {
           <img
             src="/saledock-logo.svg"
             alt="SaleDock"
-            className="mx-auto mb-4 h-10 w-auto max-w-[80px] object-contain rounded-2xl"
+            className="mx-auto mb-4 h-14 w-auto max-w-[220px] object-contain"
           />
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-blue-700">
-            SaleDock Cloud POS
-          </p>
           <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Set up your shop</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
             Complete the steps below to create your organization and start selling.

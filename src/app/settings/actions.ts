@@ -6,6 +6,7 @@ import { getCurrentContext } from "@/lib/auth/session";
 import { canManageSettings } from "@/lib/permissions";
 import { settingsSchema } from "@/lib/validation/settings";
 import { logAudit } from "@/lib/audit";
+import { sanitizePlainText, sanitizeNullableText, normalizePhone, validateImageUrl } from "@/lib/security/sanitize";
 
 export type SettingsActionState = {
   error: string | null;
@@ -61,20 +62,43 @@ export async function updateSettingsAction(
   const organizationId = profile.organization_id;
   const branchId = profile.branch_id;
 
+  // Sanitize all values before DB write
+  const safe = {
+    shopName: sanitizePlainText(values.shopName, 120),
+    ownerName: sanitizeNullableText(values.ownerName ?? "", 120),
+    phone: normalizePhone(values.phone),
+    email: values.email ?? null,
+    address: sanitizeNullableText(values.address ?? "", 300),
+    whatsappSupport: normalizePhone(values.whatsappSupport),
+    branchName: sanitizePlainText(values.branchName, 120),
+    branchPhone: normalizePhone(values.branchPhone),
+    branchAddress: sanitizeNullableText(values.branchAddress ?? "", 300),
+    logoUrl: validateImageUrl(values.logoUrl),
+    invoiceFooter: sanitizeNullableText(values.invoiceFooter ?? "", 500),
+    receiptTerms: sanitizeNullableText(values.receiptTerms ?? "", 1200),
+    primaryColor: values.primaryColor ?? null,
+    accentColor: values.accentColor ?? null,
+    defaultTheme: values.defaultTheme ?? null,
+    currencyCode: values.currencyCode,
+    timezone: values.timezone,
+    printFormat: values.printFormat,
+    lowStockDefaultThreshold: values.lowStockDefaultThreshold,
+  };
+
   const { error: orgError } = await supabase
     .from("organizations")
     .update({
-      name: values.shopName,
-      owner_name: values.ownerName ?? null,
-      phone: values.phone ?? null,
-      email: values.email ?? null,
-      address: values.address ?? null,
-      logo_url: values.logoUrl === "/saledock-logo.svg" ? null : values.logoUrl ?? null,
-      primary_color: values.primaryColor ?? null,
-      accent_color: values.accentColor ?? null,
-      default_theme: values.defaultTheme ?? null,
-      currency_code: values.currencyCode,
-      timezone: values.timezone,
+      name: safe.shopName,
+      owner_name: safe.ownerName,
+      phone: safe.phone,
+      email: safe.email,
+      address: safe.address,
+      logo_url: safe.logoUrl,
+      primary_color: safe.primaryColor,
+      accent_color: safe.accentColor,
+      default_theme: safe.defaultTheme,
+      currency_code: safe.currencyCode,
+      timezone: safe.timezone,
     })
     .eq("id", organizationId);
   if (orgError) return { error: orgError.message, success: null };
@@ -83,9 +107,9 @@ export async function updateSettingsAction(
     const { error: branchError } = await supabase
       .from("branches")
       .update({
-        name: values.branchName,
-        phone: values.branchPhone ?? null,
-        address: values.branchAddress ?? null,
+        name: safe.branchName,
+        phone: safe.branchPhone,
+        address: safe.branchAddress,
       })
       .eq("organization_id", organizationId)
       .eq("id", branchId);
@@ -107,24 +131,24 @@ export async function updateSettingsAction(
 
   const settingsJson = {
     ...(existing?.settings ?? {}),
-    owner_name: values.ownerName ?? "",
-    whatsapp_support: values.whatsappSupport ?? "",
-    logo_url: values.logoUrl ?? "/saledock-logo.svg",
-    receipt_terms: values.receiptTerms ?? "",
-    print_format: values.printFormat,
-    low_stock_default_threshold: values.lowStockDefaultThreshold,
+    owner_name: safe.ownerName ?? "",
+    whatsapp_support: safe.whatsappSupport ?? "",
+    logo_url: safe.logoUrl ?? "/saledock-logo.svg",
+    receipt_terms: safe.receiptTerms ?? "",
+    print_format: safe.printFormat,
+    low_stock_default_threshold: safe.lowStockDefaultThreshold,
     upload_storage_status: "deferred",
   };
 
   const appSettingsPayload = {
     organization_id: organizationId,
     branch_id: branchId,
-    shop_name: values.shopName,
-    phone: values.phone ?? null,
-    email: values.email ?? null,
-    address: values.address ?? null,
-    invoice_template: values.printFormat,
-    receipt_footer: values.invoiceFooter ?? null,
+    shop_name: safe.shopName,
+    phone: safe.phone,
+    email: safe.email,
+    address: safe.address,
+    invoice_template: safe.printFormat,
+    receipt_footer: safe.invoiceFooter,
     settings: settingsJson,
   };
 
@@ -145,8 +169,8 @@ export async function updateSettingsAction(
   logAudit({
     module: "settings",
     action: "settings.updated",
-    details: `Shop settings updated: ${values.shopName}`,
-    metadata: { shop_name: values.shopName, currency: values.currencyCode, timezone: values.timezone },
+    details: `Shop settings updated: ${safe.shopName}`,
+    metadata: { shop_name: safe.shopName, currency: safe.currencyCode, timezone: safe.timezone },
   });
 
   return { error: null, success: "Shop settings saved." };

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentContext } from "@/lib/auth/session";
+import { sanitizePlainText, sanitizeNullableText, normalizePhone, validateImageUrl } from "@/lib/security/sanitize";
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color like #0b2f6f");
 
@@ -62,23 +63,43 @@ export async function completeOnboardingAction(
   const supabase = await createClient();
   const d = parsed.data;
 
+  // Sanitize all user-supplied values before passing to RPC
+  const sanitized = {
+    organizationName: sanitizePlainText(d.organizationName, 200),
+    branchName: sanitizePlainText(d.branchName || "Main Branch", 200),
+    fullName: sanitizePlainText(d.fullName, 200),
+    ownerName: sanitizeNullableText(d.ownerName, 200),
+    phone: normalizePhone(d.phone),
+    avatarUrl: validateImageUrl(d.profilePictureUrl),
+    orgPhone: normalizePhone(d.orgPhone),
+    orgWhatsapp: normalizePhone(d.orgWhatsapp),
+    orgEmail: d.orgEmail || null,
+    orgAddress: sanitizeNullableText(d.orgAddress, 500),
+    logoUrl: validateImageUrl(d.logoUrl),
+    primaryColor: d.primaryColor || null,
+    accentColor: d.accentColor || null,
+    defaultTheme: d.defaultTheme || null,
+    currencyCode: d.currencyCode || null,
+    timezone: d.timezone || null,
+  };
+
   const { error: rpcError } = await supabase.rpc("complete_self_signup", {
-    p_organization_name: d.organizationName,
-    p_branch_name: d.branchName || "Main Branch",
-    p_full_name: d.fullName,
-    p_owner_name: d.ownerName || null,
-    p_phone: d.phone || null,
-    p_avatar_url: d.profilePictureUrl || null,
-    p_org_phone: d.orgPhone || null,
-    p_org_whatsapp: d.orgWhatsapp || null,
-    p_org_email: d.orgEmail || null,
-    p_org_address: d.orgAddress || null,
-    p_logo_url: d.logoUrl || null,
-    p_primary_color: d.primaryColor || null,
-    p_accent_color: d.accentColor || null,
-    p_default_theme: d.defaultTheme || null,
-    p_currency_code: d.currencyCode || null,
-    p_timezone: d.timezone || null,
+    p_organization_name: sanitized.organizationName,
+    p_branch_name: sanitized.branchName,
+    p_full_name: sanitized.fullName,
+    p_owner_name: sanitized.ownerName,
+    p_phone: sanitized.phone,
+    p_avatar_url: sanitized.avatarUrl,
+    p_org_phone: sanitized.orgPhone,
+    p_org_whatsapp: sanitized.orgWhatsapp,
+    p_org_email: sanitized.orgEmail,
+    p_org_address: sanitized.orgAddress,
+    p_logo_url: sanitized.logoUrl,
+    p_primary_color: sanitized.primaryColor,
+    p_accent_color: sanitized.accentColor,
+    p_default_theme: sanitized.defaultTheme,
+    p_currency_code: sanitized.currencyCode,
+    p_timezone: sanitized.timezone,
   });
 
   if (rpcError) {
