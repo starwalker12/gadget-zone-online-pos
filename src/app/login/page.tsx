@@ -43,9 +43,9 @@ export default async function LoginPage({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/saledock-logo.svg"
+              src="/saledock-logo-full.png"
               alt="SaleDock Cloud POS"
-              className="mx-auto mb-4 h-16 w-auto max-w-[200px] object-contain"
+              className="mx-auto mb-4 h-14 w-auto max-w-[200px] object-contain sm:h-16"
             />
           </Link>
         </div>

@@ -14,7 +14,7 @@ export default function PrivacyPage() {
           <Link href="/">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/saledock-logo.svg"
+              src="/saledock-logo-full.png"
               alt="SaleDock Cloud POS"
               className="mx-auto mb-2 h-10 w-auto max-w-[180px] object-contain"
             />
