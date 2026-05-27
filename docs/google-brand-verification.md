@@ -15,7 +15,7 @@ steps needed.
 | Privacy policy | `https://saledock-cloud-pos.vercel.app/privacy` |
 | Terms of service | `https://saledock-cloud-pos.vercel.app/terms` |
 | Authorized domain | `saledock-cloud-pos.vercel.app` (no `https://` prefix) |
-| Application logo | Square 512×512 SaleDock mark (`saledock-logo-mark.svg`) |
+| Application logo | Square 512×512 SaleDock mark (`saledock-logo-mark.svg` — crop from `saledock-logo-full.png`) |
 
 **Important:** The app name in Google Cloud Console must be exactly
 **SaleDock Cloud POS** — matching the public home page branding. Do not
