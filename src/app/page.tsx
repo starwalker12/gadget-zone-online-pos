@@ -91,9 +91,9 @@ export default async function HomePage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
-              src="/saledock-logo-mark.svg"
+              src="/saledock-logo-mark.png"
               alt="SaleDock Cloud POS"
-              className="h-8 w-8 transition-transform duration-200 group-hover:scale-110"
+              className="h-8 w-8 object-contain transition-transform duration-200 group-hover:scale-110"
             />
             <span className="hidden text-sm font-extrabold uppercase tracking-wider text-blue-700 sm:inline dark:text-slate-100">
               SaleDock<span className="font-black"> Cloud POS</span>
@@ -425,7 +425,7 @@ export default async function HomePage() {
       <footer className="border-t border-slate-200 bg-slate-50 px-4 py-12 dark:border-slate-700 dark:bg-[#0b1220]">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
-            <img src="/saledock-logo-mark.svg" alt="" className="h-7 w-7" />
+            <img src="/saledock-logo-mark.png" alt="" className="h-7 w-7 object-contain" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               SaleDock Cloud POS
             </span>
