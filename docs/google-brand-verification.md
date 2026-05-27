@@ -11,10 +11,10 @@ steps needed.
 | Field | Value |
 |---|---|
 | Application name | `SaleDock Cloud POS` |
-| Application home page | `https://gadget-zone-online-pos.vercel.app` |
-| Privacy policy | `https://gadget-zone-online-pos.vercel.app/privacy` |
-| Terms of service | `https://gadget-zone-online-pos.vercel.app/terms` |
-| Authorized domain | `gadget-zone-online-pos.vercel.app` (no `https://` prefix) |
+| Application home page | `https://saledock-cloud-pos.vercel.app` |
+| Privacy policy | `https://saledock-cloud-pos.vercel.app/privacy` |
+| Terms of service | `https://saledock-cloud-pos.vercel.app/terms` |
+| Authorized domain | `saledock-cloud-pos.vercel.app` (no `https://` prefix) |
 | Application logo | Square 512×512 SaleDock mark (`saledock-logo-mark.svg`) |
 
 **Important:** The app name in Google Cloud Console must be exactly
@@ -25,7 +25,7 @@ use "SaleDock Online POS" or any other variant.
 
 | Field | Value |
 |---|---|
-| Authorized JavaScript origins | `https://gadget-zone-online-pos.vercel.app` |
+| Authorized JavaScript origins | `https://saledock-cloud-pos.vercel.app` |
 | Authorized redirect URIs | `https://bvxyxrdskjryepwjmsvc.supabase.co/auth/v1/callback` |
 
 ## Brand Verification Checklist
@@ -52,7 +52,7 @@ use "SaleDock Online POS" or any other variant.
    - Add a `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` env var in Vercel with
      the meta tag content value from Google.
    - Or place the verification HTML file in `/public/` so it serves at
-     `https://gadget-zone-online-pos.vercel.app/<filename>.html`.
+     `https://saledock-cloud-pos.vercel.app/<filename>.html`.
 
 6. **Scopes**
    The app requests only `openid`, `email`, and `profile` — these are
@@ -64,7 +64,7 @@ use "SaleDock Online POS" or any other variant.
 ### Option A — Meta tag (recommended)
 
 1. Go to https://search.google.com/search-console
-2. Add a **URL-prefix** property: `https://gadget-zone-online-pos.vercel.app`
+2. Add a **URL-prefix** property: `https://saledock-cloud-pos.vercel.app`
 3. Choose **HTML tag** verification method.
 4. Copy the meta tag content value.
 5. Set it as a Vercel environment variable:
@@ -80,7 +80,7 @@ use "SaleDock Online POS" or any other variant.
    (e.g. `google1234567890abcdef.html`).
 2. Place it in `/public/` of this project.
 3. Deploy. It will be served at:
-   `https://gadget-zone-online-pos.vercel.app/google1234567890abcdef.html`
+   `https://saledock-cloud-pos.vercel.app/google1234567890abcdef.html`
 4. Click **Verify** in Search Console.
 
 ## After Verification
