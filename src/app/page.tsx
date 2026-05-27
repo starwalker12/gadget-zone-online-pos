@@ -95,9 +95,9 @@ export default async function HomePage() {
         <div className="relative animate-fade-in-up">
           <div className="mx-auto mb-8 flex items-center justify-center">
             <img
-              src="/saledock-logo.svg"
+              src="/saledock-logo-full.png"
               alt="SaleDock Cloud POS"
-              className="h-14 w-auto max-w-[240px] object-contain sm:h-16 sm:max-w-[280px]"
+              className="h-16 w-auto max-w-[220px] object-contain sm:h-20 sm:max-w-[280px]"
             />
           </div>
 
