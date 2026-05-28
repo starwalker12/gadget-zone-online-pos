@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Bell, LogOut, AlertTriangle } from "lucide-react";
+import { Bell, AlertTriangle } from "lucide-react";
 import { getCurrentContext } from "@/lib/auth/session";
-import { signOutAction } from "@/app/(auth)/actions";
 import { GlobalSearch } from "@/components/search/global-search";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { getPublicPlatformSetting, isPlatformAdmin } from "@/lib/platform/admin";
 
 export async function Topbar({ pageTitle }: { pageTitle?: string }) {
@@ -14,6 +14,7 @@ export async function Topbar({ pageTitle }: { pageTitle?: string }) {
     isPlatformAdmin(),
   ]);
   const maintenanceMode = (maintenanceRaw === true || maintenanceRaw === "true") && !platformAdmin;
+  const profilePictureUrl = profile?.profile_picture_url ?? profile?.avatar_url ?? null;
 
   return (
     // `sticky` class kept so the existing print CSS selector (header.sticky)
@@ -38,26 +39,13 @@ export async function Topbar({ pageTitle }: { pageTitle?: string }) {
             <Bell className="size-4" />
           </button>
           {user ? (
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="hidden min-w-0 flex-col text-right sm:flex">
-                <span className="max-w-48 truncate text-sm font-bold text-slate-900 dark:text-slate-100 lg:max-w-64">
-                  {profile?.full_name ?? user.email}
-                </span>
-                <span className="max-w-48 truncate text-xs text-slate-500 dark:text-slate-400 lg:max-w-64">
-                  {profile?.role ?? "no profile"} · {user.email}
-                </span>
-              </div>
-              <form action={signOutAction} className="shrink-0">
-                <button
-                  type="submit"
-                  className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800 sm:px-4"
-                  title="Sign out"
-                >
-                  <LogOut className="size-4" />
-                  Sign out
-                </button>
-              </form>
-            </div>
+            <UserMenu
+              name={profile?.full_name ?? user.email ?? "User"}
+              email={user.email ?? ""}
+              role={profile?.role ?? null}
+              profilePictureUrl={profilePictureUrl}
+              isPlatformAdmin={platformAdmin}
+            />
           ) : (
             <Link
               href="/login"
