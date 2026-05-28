@@ -31,6 +31,7 @@
   --color-surface: var(--surface);
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-syne);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -177,13 +178,21 @@ body {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.03); }
+}
+@keyframes bar-grow {
+  from { transform: scaleY(0); transform-origin: bottom; }
+  to { transform: scaleY(1); transform-origin: bottom; }
+}
 
 .animate-gradient-shift {
   animation: gradient-shift 8s ease infinite;
   background-size: 200% 200%;
 }
 .animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
+  animation: fade-in-up 0.7s ease-out both;
 }
 .animate-float {
   animation: float 4s ease-in-out infinite;
@@ -193,14 +202,38 @@ body {
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
+.animate-glow-pulse {
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+.animate-bar-grow {
+  animation: bar-grow 0.6s ease-out both;
+}
+
+/* 3-D perspective tilt on dashboard preview */
+.dashboard-3d {
+  transform: perspective(1400px) rotateY(-9deg) rotateX(5deg) scale(1.01);
+  transform-origin: center center;
+  transition: transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1),
+              box-shadow 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.dashboard-3d:hover {
+  transform: perspective(1400px) rotateY(-2deg) rotateX(1deg) scale(1.015);
+}
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .animate-gradient-shift,
   .animate-fade-in-up,
   .animate-float,
-  .animate-shimmer {
+  .animate-shimmer,
+  .animate-glow-pulse,
+  .animate-bar-grow {
     animation: none !important;
+  }
+  .dashboard-3d,
+  .dashboard-3d:hover {
+    transform: none !important;
+    transition: none !important;
   }
 }
 
