@@ -94,7 +94,7 @@ export function UserMenu({ name, email, role, profilePictureUrl, isPlatformAdmin
           </div>
 
           <div className="p-1.5">
-            <MenuItem href="/settings?tab=general" icon={Settings} label="Shop Settings" />
+            <MenuItem href="/settings" icon={Settings} label="Shop Profile" />
             <MenuItem href="/settings?tab=accounts" icon={UserCircle} label="Connected Accounts" />
             <MenuItem href="/settings?tab=privacy" icon={Shield} label="Privacy Center" />
             <MenuItem href="/settings?tab=security" icon={ShieldCheck} label="Security" />
