@@ -300,10 +300,10 @@ export default async function HomePage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="group flex shrink-0 items-center">
             {/* Light: coloured SVG logo */}
-            <Image src="/saledock-logo.svg" alt="SaleDock Cloud POS" width={600} height={160}
+            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1254} height={1254}
               className="h-9 w-auto object-contain transition-opacity duration-200 group-hover:opacity-75 dark:hidden" priority />
             {/* Dark: white-readable version */}
-            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1095} height={336}
+            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1254} height={1254}
               className="hidden h-9 w-auto object-contain brightness-0 invert opacity-85 transition-opacity duration-200 group-hover:opacity-60 dark:block" priority />
           </Link>
 
@@ -388,9 +388,9 @@ export default async function HomePage() {
 
             {/* Logo mark in hero */}
             <div className="animate-fade-in-up mb-5" style={{ animationDelay: "0.04s" }}>
-              <Image src="/saledock-logo.svg" alt="SaleDock Cloud POS" width={600} height={160}
+              <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1254} height={1254}
                 className="h-14 w-auto object-contain dark:hidden" priority />
-              <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1095} height={336}
+              <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1254} height={1254}
                 className="hidden h-14 w-auto object-contain brightness-0 invert opacity-90 dark:block" priority />
             </div>
 
@@ -775,9 +775,9 @@ export default async function HomePage() {
       <footer className="border-t border-slate-200 bg-slate-50 px-4 py-12 dark:border-white/[0.05] dark:bg-[#070b16]">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div className="flex items-center">
-            <Image src="/saledock-logo.svg" alt="SaleDock Cloud POS" width={600} height={160}
+            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1254} height={1254}
               className="h-7 w-auto object-contain dark:hidden" />
-            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1095} height={336}
+            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1254} height={1254}
               className="hidden h-7 w-auto object-contain brightness-0 invert opacity-45 dark:block" />
           </div>
 
