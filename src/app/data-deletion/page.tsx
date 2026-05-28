@@ -68,7 +68,7 @@ export default function DataDeletionPage() {
             </a>
           </div>
 
-          <h2 className="text-lg font-bold text-text-slate-950 dark:text-white">What Happens Next</h2>
+          <h2 className="text-lg font-bold text-slate-950 dark:text-white">What Happens Next</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li>We may verify account or shop ownership before processing deletion.</li>
             <li>After verification, eligible account, profile, and shop data will be deleted or anonymized.</li>
