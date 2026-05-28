@@ -46,6 +46,9 @@ export type DayActivity = {
   expensesByCategory: ExpenseBreakdown[];
   creditPending: number;
   expectedCash: number;
+  creditCollectionCash: number;
+  creditCollectionDigital: number;
+  creditWriteOffs: number;
 };
 
 export type DailyClosingRow = {
@@ -62,6 +65,9 @@ export type DailyClosingRow = {
   expected_closing_cash: number;
   actual_closing_cash: number;
   cash_difference: number;
+  credit_collection_cash: number;
+  credit_collection_digital: number;
+  credit_write_offs: number;
   notes: string | null;
   finalized_by: string | null;
   finalized_by_name: string | null;
@@ -172,7 +178,9 @@ export async function getDayActivity(
     .map(([category, amount]) => ({ category, amount }))
     .sort((a, b) => b.amount - a.amount);
 
-  const expectedCash = paymentsByMethod.cash - refundsByMethod.cash - expensesCash;
+  const { creditCollectionCash, creditCollectionDigital, creditWriteOffs } = await getCreditCollections(organizationId, branchId, date);
+
+  const expectedCash = paymentsByMethod.cash - refundsByMethod.cash - expensesCash + creditCollectionCash;
 
   return {
     branchId,
@@ -189,7 +197,55 @@ export async function getDayActivity(
     expensesByCategory,
     creditPending,
     expectedCash,
+    creditCollectionCash,
+    creditCollectionDigital,
+    creditWriteOffs,
   };
+}
+
+export async function getCreditCollections(
+  organizationId: string,
+  branchId: string,
+  date: string,
+): Promise<{ creditCollectionCash: number; creditCollectionDigital: number; creditWriteOffs: number }> {
+  const supabase = await createClient();
+  const { start, end } = dayBounds(date);
+
+  const digitalMethods = ["card", "easypaisa", "jazzcash", "bank_transfer"];
+
+  // Credit payment settlements for this day
+  const cpRes = await supabase
+    .from("credit_payments")
+    .select("amount, method")
+    .eq("organization_id", organizationId)
+    .eq("branch_id", branchId)
+    .gte("created_at", start)
+    .lte("created_at", end);
+
+  let creditCollectionCash = 0;
+  let creditCollectionDigital = 0;
+
+  for (const cp of cpRes.data ?? []) {
+    const amt = Number(cp.amount ?? 0);
+    if (digitalMethods.includes(cp.method)) {
+      creditCollectionDigital += amt;
+    } else {
+      creditCollectionCash += amt;
+    }
+  }
+
+  // Write-offs for this day
+  const woRes = await supabase
+    .from("customer_write_offs")
+    .select("amount")
+    .eq("organization_id", organizationId)
+    .eq("branch_id", branchId)
+    .gte("created_at", start)
+    .lte("created_at", end);
+
+  const creditWriteOffs = (woRes.data ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
+
+  return { creditCollectionCash, creditCollectionDigital, creditWriteOffs };
 }
 
 export async function getClosing(
@@ -203,7 +259,8 @@ export async function getClosing(
     .select(
       `id, organization_id, branch_id, closing_date, bills_count, cash_sales, digital_payments,
        credit_pending, expenses_total, refunds_total, expected_closing_cash, actual_closing_cash,
-       cash_difference, notes, finalized_by, finalized_at, created_at, updated_at,
+       cash_difference, credit_collection_cash, credit_collection_digital, credit_write_offs,
+       notes, finalized_by, finalized_at, created_at, updated_at,
        profiles!daily_closings_finalized_by_fkey(full_name)`,
     )
     .eq("organization_id", organizationId)
@@ -228,6 +285,9 @@ export async function getClosing(
     expected_closing_cash: Number(data.expected_closing_cash ?? 0),
     actual_closing_cash: Number(data.actual_closing_cash ?? 0),
     cash_difference: Number(data.cash_difference ?? 0),
+    credit_collection_cash: Number(data.credit_collection_cash ?? 0),
+    credit_collection_digital: Number(data.credit_collection_digital ?? 0),
+    credit_write_offs: Number(data.credit_write_offs ?? 0),
     notes: data.notes,
     finalized_by: data.finalized_by,
     finalized_by_name: name,

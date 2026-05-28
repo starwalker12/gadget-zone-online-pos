@@ -43,6 +43,7 @@ export type ProfitSummaryReport = {
   grossMarginPercent: number;
   serviceProfit: number;
   servicePrincipalHandled: number;
+  creditWriteOffs: number;
   estimatedNetProfit: number;
 };
 
@@ -65,6 +66,7 @@ export type CustomerLedgerSummaryReport = {
   debtorCount: number;
   topDebtors: { name: string; phone: string | null; balance: number }[];
   creditPaymentsReceived: number;
+  creditWriteOffs: number;
 };
 
 export type InventorySummaryReport = {
@@ -280,6 +282,22 @@ export async function getReportsData(
   if (creditPaymentsError) throw new Error(`Credit payments query error: ${creditPaymentsError.message}`);
   const creditPaymentsReceived = (creditPayments ?? []).reduce((sum, cp) => sum + Number(cp.amount ?? 0), 0);
 
+  // 7b. Write-offs in range
+  let writeOffsQuery = supabase
+    .from("customer_write_offs")
+    .select("amount")
+    .eq("organization_id", orgId)
+    .gte("created_at", start)
+    .lte("created_at", end);
+
+  if (branchId) {
+    writeOffsQuery = writeOffsQuery.eq("branch_id", branchId);
+  }
+
+  const { data: writeOffsData, error: writeOffsError } = await writeOffsQuery;
+  if (writeOffsError) throw new Error(`Write-offs query error: ${writeOffsError.message}`);
+  const creditWriteOffs = (writeOffsData ?? []).reduce((sum, wo) => sum + Number(wo.amount ?? 0), 0);
+
   // 8. Inventory products & stock lots
   let productsQuery = supabase
     .from("products")
@@ -422,7 +440,7 @@ export async function getReportsData(
   const refundTotal = completedReturns.reduce((sum, ret) => sum + Number(ret.refund_amount ?? 0), 0);
 
   const totalExpenses = activeExpenses.reduce((sum, exp) => sum + Number(exp.amount ?? 0), 0);
-  const estimatedNetProfit = grossProfit - totalExpenses - refundTotal;
+  const estimatedNetProfit = grossProfit - totalExpenses - refundTotal - creditWriteOffs;
 
   const refundsByMethodMap = new Map<string, number>();
   for (const ret of completedReturns) {
@@ -636,6 +654,7 @@ export async function getReportsData(
       grossMarginPercent,
       serviceProfit,
       servicePrincipalHandled,
+      creditWriteOffs,
       estimatedNetProfit,
     },
     returns: {
@@ -655,6 +674,7 @@ export async function getReportsData(
       debtorCount,
       topDebtors,
       creditPaymentsReceived,
+      creditWriteOffs,
     },
     inventory: {
       activeProductCount,

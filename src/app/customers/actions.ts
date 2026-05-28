@@ -9,8 +9,10 @@ import { canWriteCatalog } from "@/lib/permissions";
 import {
   customerSchema,
   creditPaymentSchema,
+  writeOffSchema,
   type CreditPaymentMethod,
 } from "@/lib/validation/customers";
+import { logAudit } from "@/lib/audit";
 
 export type ActionState = { error: string | null; success: string | null };
 const ok = (msg: string): ActionState => ({ error: null, success: msg });
@@ -117,7 +119,7 @@ export async function recordCreditPaymentAction(
   const ctx = await getCurrentContext();
   if (!ctx.user) redirect("/login");
   if (!ctx.profile?.organization_id) redirect("/setup");
-  
+
   // Viewers cannot modify balances or log payments.
   if (ctx.profile.role === "technician") {
     return err("You do not have permission to log payments.");
@@ -142,8 +144,60 @@ export async function recordCreditPaymentAction(
     return err(error.message);
   }
 
+  logAudit({
+    module: "customers",
+    action: "customer.credit_payment",
+    details: `Credit payment of ${parsed.data.amount} recorded for customer ${customerId} via ${parsed.data.method}`,
+    metadata: { customer_id: customerId, amount: parsed.data.amount, method: parsed.data.method },
+  });
+
   revalidatePath("/customers");
   revalidatePath(`/customers/${customerId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/daily-closing");
   return ok("Credit payment recorded successfully.");
+}
+
+export async function recordWriteOffAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const ctx = await getCurrentContext();
+  if (!ctx.user) redirect("/login");
+  if (!ctx.profile?.organization_id) redirect("/setup");
+
+  if (ctx.profile.role !== "owner" && ctx.profile.role !== "admin") {
+    return err("Only owner or admin can write off customer credit.");
+  }
+
+  const customerId = formData.get("customer_id") as string;
+  if (!customerId) return err("Customer ID is missing.");
+
+  const parsed = writeOffSchema.safeParse(fd(formData));
+  if (!parsed.success) return err(flatten(parsed.error));
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("record_customer_write_off", {
+    p_customer_id: customerId,
+    p_amount: parsed.data.amount,
+    p_reason: parsed.data.reason,
+  });
+
+  if (error) {
+    return err(error.message);
+  }
+
+  logAudit({
+    module: "customers",
+    action: "customer.write_off",
+    details: `Credit write-off of ${parsed.data.amount} for customer ${customerId}: ${parsed.data.reason}`,
+    metadata: { customer_id: customerId, amount: parsed.data.amount, reason: parsed.data.reason },
+  });
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/daily-closing");
+  revalidatePath("/reports");
+  return ok("Credit write-off recorded successfully.");
 }

@@ -188,6 +188,7 @@ export default async function DashboardPage() {
   const expectedCashToday = todayActivity?.expectedCash ?? 0;
   const closingDifference = todayClosing?.cash_difference ?? null;
   const isTodayClosed = Boolean(todayClosing?.finalized_by);
+  const creditCollectedToday = (todayActivity?.creditCollectionCash ?? 0) + (todayActivity?.creditCollectionDigital ?? 0);
 
   const isPrivileged = profile?.role === "owner" || profile?.role === "admin" || profile?.role === "manager";
 
@@ -428,7 +429,18 @@ export default async function DashboardPage() {
             </div>
 
             {/* Sales summary + quick links for mobile */}
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Credit collected today
+                </p>
+                <p className="mt-1 text-base font-bold text-emerald-700 dark:text-emerald-400">
+                  {formatCurrency(creditCollectedToday, currency)}
+                </p>
+                <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                  Cash + digital settlements
+                </p>
+              </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Today net

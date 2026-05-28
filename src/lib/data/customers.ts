@@ -25,7 +25,7 @@ export type CustomerInvoice = {
 
 export type CustomerLedgerEntry = {
   id: string;
-  entry_type: "invoice_credit" | "credit_payment" | "adjustment" | "refund" | "opening_balance";
+  entry_type: "invoice_credit" | "credit_payment" | "adjustment" | "refund" | "opening_balance" | "write_off";
   direction: "debit" | "credit";
   amount: number;
   balance_after: number;
