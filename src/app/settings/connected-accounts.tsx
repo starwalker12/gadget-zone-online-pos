@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   linkGoogleAccountAction,
@@ -10,7 +11,7 @@ import {
   setPasswordAction,
   type AuthState,
 } from "@/app/(auth)/actions";
-import { Link, Unlink, AlertTriangle, Loader2, CheckCircle } from "lucide-react";
+import { Link, Unlink, AlertTriangle, Loader2, CheckCircle, X } from "lucide-react";
 import { getLinkedProviders, type LinkedProviders } from "@/lib/auth/identities";
 import { GoogleIcon, FacebookIcon, PasswordIcon } from "@/components/icons/provider-icons";
 
@@ -27,16 +28,20 @@ type IdentityProvider = {
 
 export function ConnectedAccounts({
   linkParam,
+  errorCode,
   linkedProviders: initialLinkedProviders,
 }: {
   linkParam?: string | null;
+  errorCode?: string | null;
   linkedProviders: LinkedProviders;
 }) {
+  const router = useRouter();
   const [identities, setIdentities] = useState<IdentityProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [serverProviders, setServerProviders] = useState<LinkedProviders>(initialLinkedProviders);
   const [unlinkState, unlinkAction] = useActionState(unlinkIdentityAction, initialState);
   const [passwordState, passwordAction] = useActionState(setPasswordAction, passwordInitialState);
+  const [conflictDismissed, setConflictDismissed] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -55,18 +60,24 @@ export function ConnectedAccounts({
   }, [unlinkState, passwordState]);
 
   const { hasPassword, hasGoogle, hasFacebook, identityCount } = serverProviders;
+
+  const hasAnyOAuthConnected = hasGoogle || hasFacebook;
+
+  const showConflictBanner = linkParam === "conflict" && !hasAnyOAuthConnected && !conflictDismissed;
+
+  useEffect(() => {
+    if (linkParam === "conflict" && hasAnyOAuthConnected && !loading) {
+      router.replace("/settings?tab=accounts", { scroll: false });
+    }
+  }, [linkParam, hasAnyOAuthConnected, loading, router]);
+
+  const dismissConflict = useCallback(() => {
+    setConflictDismissed(true);
+    router.replace("/settings?tab=accounts", { scroll: false });
+  }, [router]);
+
   const googleIdentity = identities.find((id) => id.provider === "google");
   const facebookIdentity = identities.find((id) => id.provider === "facebook");
-
-  const linkMessage =
-    linkParam === "success"
-      ? "Account linked successfully."
-      : linkParam === "conflict"
-        ? "This email is already used by another sign-in method. Sign in with your original method first, then link this provider from Profile Settings."
-        : null;
-
-  const linkMessageType =
-    linkParam === "success" ? "success" : linkParam === "conflict" ? "error" : null;
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -79,15 +90,34 @@ export function ConnectedAccounts({
       </div>
 
       <div className="mt-5 space-y-4">
-        {linkMessage && (
-          <div
-            className={`rounded-xl border px-4 py-3 text-sm font-medium ${
-              linkMessageType === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-red-200 bg-red-50 text-red-800"
-            }`}
-          >
-            {linkMessage}
+        {linkParam === "success" && (
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p className="text-sm font-medium text-emerald-800">
+              Account linked successfully.
+            </p>
+          </div>
+        )}
+
+        {showConflictBanner && (
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-red-800">
+                Provider already linked to another account
+              </p>
+              <p className="text-sm leading-5 text-red-700">
+                {errorCode === "identity_already_exists"
+                  ? "This Google/Facebook login belongs to a different SaleDock user. Sign out and sign in with that provider to check which account it opens."
+                  : "This Google/Facebook account is already linked to a different user. Sign out and sign in with that provider to access the other account."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissConflict}
+              className="shrink-0 rounded-lg p-1 text-red-500 hover:bg-red-100 hover:text-red-700"
+              aria-label="Dismiss"
+            >
+              <X className="size-4" />
+            </button>
           </div>
         )}
 
@@ -125,9 +155,8 @@ export function ConnectedAccounts({
               label="Email / Password"
               connected={hasPassword}
               provider="email"
-              locked={identityCount <= 1 && hasPassword}
+              required={identityCount <= 1 && hasPassword}
             >
-              {hasPassword && <p className="text-xs text-slate-400">Connected</p>}
               {!hasPassword && (
                 <div className="mt-2">
                   <details className="group">
@@ -172,7 +201,7 @@ export function ConnectedAccounts({
                 fd.append("provider", "google");
                 unlinkAction(fd);
               }}
-              locked={identityCount <= 1 && hasGoogle}
+              required={identityCount <= 1 && hasGoogle}
             >
               {!hasGoogle && (
                 <form action={async (fd: FormData) => { await linkGoogleAccountAction(initialState, fd); }}>
@@ -198,7 +227,7 @@ export function ConnectedAccounts({
                 fd.append("provider", "facebook");
                 unlinkAction(fd);
               }}
-              locked={identityCount <= 1 && hasFacebook}
+              required={identityCount <= 1 && hasFacebook}
             >
               {!hasFacebook && (
                 <form action={async (fd: FormData) => { await linkFacebookAccountAction(initialState, fd); }}>
@@ -219,6 +248,10 @@ export function ConnectedAccounts({
                 you can link Google or Facebook so you have more sign-in options.
                 You can always unlink a provider as long as at least one other sign-in method remains.
               </p>
+              <p className="mt-2">
+                <strong className="text-slate-700">Required</strong> means this is your only current sign-in
+                method. Add another provider or set a password before unlinking it.
+              </p>
             </div>
           </>
         )}
@@ -232,18 +265,18 @@ function ProviderRow({
   connected,
   provider,
   detail,
+  required,
   canUnlink,
   onUnlink,
-  locked,
   children,
 }: {
   label: string;
   connected: boolean;
   provider: string;
   detail?: string;
+  required?: boolean;
   canUnlink?: boolean;
   onUnlink?: () => void;
-  locked?: boolean;
   children?: React.ReactNode;
 }) {
   const Icon = provider === "email" ? PasswordIcon : provider === "google" ? GoogleIcon : FacebookIcon;
@@ -253,18 +286,12 @@ function ProviderRow({
       <div className="flex items-center gap-3">
         <div
           className={`flex size-10 items-center justify-center rounded-full ${
-            locked && connected
-              ? "bg-amber-100 text-amber-600"
-              : connected
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-slate-100 text-slate-400"
+            connected
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-slate-100 text-slate-400"
           }`}
         >
-          {locked && connected ? (
-            <AlertTriangle className="size-5" />
-          ) : (
-            <Icon className="size-5" />
-          )}
+          <Icon className="size-5" />
         </div>
         <div>
           <p className="text-sm font-semibold text-slate-800">{label}</p>
@@ -284,13 +311,19 @@ function ProviderRow({
             </button>
           </form>
         )}
-        {connected && locked && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
-            <AlertTriangle className="size-3" />
-            Required
-          </span>
+        {connected && required && (
+          <>
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
+              <CheckCircle className="size-3" />
+              Connected
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+              <AlertTriangle className="size-3" />
+              Required
+            </span>
+          </>
         )}
-        {connected && !locked && (
+        {connected && !required && (
           <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
             <CheckCircle className="size-3" />
             Connected
