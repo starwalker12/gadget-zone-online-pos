@@ -299,10 +299,8 @@ export default async function HomePage() {
       <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-gradient-to-r from-[#0b2f6f] to-[#0d9488] shadow-lg shadow-blue-900/20 dark:border-white/[0.06] dark:bg-[#050c1a]/95">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex shrink-0 items-center">
-            <div className="rounded-xl bg-white/95 px-3 py-1.5 shadow-sm">
-              <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1177} height={416}
-                className="h-9 w-auto object-contain sm:h-10" priority />
-            </div>
+            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={488} height={178}
+              className="h-8 w-auto object-contain drop-shadow-[0_0_10px_rgba(20,184,166,0.3)] sm:h-9 dark:drop-shadow-[0_0_12px_rgba(20,184,166,0.4)]" priority />
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -394,10 +392,16 @@ export default async function HomePage() {
           {/* ── LEFT: text column ── */}
           <div className="flex flex-col items-start">
 
-            {/* Logo mark in hero */}
-            <div className="animate-fade-in-up mb-5 rounded-2xl bg-white/95 px-5 py-3 shadow-sm ring-1 ring-slate-200/50 dark:bg-white/10 dark:ring-white/10" style={{ animationDelay: "0.04s" }}>
-              <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1177} height={416}
-                className="max-w-[200px] w-full h-auto object-contain sm:max-w-[280px]" priority />
+            {/* Logo mark in hero — transparent with glow/shimmer */}
+            <div className="animate-fade-in-up relative mb-5 inline-flex items-center justify-center" style={{ animationDelay: "0.04s" }}>
+              {/* Soft teal/navy glow behind logo */}
+              <div aria-hidden className="absolute -inset-6 rounded-full bg-gradient-to-r from-teal-400/20 via-cyan-400/10 to-teal-400/20 blur-3xl dark:from-teal-400/25 dark:via-cyan-400/15 dark:to-teal-400/25" />
+              <div aria-hidden className="absolute -inset-3 rounded-2xl bg-gradient-to-r from-[#0b2f6f]/10 via-teal-400/10 to-[#0b2f6f]/10 blur-xl dark:from-[#0b2f6f]/20 dark:via-teal-400/15 dark:to-[#0b2f6f]/20" />
+              {/* Animated shimmer sweep */}
+              <div aria-hidden className="pointer-events-none absolute inset-0 animate-logo-shimmer rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent dark:via-white/15" />
+              {/* Logo image */}
+              <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={488} height={178}
+                className="relative z-10 max-w-[200px] w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(20,184,166,0.25)] sm:max-w-[280px] dark:drop-shadow-[0_0_30px_rgba(20,184,166,0.4)]" priority />
             </div>
 
             {/* Badge */}
@@ -781,7 +785,7 @@ export default async function HomePage() {
       <footer className="border-t border-slate-200 bg-slate-50 px-4 py-12 dark:border-white/[0.05] dark:bg-[#070b16]">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div className="flex items-center">
-            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={1177} height={416}
+            <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={488} height={178}
               className="h-7 w-auto object-contain" />
           </div>
 
