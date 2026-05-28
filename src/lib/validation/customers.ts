@@ -56,3 +56,9 @@ export const creditPaymentSchema = z.object({
   notes: optionalString,
 });
 export type CreditPaymentInput = z.infer<typeof creditPaymentSchema>;
+
+export const writeOffSchema = z.object({
+  amount: positiveNumber,
+  reason: z.string().trim().min(1, "Reason is required.").max(500),
+});
+export type WriteOffInput = z.infer<typeof writeOffSchema>;

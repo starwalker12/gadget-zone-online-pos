@@ -27,6 +27,7 @@ import { env } from "@/lib/env";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
 import { archiveCustomerAction, restoreCustomerAction } from "../actions";
 import { SettlementForm } from "./settlement-form";
+import { WriteOffForm } from "./write-off-form";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-PK", {
@@ -79,6 +80,8 @@ export default async function CustomerDetailPage({
   const openInvoicesCount = invoices.filter(
     (inv) => inv.status === "unpaid" || inv.status === "partial"
   ).length;
+
+  const isPrivileged = profile.role === "owner" || profile.role === "admin";
 
   // Credit utilization calculations
   const limit = customer.credit_limit;
@@ -216,8 +219,11 @@ export default async function CustomerDetailPage({
 
           {/* Quick Pay Settlement Action */}
           {canWrite && balance > 0 && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
               <SettlementForm customerId={customer.id} outstandingBalance={balance} />
+              {isPrivileged && (
+                <WriteOffForm customerId={customer.id} outstandingBalance={balance} />
+              )}
             </div>
           )}
         </div>
@@ -308,8 +314,10 @@ export default async function CustomerDetailPage({
                             <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
                               l.entry_type === "invoice_credit"
                                 ? "bg-red-50 text-red-700 border border-red-100"
-                                : l.entry_type === "credit_payment"
+                                :                                l.entry_type === "credit_payment"
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                : l.entry_type === "write_off"
+                                ? "bg-rose-50 text-rose-700 border border-rose-100"
                                 : "bg-blue-50 text-blue-700 border border-blue-100"
                             }`}>
                               {l.entry_type.replace("_", " ")}

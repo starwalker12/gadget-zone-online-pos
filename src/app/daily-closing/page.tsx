@@ -8,6 +8,8 @@ import {
   RotateCcw,
   Scale,
   Wallet,
+  HandCoins,
+  BadgeMinus,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { StatCard } from "@/components/ui/stat-card";
@@ -94,13 +96,16 @@ export default async function DailyClosingPage({
   const displayed = closing && isClosed
     ? {
         bills: closing.bills_count,
-        gross: activity.grossSales, // gross sales aren't snapshotted; live is fine — only the closed totals matter for reconciliation
+        gross: activity.grossSales,
         cash: closing.cash_sales,
         digital: closing.digital_payments,
         credit: closing.credit_pending,
         expenses: closing.expenses_total,
         refunds: closing.refunds_total,
         expected: closing.expected_closing_cash,
+        creditCollectionCash: closing.credit_collection_cash,
+        creditCollectionDigital: closing.credit_collection_digital,
+        creditWriteOffs: closing.credit_write_offs,
       }
     : {
         bills: activity.invoicesCount,
@@ -115,6 +120,9 @@ export default async function DailyClosingPage({
         expenses: activity.expensesTotal,
         refunds: activity.refundsTotal,
         expected: activity.expectedCash,
+        creditCollectionCash: activity.creditCollectionCash,
+        creditCollectionDigital: activity.creditCollectionDigital,
+        creditWriteOffs: activity.creditWriteOffs,
       };
 
   return (
@@ -221,6 +229,24 @@ export default async function DailyClosingPage({
           value={formatCurrency(displayed.credit, currency)}
           detail="Outstanding balance on today's invoices."
           icon={<Scale className="size-5" />}
+        />
+        <StatCard
+          label="Credit collection cash"
+          value={formatCurrency(displayed.creditCollectionCash, currency)}
+          detail="Cash settlements received from customers."
+          icon={<HandCoins className="size-5" />}
+        />
+        <StatCard
+          label="Credit collection digital"
+          value={formatCurrency(displayed.creditCollectionDigital, currency)}
+          detail="Digital settlements received from customers."
+          icon={<CalendarDays className="size-5" />}
+        />
+        <StatCard
+          label="Credit write-offs"
+          value={formatCurrency(displayed.creditWriteOffs, currency)}
+          detail="Bad debt written off (P&L impact)."
+          icon={<BadgeMinus className="size-5" />}
         />
       </div>
 

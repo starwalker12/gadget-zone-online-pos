@@ -357,6 +357,12 @@ export default async function ReportsPage({
               <span className="text-sm font-semibold text-slate-600">Refund/Return Outflow Impact</span>
               <span className="text-sm font-bold text-red-700">-{formatCurrency(data.returns.refundTotal, currency)}</span>
             </div>
+            {data.profit.creditWriteOffs > 0 && (
+              <div className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2">
+                <span className="text-sm font-semibold text-slate-600">Credit Write-offs / Bad Debt</span>
+                <span className="text-sm font-bold text-rose-700">-{formatCurrency(data.profit.creditWriteOffs, currency)}</span>
+              </div>
+            )}
             <div className="flex flex-wrap justify-between gap-2 border-t-2 border-dashed border-slate-200 pt-2">
               <span className="text-base font-black text-slate-950">Estimated Net Profit</span>
               <span className="text-base font-black text-emerald-800">{formatCurrency(data.profit.estimatedNetProfit, currency)}</span>
@@ -507,6 +513,10 @@ export default async function ReportsPage({
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ledger Debt Settlements</p>
                 <p className="mt-1 text-2xl font-black text-emerald-800">+{formatCurrency(data.ledger.creditPaymentsReceived, currency)}</p>
+              </div>
+              <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
+                <p className="text-xs font-bold text-rose-800 uppercase tracking-wider">Credit Write-offs</p>
+                <p className="mt-1 text-2xl font-black text-rose-900">{formatCurrency(data.ledger.creditWriteOffs, currency)}</p>
               </div>
             </div>
             <div>

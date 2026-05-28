@@ -82,6 +82,7 @@ export default async function DashboardPage() {
   const expectedCashToday = todayActivity?.expectedCash ?? 0;
   const closingDifference = todayClosing?.cash_difference ?? null;
   const isTodayClosed = Boolean(todayClosing?.finalized_by);
+  const creditCollectedToday = (todayActivity?.creditCollectionCash ?? 0) + (todayActivity?.creditCollectionDigital ?? 0);
   const currency = organization?.currency_code ?? "PKR";
 
   const isPrivileged =
@@ -186,6 +187,12 @@ export default async function DashboardPage() {
                 : "No branch assigned."
           }
           icon={<CalendarCheck className="size-5" />}
+        />
+        <StatCard
+          label="Credit collected today"
+          value={formatCurrency(creditCollectedToday, currency)}
+          detail="Cash + digital settlements from customers."
+          icon={<TrendingUp className="size-5" />}
         />
         <StatCard
           label="Month expenses"
