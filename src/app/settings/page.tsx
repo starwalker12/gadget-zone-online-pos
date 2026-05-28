@@ -20,6 +20,7 @@ export const dynamic = "force-dynamic";
 type SearchParams = {
   tab?: string;
   link?: string;
+  error_code?: string;
 };
 
 export default async function SettingsPage({
@@ -127,7 +128,7 @@ export default async function SettingsPage({
         )}
 
         {currentTab === "accounts" && (
-          <ConnectedAccounts linkParam={linkParam} linkedProviders={linkedProviders} />
+          <ConnectedAccounts linkParam={linkParam} errorCode={params.error_code} linkedProviders={linkedProviders} />
         )}
 
         {currentTab === "privacy" && (
