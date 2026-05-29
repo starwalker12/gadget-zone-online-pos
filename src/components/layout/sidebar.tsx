@@ -19,8 +19,9 @@ import {
 import { getCurrentContext } from "@/lib/auth/session";
 import { canManageUsers, canViewAuditLog, canManageSupplierPurchases } from "@/lib/permissions";
 import { isPlatformAdmin } from "@/lib/platform/admin";
+import { SidebarNav, type NavItem } from "@/components/layout/sidebar-nav";
 
-const items = [
+const items: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pos", label: "POS", icon: ShoppingCart },
   { href: "/products", label: "Products", icon: Boxes },
@@ -36,7 +37,7 @@ const items = [
 export async function Sidebar() {
   const { profile } = await getCurrentContext();
   const [platformAdmin] = await Promise.all([isPlatformAdmin()]);
-  const visibleItems = [
+  const visibleItems: NavItem[] = [
     ...items,
     ...(canManageSupplierPurchases(profile?.role)
       ? [{ href: "/suppliers/purchases", label: "Purchases", icon: Truck }]
@@ -60,21 +61,7 @@ export async function Sidebar() {
           className="h-9 w-auto max-w-[160px] object-contain brightness-0 dark:invert"
         />
       </Link>
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
-        {visibleItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <Icon className="size-4" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <SidebarNav items={visibleItems} />
     </aside>
   );
 }

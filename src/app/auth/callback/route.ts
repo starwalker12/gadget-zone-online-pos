@@ -19,17 +19,30 @@ export async function GET(request: NextRequest) {
   const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
   const origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : url.origin;
 
+  // ── Detect provider from redirectTo URL ───────────────────────────────────
+  const providerHint = url.searchParams.get("provider");
+
   // ── Error handling ────────────────────────────────────────────────────────
   if (errorParam) {
-    const loginUrl = new URL("/login", origin);
     const lower = errorParam.toLowerCase();
 
     // OAuth identity/email conflict
     if (lower.includes("email already registered") || lower.includes("email already exists") || lower.includes("identity conflict") || lower.includes("already linked")) {
       const settingsUrl = new URL("/settings?tab=accounts", origin);
       settingsUrl.searchParams.set("link", "conflict");
+      if (providerHint) settingsUrl.searchParams.set("provider", providerHint);
       return NextResponse.redirect(settingsUrl);
     }
+
+    // Linking flow error — redirect to settings with error banner
+    if (linkingParam === "1") {
+      const settingsUrl = new URL("/settings?tab=accounts", origin);
+      settingsUrl.searchParams.set("link", "error");
+      if (providerHint) settingsUrl.searchParams.set("provider", providerHint);
+      return NextResponse.redirect(settingsUrl);
+    }
+
+    const loginUrl = new URL("/login", origin);
 
     // Facebook "Invalid Scopes: email" / invalid_scope
     if (lower.includes("invalid_scope") || lower.includes("invalid scope") || lower.includes("scopes")) {
@@ -50,8 +63,16 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    const loginUrl = new URL("/login", origin);
     const msg = error.message.toLowerCase();
+
+    if (linkingParam === "1") {
+      const settingsUrl = new URL("/settings?tab=accounts", origin);
+      settingsUrl.searchParams.set("link", "error");
+      if (providerHint) settingsUrl.searchParams.set("provider", providerHint);
+      return NextResponse.redirect(settingsUrl);
+    }
+
+    const loginUrl = new URL("/login", origin);
 
     if (msg.includes("email already registered") || msg.includes("email already exists") || msg.includes("identity conflict") || msg.includes("already linked")) {
       const settingsUrl = new URL("/settings?tab=accounts", origin);
@@ -67,8 +88,6 @@ export async function GET(request: NextRequest) {
   if (linkingParam === "1") {
     const settingsUrl = new URL("/settings?tab=accounts", origin);
     settingsUrl.searchParams.set("link", "success");
-    // Detect provider from URL hash or connector_token if available
-    const providerHint = url.searchParams.get("provider");
     if (providerHint) {
       settingsUrl.searchParams.set("provider", providerHint);
     }

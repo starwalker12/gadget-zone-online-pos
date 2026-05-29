@@ -233,7 +233,7 @@ async function linkOAuthAction(provider: "google" | "facebook"): Promise<AuthSta
   const { data, error } = await supabase.auth.linkIdentity({
     provider,
     options: {
-      redirectTo: `${origin}/auth/callback?linking=1`,
+      redirectTo: `${origin}/auth/callback?linking=1&provider=${provider}`,
     },
   });
 
