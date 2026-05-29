@@ -116,7 +116,9 @@ export function ConnectedAccounts({
 
         {linkParam === "error" && (
           <Banner type="error" onDismiss={dismissAll}>
-            We could not link this provider. Please try again.
+            {linkProviderLabel
+              ? `We could not link ${linkProviderLabel}. Please try again.`
+              : "We could not link this provider. Please try again."}
           </Banner>
         )}
 
@@ -304,16 +306,14 @@ function EmailPasswordRow({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {hasPassword && (
-            <button
-              type="button"
-              onClick={() => { setShowPasswordForm(!showPasswordForm); setShowEmailForm(false); }}
-              className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              <Shield className="size-3" />
-              Update password
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => { setShowPasswordForm(!showPasswordForm); setShowEmailForm(false); }}
+            className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <Shield className="size-3" />
+            {hasPassword ? "Update password" : "Set password"}
+          </button>
           <button
             type="button"
             onClick={() => { setShowEmailForm(!showEmailForm); setShowPasswordForm(false); }}

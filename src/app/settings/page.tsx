@@ -15,6 +15,7 @@ import { PrivacyCenter } from "./privacy-center";
 import { getLinkedProviders } from "@/lib/auth/identities";
 import { createClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TabTransition } from "@/components/ui/tab-transition";
 import { AlertTriangle, Settings, Database, Archive, ShieldCheck, UserCircle, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -104,44 +105,46 @@ export default async function SettingsPage({
 
         {/* Tab Render Content with Suspense boundaries */}
         <Suspense key={`tab-${currentTab}`} fallback={<TabSkeleton tabId={currentTab} />}>
-          {currentTab === "general" && (
-            <SettingsForm
-              settings={settings}
-              canEdit={canEdit}
-              organizationId={profile.organization_id}
-              branchId={profile.branch_id}
-              userId={user.id}
-              profilePictureUrl={profilePictureUrl}
-            />
-          )}
+          <TabTransition currentTab={currentTab} fallback={<TabSkeleton tabId={currentTab} />}>
+            {currentTab === "general" && (
+              <SettingsForm
+                settings={settings}
+                canEdit={canEdit}
+                organizationId={profile.organization_id}
+                branchId={profile.branch_id}
+                userId={user.id}
+                profilePictureUrl={profilePictureUrl}
+              />
+            )}
 
-          {currentTab === "demo-data" && (
-            isPrivileged ? (
-              <DemoTab demoDataEnabled={demoDataEnabled} />
-            ) : (
-              <AccessDeniedView />
-            )
-          )}
+            {currentTab === "demo-data" && (
+              isPrivileged ? (
+                <DemoTab demoDataEnabled={demoDataEnabled} />
+              ) : (
+                <AccessDeniedView />
+              )
+            )}
 
-          {currentTab === "backup" && (
-            isPrivileged ? (
-              <BackupTab backupImportEnabled={backupImportEnabled} factoryResetEnabled={factoryResetEnabled} />
-            ) : (
-              <AccessDeniedView />
-            )
-          )}
+            {currentTab === "backup" && (
+              isPrivileged ? (
+                <BackupTab backupImportEnabled={backupImportEnabled} factoryResetEnabled={factoryResetEnabled} />
+              ) : (
+                <AccessDeniedView />
+              )
+            )}
 
-          {currentTab === "accounts" && (
-            <ConnectedAccounts linkParam={linkParam} providerParam={params.provider} linkedProviders={linkedProviders} />
-          )}
+            {currentTab === "accounts" && (
+              <ConnectedAccounts linkParam={linkParam} providerParam={params.provider} linkedProviders={linkedProviders} />
+            )}
 
-          {currentTab === "privacy" && (
-            <PrivacyCenter />
-          )}
+            {currentTab === "privacy" && (
+              <PrivacyCenter />
+            )}
 
-          {currentTab === "security" && (
-            isPrivileged ? <SecurityChecklist /> : <AccessDeniedView />
-          )}
+            {currentTab === "security" && (
+              isPrivileged ? <SecurityChecklist /> : <AccessDeniedView />
+            )}
+          </TabTransition>
         </Suspense>
       </div>
     </AppShell>
