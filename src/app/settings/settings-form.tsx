@@ -186,6 +186,7 @@ export function SettingsForm({
             <input type="hidden" name="appLogoUrl" value={appLogoUrlInput} />
             <div className="mt-3">
               <ImageUpload
+                key={`app-logo-${settings.appLogoUrl || 'empty'}`}
                 bucket="public-branding"
                 folderPath={`orgs/${organizationId}/app-logo`}
                 currentUrl={settings.appLogoUrl || null}
@@ -260,6 +261,7 @@ export function SettingsForm({
               )}
               <div className="mt-3 space-y-2">
                 <ImageUpload
+                  key={`invoice-logo-${logoUrlInput || 'empty'}`}
                   bucket="public-branding"
                   folderPath={`orgs/${organizationId}/logo`}
                   currentUrl={null}
@@ -377,6 +379,7 @@ export function SettingsForm({
           <input type="hidden" name="profilePictureUrl" value="" />
           <div className="flex items-start gap-4">
             <ImageUpload
+              key={`profile-pic-${profilePictureUrl || 'none'}`}
               bucket="profile-pictures"
               folderPath={`users/${userId}/profile-picture`}
               currentUrl={profilePictureUrl || null}
