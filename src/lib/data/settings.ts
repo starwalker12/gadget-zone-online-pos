@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type JsonObject = Record<string, unknown>;
 
@@ -83,28 +84,36 @@ function printFormat(value: unknown): BrandingSettings["printFormat"] {
   return value === "80mm_planned" ? "80mm_planned" : "a4";
 }
 
+async function getDb() {
+  try {
+    return createAdminClient();
+  } catch {
+    return await createClient();
+  }
+}
+
 export async function getBrandingSettings(
   organizationId: string,
   branchId?: string | null,
 ): Promise<BrandingSettings> {
-  const supabase = await createClient();
+  const db = await getDb();
 
   const [{ data: org, error: orgError }, { data: branch, error: branchError }, { data: settings, error: settingsError }] =
     await Promise.all([
-      supabase
+      db
         .from("organizations")
         .select("id, name, legal_name, phone, email, address, currency_code, timezone, logo_url, owner_name, primary_color, accent_color, default_theme")
         .eq("id", organizationId)
         .maybeSingle<OrganizationSettingsRow>(),
       branchId
-        ? supabase
+        ? db
             .from("branches")
             .select("id, organization_id, name, phone, address")
             .eq("organization_id", organizationId)
             .eq("id", branchId)
             .maybeSingle<BranchSettingsRow>()
         : Promise.resolve({ data: null, error: null }),
-      supabase
+      db
         .from("app_settings")
         .select(
           "id, organization_id, branch_id, shop_name, business_subtitle, phone, email, address, invoice_template, theme_accent, receipt_footer, settings",

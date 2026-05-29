@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentContext } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { canManageUsers, canViewAuditLog, canManageSupplierPurchases } from "@/lib/permissions";
 import { isPlatformAdmin } from "@/lib/platform/admin";
 import { SidebarNav, type NavItem } from "@/components/layout/sidebar-nav";
@@ -18,9 +19,17 @@ const items: NavItem[] = [
   { href: "/reports", label: "Reports", icon: "reports" },
 ];
 
+async function getDb() {
+  try {
+    return createAdminClient();
+  } catch {
+    return await createClient();
+  }
+}
+
 async function getAppLogoUrl(organizationId: string, branchId: string | null): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: rows } = await supabase
+  const db = await getDb();
+  const { data: rows } = await db
     .from("app_settings")
     .select("branch_id, settings")
     .eq("organization_id", organizationId)
@@ -56,9 +65,6 @@ export async function Sidebar() {
   ];
 
   return (
-    // h-dvh + flex column so the header stays fixed and the nav scrolls
-    // internally when the list is taller than the viewport. The outer shell
-    // is overflow-hidden, so this sidebar never moves when main scrolls.
     <aside className="hidden h-dvh w-72 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 lg:flex">
       <Link href="/dashboard" className="flex h-20 shrink-0 items-center gap-3 border-b border-slate-200 px-6 dark:border-slate-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
