@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
@@ -13,6 +14,7 @@ import { ConnectedAccounts } from "./connected-accounts";
 import { PrivacyCenter } from "./privacy-center";
 import { getLinkedProviders } from "@/lib/auth/identities";
 import { createClient } from "@/lib/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Settings, Database, Archive, ShieldCheck, UserCircle, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +22,7 @@ export const dynamic = "force-dynamic";
 type SearchParams = {
   tab?: string;
   link?: string;
+  provider?: string;
   error_code?: string;
 };
 
@@ -70,14 +73,14 @@ export default async function SettingsPage({
         {/* Page Heading and Tabs Navigation */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 space-y-6">
           <div>
-            <h2 className="text-2xl font-black text-slate-950">Settings</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
+            <h2 className="text-2xl font-black text-slate-950 dark:text-slate-50">Settings</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
               Configure organizational credentials, manage demonstration databases, or package offline backup archives.
             </p>
           </div>
 
           {/* Premium Tab bar navigation */}
-          <div className="flex border-b border-slate-200 gap-1 overflow-x-auto pb-px">
+          <div className="flex border-b border-slate-200 dark:border-slate-700 gap-1 overflow-x-auto pb-px">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = currentTab === tab.id;
@@ -99,45 +102,47 @@ export default async function SettingsPage({
           </div>
         </div>
 
-        {/* Tab Render Content */}
-        {currentTab === "general" && (
-          <SettingsForm
-            settings={settings}
-            canEdit={canEdit}
-            organizationId={profile.organization_id}
-            branchId={profile.branch_id}
-            userId={user.id}
-            profilePictureUrl={profilePictureUrl}
-          />
-        )}
+        {/* Tab Render Content with Suspense boundaries */}
+        <Suspense key={`tab-${currentTab}`} fallback={<TabSkeleton tabId={currentTab} />}>
+          {currentTab === "general" && (
+            <SettingsForm
+              settings={settings}
+              canEdit={canEdit}
+              organizationId={profile.organization_id}
+              branchId={profile.branch_id}
+              userId={user.id}
+              profilePictureUrl={profilePictureUrl}
+            />
+          )}
 
-        {currentTab === "demo-data" && (
-          isPrivileged ? (
-            <DemoTab demoDataEnabled={demoDataEnabled} />
-          ) : (
-            <AccessDeniedView />
-          )
-        )}
+          {currentTab === "demo-data" && (
+            isPrivileged ? (
+              <DemoTab demoDataEnabled={demoDataEnabled} />
+            ) : (
+              <AccessDeniedView />
+            )
+          )}
 
-        {currentTab === "backup" && (
-          isPrivileged ? (
-            <BackupTab backupImportEnabled={backupImportEnabled} factoryResetEnabled={factoryResetEnabled} />
-          ) : (
-            <AccessDeniedView />
-          )
-        )}
+          {currentTab === "backup" && (
+            isPrivileged ? (
+              <BackupTab backupImportEnabled={backupImportEnabled} factoryResetEnabled={factoryResetEnabled} />
+            ) : (
+              <AccessDeniedView />
+            )
+          )}
 
-        {currentTab === "accounts" && (
-          <ConnectedAccounts linkParam={linkParam} errorCode={params.error_code} linkedProviders={linkedProviders} />
-        )}
+          {currentTab === "accounts" && (
+            <ConnectedAccounts linkParam={linkParam} providerParam={params.provider} linkedProviders={linkedProviders} />
+          )}
 
-        {currentTab === "privacy" && (
-          <PrivacyCenter />
-        )}
+          {currentTab === "privacy" && (
+            <PrivacyCenter />
+          )}
 
-        {currentTab === "security" && (
-          isPrivileged ? <SecurityChecklist /> : <AccessDeniedView />
-        )}
+          {currentTab === "security" && (
+            isPrivileged ? <SecurityChecklist /> : <AccessDeniedView />
+          )}
+        </Suspense>
       </div>
     </AppShell>
   );
@@ -210,6 +215,116 @@ function SecurityChecklist() {
       </p>
     </section>
   );
+}
+
+function TabSkeleton({ tabId }: { tabId: string }) {
+  switch (tabId) {
+    case "general":
+      return (
+        <div className="space-y-5">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="mt-2 h-3 w-64" />
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {[...Array(4)].map((_, j) => (
+                  <div key={j} className="space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    case "accounts":
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="mt-2 h-3 w-72" />
+          <div className="mt-5 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 p-4 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-10 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case "privacy":
+      return (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="mt-2 h-3 w-56" />
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="rounded-xl border border-slate-100 p-4 dark:border-slate-800">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="mt-2 h-6 w-12" />
+                  <Skeleton className="mt-2 h-3 w-32" />
+                </div>
+              ))}
+            </div>
+            <Skeleton className="mt-4 h-10 w-32 rounded-lg" />
+          </div>
+        </div>
+      );
+    case "demo-data":
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="mt-2 h-3 w-48" />
+          <Skeleton className="mt-4 h-10 w-full rounded-xl" />
+          <Skeleton className="mt-3 h-10 w-full rounded-xl" />
+        </div>
+      );
+    case "backup":
+      return (
+        <div className="space-y-5">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="mt-2 h-3 w-56" />
+              <Skeleton className="mt-4 h-10 w-full rounded-xl" />
+              <Skeleton className="mt-3 h-10 w-40 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      );
+    case "security":
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="mt-2 h-3 w-64" />
+          <div className="mt-5 space-y-2">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      );
+    default:
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="mt-2 h-3 w-48" />
+          <div className="mt-5 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      );
+  }
 }
 
 function AccessDeniedView() {
