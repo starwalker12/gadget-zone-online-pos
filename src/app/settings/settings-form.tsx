@@ -158,7 +158,8 @@ export function SettingsForm({
               {logoError ? (
                 <div className="flex flex-col items-center gap-2">
                   <ImageIcon className="size-10 text-slate-300" />
-                  <span className="text-xs text-slate-400">Logo preview unavailable</span>
+                  <span className="text-xs text-slate-400">Preview unavailable</span>
+                  <span className="text-[10px] text-slate-400 text-center leading-tight">Upload a new image or remove it.</span>
                 </div>
               ) : (
                 /* eslint-disable-next-line @next/next/no-img-element */
