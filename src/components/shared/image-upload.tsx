@@ -56,10 +56,11 @@ export function ImageUpload({
     checkAuth();
   }, []);
 
-  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError(null);
+    setImgError(false);
 
     const validationError = validateImageFile(file);
     if (validationError) {
@@ -68,30 +69,40 @@ export function ImageUpload({
       return;
     }
 
-    setImgError(false);
     const localPreview = URL.createObjectURL(file);
     setPreview(localPreview);
     setUploading(true);
 
-    uploadImage(bucket, folderPath, file).then((result: UploadResult) => {
-      setUploading(false);
-      if (result.error) {
-        setUploadError(result.error);
-        setImgError(false);
-        setPreview(currentUrl ?? null);
-        return;
-      }
-      if (result.publicUrl) {
-        onUploadComplete(result.publicUrl);
-        setPreview(result.publicUrl);
-      }
-      URL.revokeObjectURL(localPreview);
-    }).catch(() => {
+    let result: UploadResult;
+    try {
+      result = await uploadImage(bucket, folderPath, file);
+    } catch {
       setUploading(false);
       setImgError(false);
-      setUploadError("Unexpected upload error. Please try again.");
+      setUploadError("Upload could not complete. Please try again.");
       setPreview(currentUrl ?? null);
-    });
+      URL.revokeObjectURL(localPreview);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    setUploading(false);
+
+    if (result.error) {
+      setUploadError(result.error);
+      setImgError(false);
+      setPreview(currentUrl ?? null);
+      URL.revokeObjectURL(localPreview);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    if (result.publicUrl) {
+      setPreview(result.publicUrl);
+      onUploadComplete(result.publicUrl);
+    }
+    URL.revokeObjectURL(localPreview);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   function handleRemove() {
