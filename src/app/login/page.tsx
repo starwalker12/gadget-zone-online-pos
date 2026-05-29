@@ -135,13 +135,11 @@ export default async function LoginPage({
                 SaleDock Cloud POS
               </p>
               <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Sign in to your shop</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                {maintenanceMode
-                  ? "The system is undergoing scheduled maintenance. Please check back later."
-                  : publicSignupEnabled
-                    ? "Registration is open for new shops. Sign in or create a new account to get started."
-                    : "Sign in to your account."}
-              </p>
+              {maintenanceMode && (
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  The system is undergoing scheduled maintenance. Please check back later.
+                </p>
+              )}
             </div>
             {maintenanceMode && (
               <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">

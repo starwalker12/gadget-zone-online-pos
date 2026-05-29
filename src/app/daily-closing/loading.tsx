@@ -1,25 +1,65 @@
 import { AppShell } from "@/components/layout/app-shell";
-
-function Box({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-slate-200/60 ${className}`} />;
-}
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DailyClosingLoading() {
   return (
     <AppShell pageTitle="Daily Closing">
-      <Box className="mb-5 h-12 w-full" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {/* Header action bar */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-44" />
+        </div>
+        <Skeleton className="h-10 w-32 rounded-lg" />
+      </div>
+
+      {/* Summary cards */}
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <Box className="h-3 w-24" />
-            <Box className="mt-2 h-7 w-32" />
-            <Box className="mt-4 h-3 w-40" />
+          <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="mt-2 h-7 w-32" />
+            <Skeleton className="mt-4 h-3 w-40" />
           </div>
         ))}
       </div>
+
+      {/* Payment breakdown + Recent closings */}
       <div className="mt-6 grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-        <Box className="h-72 w-full" />
-        <Box className="h-72 w-full" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Skeleton className="h-5 w-40" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Skeleton className="h-5 w-32" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Closing history table */}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+          <Skeleton className="h-5 w-36" />
+        </div>
+        <div className="space-y-3 p-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))}
+        </div>
       </div>
     </AppShell>
   );

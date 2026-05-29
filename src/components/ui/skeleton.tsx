@@ -1,13 +1,11 @@
-import type { HTMLAttributes } from "react";
+import type { CSSProperties } from "react";
 
-export function Skeleton({
-  className = "",
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
+export function Skeleton({ className = "", style }: { className?: string; style?: CSSProperties }) {
   return (
     <div
-      className={`animate-pulse rounded-md bg-slate-250/70 bg-slate-200/60 ${className}`}
-      {...props}
+      aria-hidden="true"
+      className={`animate-pulse rounded-xl bg-slate-200/70 dark:bg-slate-800/70 ${className}`}
+      style={style}
     />
   );
 }

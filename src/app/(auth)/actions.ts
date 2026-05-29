@@ -353,6 +353,58 @@ export async function setPasswordAction(
   };
 }
 
+// ── Change Email (authenticated) ─────────────────────────────────────────────
+
+export async function changeEmailAction(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  if (!env.isSupabaseConfigured) return configError();
+
+  const newEmail = formData.get("newEmail") as string | null;
+  const confirmEmail = formData.get("confirmEmail") as string | null;
+
+  if (!newEmail || !confirmEmail) {
+    return { error: "Both email fields are required." };
+  }
+
+  const emailSchema = z.string().email("Enter a valid email address.");
+  const parsed = emailSchema.safeParse(newEmail);
+  if (!parsed.success) {
+    return { error: "Enter a valid email address." };
+  }
+
+  if (newEmail !== confirmEmail) {
+    return { error: "Email addresses do not match." };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in." };
+  }
+
+  if (newEmail.toLowerCase() === (user.email ?? "").toLowerCase()) {
+    return { error: "New email is the same as your current email." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ email: newEmail });
+  if (error) {
+    if (error.message.toLowerCase().includes("reauthentication") || error.message.toLowerCase().includes("recent")) {
+      return { error: "For security, please sign out and sign back in, then try again." };
+    }
+    if (error.message.toLowerCase().includes("already") || error.message.toLowerCase().includes("exists") || error.message.toLowerCase().includes("in use")) {
+      return { error: "This email address is already in use." };
+    }
+    return { error: error.message };
+  }
+
+  return {
+    error: null,
+    success: "Check your new email to confirm the change. You may need to confirm from your current and new email addresses.",
+  };
+}
+
 // ── Incomplete Signup Recovery ────────────────────────────────────────────────
 
 export async function restartSetupAction(): Promise<{ error: string | null }> {

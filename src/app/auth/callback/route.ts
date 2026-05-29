@@ -67,6 +67,11 @@ export async function GET(request: NextRequest) {
   if (linkingParam === "1") {
     const settingsUrl = new URL("/settings?tab=accounts", origin);
     settingsUrl.searchParams.set("link", "success");
+    // Detect provider from URL hash or connector_token if available
+    const providerHint = url.searchParams.get("provider");
+    if (providerHint) {
+      settingsUrl.searchParams.set("provider", providerHint);
+    }
     return NextResponse.redirect(settingsUrl);
   }
 

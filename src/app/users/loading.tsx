@@ -5,28 +5,65 @@ export default function UsersLoading() {
   return (
     <AppShell pageTitle="Users">
       <div className="space-y-6">
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-full max-w-xl" />
+        {/* Header section */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-7 w-32" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-lg" />
         </div>
+
+        {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[...Array(4)].map((_, index) => (
-            <Skeleton key={index} className="h-32 rounded-2xl" />
+            <div key={index} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="size-6 rounded-lg" />
+              </div>
+              <Skeleton className="mt-2 h-7 w-16" />
+              <Skeleton className="mt-1 h-3 w-28" />
+            </div>
           ))}
         </div>
-        <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5">
-          <Skeleton className="h-5 w-44" />
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+
+        {/* Filter/sort bar */}
+        <div className="flex flex-wrap gap-3">
+          <Skeleton className="h-10 w-64 rounded-lg" />
+          <Skeleton className="h-10 w-32 rounded-lg" />
+          <Skeleton className="h-10 w-32 rounded-lg" />
+        </div>
+
+        {/* Users table */}
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+            <Skeleton className="h-5 w-24" />
+          </div>
+          <div className="space-y-4 p-4">
+            <div className="grid grid-cols-5 gap-4 border-b border-slate-100 pb-2 dark:border-slate-800">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16 justify-self-end" />
+            </div>
             {[...Array(5)].map((_, index) => (
-              <Skeleton key={index} className="h-10 rounded-lg" />
+              <div key={index} className="grid grid-cols-5 gap-4 border-b border-slate-100 py-3 last:border-0 items-center dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-8 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-4 w-20" />
+                <div className="flex gap-2 justify-self-end">
+                  <Skeleton className="size-8 rounded-lg" />
+                  <Skeleton className="size-8 rounded-lg" />
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
-          {[...Array(5)].map((_, index) => (
-            <Skeleton key={index} className="h-20 rounded-xl" />
-          ))}
         </div>
       </div>
     </AppShell>
