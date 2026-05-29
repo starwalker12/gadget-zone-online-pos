@@ -29,38 +29,6 @@ export function validateImageFile(file: File): string | null {
   return null;
 }
 
-type UploadAttemptResult =
-  | { ok: true }
-  | { ok: false; error: string; isNetworkError: boolean };
-
-async function uploadAttempt(
-  bucket: "profile-pictures" | "public-branding",
-  fullPath: string,
-  file: File,
-): Promise<UploadAttemptResult> {
-  const supabase = createClient();
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    return { ok: false, error: "You must be signed in to upload images.", isNetworkError: false };
-  }
-
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(fullPath, file, {
-      cacheControl: "3600",
-      upsert: true,
-    });
-
-  if (!error) return { ok: true };
-
-  const msg = error.message;
-  if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-    return { ok: false, error: "Could not connect to storage. Please check your connection and try again.", isNetworkError: true };
-  }
-  return { ok: false, error: msg, isNetworkError: false };
-}
-
 export async function uploadImage(
   bucket: "profile-pictures" | "public-branding",
   folderPath: string,
@@ -74,20 +42,50 @@ export async function uploadImage(
   const filename = generateSafeFilename(file);
   const fullPath = `${folderPath}/${filename}`;
 
-  const result = await uploadAttempt(bucket, fullPath, file);
-  if (!result.ok) {
-    if (result.isNetworkError) {
+  const supabase = createClient();
+  let { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const refreshed = await supabase.auth.getSession();
+      session = refreshed.data.session;
+    }
+  }
+  if (!session) {
+    const { publicUrl, error } = await uploadViaServerAction(bucket, folderPath, file);
+    if (error) return { publicUrl: null, error };
+    return { publicUrl, error: null };
+  }
+
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(fullPath, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (error) {
+    const msg = error.message;
+    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
       await new Promise((r) => setTimeout(r, 1500));
-      const retryResult = await uploadAttempt(bucket, fullPath, file);
-      if (!retryResult.ok) {
-        return { publicUrl: null, error: retryResult.error };
+      const { error: retryError } = await supabase.storage
+        .from(bucket)
+        .upload(fullPath, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+      if (retryError) {
+        const retryMsg = retryError.message;
+        if (/failed to fetch|networkerror|load failed/i.test(retryMsg)) {
+          return { publicUrl: null, error: "Could not connect to storage. Please check your connection and try again." };
+        }
+        return { publicUrl: null, error: retryMsg };
       }
     } else {
-      return { publicUrl: null, error: result.error };
+      return { publicUrl: null, error: msg };
     }
   }
 
-  const supabase = createClient();
   const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fullPath);
   if (!urlData?.publicUrl) {
     return { publicUrl: null, error: "Upload succeeded but could not generate a public URL." };
@@ -95,15 +93,31 @@ export async function uploadImage(
   return { publicUrl: urlData.publicUrl, error: null };
 }
 
+async function uploadViaServerAction(
+  bucket: "profile-pictures" | "public-branding",
+  folderPath: string,
+  file: File,
+): Promise<UploadResult> {
+  const { uploadImageAction } = await import("./upload-action");
+  return uploadImageAction(bucket, folderPath, file);
+}
+
 export async function removeImage(
   bucket: "profile-pictures" | "public-branding",
   path: string,
 ): Promise<string | null> {
   const supabase = createClient();
-
-  const { data: { session } } = await supabase.auth.getSession();
+  let { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    return "You must be signed in to remove images.";
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const refreshed = await supabase.auth.getSession();
+      session = refreshed.data.session;
+    }
+  }
+  if (!session) {
+    const { removeImageAction } = await import("./upload-action");
+    return removeImageAction(bucket, path);
   }
 
   const { error } = await supabase.storage.from(bucket).remove([path]);

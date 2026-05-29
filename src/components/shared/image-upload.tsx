@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 import { validateImageFile, uploadImage, type UploadResult } from "@/lib/storage/upload";
+import { createClient } from "@/lib/supabase/client";
 
 type ImageUploadProps = {
   bucket: "profile-pictures" | "public-branding";
@@ -36,7 +37,24 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      const supabase = createClient();
+      let { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const refreshed = await supabase.auth.getSession();
+          session = refreshed.data.session;
+        }
+      }
+      setAuthReady(true);
+    }
+    checkAuth();
+  }, []);
 
   function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -158,11 +176,15 @@ export function ImageUpload({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || !authReady}
             className="flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
           >
-            <Upload className="size-3.5" />
-            {preview ? "Change" : "Upload"}
+            {!authReady ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Upload className="size-3.5" />
+            )}
+            {!authReady ? "Preparing…" : preview ? "Change" : "Upload"}
           </button>
           {(preview || showErrorState) && onRemove && (
             <button
