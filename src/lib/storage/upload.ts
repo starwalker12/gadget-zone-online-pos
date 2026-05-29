@@ -34,63 +34,67 @@ export async function uploadImage(
   folderPath: string,
   file: File,
 ): Promise<UploadResult> {
-  const validationError = validateImageFile(file);
-  if (validationError) {
-    return { publicUrl: null, error: validationError };
-  }
-
-  const filename = generateSafeFilename(file);
-  const fullPath = `${folderPath}/${filename}`;
-
-  const supabase = createClient();
-  let { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const refreshed = await supabase.auth.getSession();
-      session = refreshed.data.session;
+  try {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      return { publicUrl: null, error: validationError };
     }
-  }
-  if (!session) {
-    const { publicUrl, error } = await uploadViaServerAction(bucket, folderPath, file);
-    if (error) return { publicUrl: null, error };
-    return { publicUrl, error: null };
-  }
 
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(fullPath, file, {
-      cacheControl: "3600",
-      upsert: true,
-    });
+    const filename = generateSafeFilename(file);
+    const fullPath = `${folderPath}/${filename}`;
 
-  if (error) {
-    const msg = error.message;
-    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-      await new Promise((r) => setTimeout(r, 1500));
-      const { error: retryError } = await supabase.storage
-        .from(bucket)
-        .upload(fullPath, file, {
-          cacheControl: "3600",
-          upsert: true,
-        });
-      if (retryError) {
-        const retryMsg = retryError.message;
-        if (/failed to fetch|networkerror|load failed/i.test(retryMsg)) {
-          return { publicUrl: null, error: "Could not connect to storage. Please check your connection and try again." };
-        }
-        return { publicUrl: null, error: retryMsg };
+    const supabase = createClient();
+    let { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const refreshed = await supabase.auth.getSession();
+        session = refreshed.data.session;
       }
-    } else {
-      return { publicUrl: null, error: msg };
     }
-  }
+    if (!session) {
+      const { publicUrl, error } = await uploadViaServerAction(bucket, folderPath, file);
+      if (error) return { publicUrl: null, error };
+      return { publicUrl, error: null };
+    }
 
-  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fullPath);
-  if (!urlData?.publicUrl) {
-    return { publicUrl: null, error: "Upload succeeded but could not generate a public URL." };
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(fullPath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      const msg = error.message;
+      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+        await new Promise((r) => setTimeout(r, 1500));
+        const { error: retryError } = await supabase.storage
+          .from(bucket)
+          .upload(fullPath, file, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+        if (retryError) {
+          const retryMsg = retryError.message;
+          if (/failed to fetch|networkerror|load failed/i.test(retryMsg)) {
+            return { publicUrl: null, error: "Could not connect to storage. Please check your connection and try again." };
+          }
+          return { publicUrl: null, error: retryMsg };
+        }
+      } else {
+        return { publicUrl: null, error: msg };
+      }
+    }
+
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fullPath);
+    if (!urlData?.publicUrl) {
+      return { publicUrl: null, error: "Upload succeeded but could not generate a public URL." };
+    }
+    return { publicUrl: urlData.publicUrl, error: null };
+  } catch {
+    return { publicUrl: null, error: "Upload could not complete. Please try again." };
   }
-  return { publicUrl: urlData.publicUrl, error: null };
 }
 
 async function uploadViaServerAction(
@@ -106,20 +110,24 @@ export async function removeImage(
   bucket: "profile-pictures" | "public-branding",
   path: string,
 ): Promise<string | null> {
-  const supabase = createClient();
-  let { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const refreshed = await supabase.auth.getSession();
-      session = refreshed.data.session;
+  try {
+    const supabase = createClient();
+    let { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const refreshed = await supabase.auth.getSession();
+        session = refreshed.data.session;
+      }
     }
-  }
-  if (!session) {
-    const { removeImageAction } = await import("./upload-action");
-    return removeImageAction(bucket, path);
-  }
+    if (!session) {
+      const { removeImageAction } = await import("./upload-action");
+      return removeImageAction(bucket, path);
+    }
 
-  const { error } = await supabase.storage.from(bucket).remove([path]);
-  return error?.message ?? null;
+    const { error } = await supabase.storage.from(bucket).remove([path]);
+    return error?.message ?? null;
+  } catch {
+    return "Upload could not complete. Please try again.";
+  }
 }
