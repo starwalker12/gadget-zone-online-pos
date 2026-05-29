@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useActionState, useState } from "react";
 import type { BrandingSettings } from "@/lib/data/settings";
-import { updateSettingsAction, updateProfilePictureAction, type SettingsActionState } from "./actions";
+import { updateSettingsAction, updateProfilePictureAction, type SettingsActionState, type SettingsIntent } from "./actions";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { ImageIcon } from "lucide-react";
 
@@ -36,6 +36,39 @@ function Section({
   );
 }
 
+function BlockSaveButton({
+  pending,
+  canEdit,
+  label = "Save",
+}: {
+  pending: boolean;
+  canEdit: boolean;
+  label?: string;
+}) {
+  return (
+    <button
+      type="submit"
+      disabled={!canEdit || pending}
+      className="mt-4 h-10 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
+    >
+      {pending ? "Saving..." : label}
+    </button>
+  );
+}
+
+function BlockMessage({ state }: { state: SettingsActionState }) {
+  return (
+    <>
+      {state.success && (
+        <p className="mt-3 text-xs font-semibold text-emerald-600">{state.success}</p>
+      )}
+      {state.error && (
+        <p className="mt-3 text-xs font-semibold text-red-600">{state.error}</p>
+      )}
+    </>
+  );
+}
+
 export function SettingsForm({
   settings,
   canEdit,
@@ -51,8 +84,14 @@ export function SettingsForm({
   userId: string;
   profilePictureUrl?: string | null;
 }) {
-  const [state, formAction, pending] = useActionState(updateSettingsAction, initialState);
-  const [ppState, ppAction, ppPending] = useActionState(updateProfilePictureAction, initialState);
+  const [bpState, bpAction, bpPending] = useActionState(updateSettingsAction, initialState);
+  const [logoState, logoAction, logoPending] = useActionState(updateSettingsAction, initialState);
+  const [brState, brAction, brPending] = useActionState(updateSettingsAction, initialState);
+  const [invState, invAction, invPending] = useActionState(updateSettingsAction, initialState);
+  const [thState, thAction, thPending] = useActionState(updateSettingsAction, initialState);
+  const [regState, regAction, regPending] = useActionState(updateSettingsAction, initialState);
+  const [ppState, ppAction] = useActionState(updateProfilePictureAction, initialState);
+
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
   const [logoUrlInput, setLogoUrlInput] = useState(settings.logoUrl ?? "");
@@ -86,221 +125,246 @@ export function SettingsForm({
     setAppLogoUrlInput("");
   }
 
+  function makeAction(intent: SettingsIntent) {
+    return (formData: FormData) => {
+      formData.set("intent", intent);
+      const actions: Record<SettingsIntent, typeof bpAction> = {
+        business_profile: bpAction,
+        app_logo: logoAction,
+        branch_profile: brAction,
+        invoice_branding: invAction,
+        theme: thAction,
+        regional: regAction,
+      };
+      actions[intent](formData);
+    };
+  }
+
   return (
-    <form key={`${settings.logoUrl}-${settings.appLogoUrl}`} action={formAction} className="space-y-5">
-      {!canEdit && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          Your role can view these settings, but only owners and admins can save changes.
-        </div>
-      )}
-
-      {state.error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-          {state.error}
-        </div>
-      )}
-      {state.success && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-          {state.success}
-        </div>
-      )}
-
+    <div className="space-y-5">
+      {/* Business Profile */}
       <Section
         title="Business Profile"
         description="Primary shop details used in app headers, print documents, and future sharing."
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className={labelClass}>
-            <span className={labelTextClass}>Shop name</span>
-            <input name="shopName" required defaultValue={settings.shopName} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Owner name</span>
-            <input name="ownerName" defaultValue={settings.ownerName} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Phone</span>
-            <input name="phone" defaultValue={settings.phone} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>WhatsApp support</span>
-            <input name="whatsappSupport" defaultValue={settings.whatsappSupport} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Email</span>
-            <input name="email" type="email" defaultValue={settings.email} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className="block min-w-0 md:col-span-2">
-            <span className={labelTextClass}>Address</span>
-            <textarea name="address" defaultValue={settings.address} disabled={!canEdit || pending} className={textareaClass} />
-          </label>
-        </div>
-        <div className="mt-5 border-t border-slate-100 pt-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">App / Shop Logo</p>
-          <p className="mt-1 text-xs text-slate-400">Shown in the app sidebar/header next to the SaleDock logo.</p>
-          <input type="hidden" name="appLogoUrl" value={appLogoUrlInput} />
-          <div className="mt-3">
-            <ImageUpload
-              bucket="public-branding"
-              folderPath={`orgs/${organizationId}/app-logo`}
-              currentUrl={settings.appLogoUrl || null}
-              onUploadComplete={handleAppLogoUpload}
-              onRemove={handleAppLogoRemove}
-              aspectRatio="landscape"
-              uploadingText="Uploading logo..."
-              removeLabel="Remove shop logo"
-            />
+        <form action={makeAction("business_profile")}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className={labelClass}>
+              <span className={labelTextClass}>Shop name</span>
+              <input name="shopName" required defaultValue={settings.shopName} disabled={!canEdit || bpPending} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Owner name</span>
+              <input name="ownerName" defaultValue={settings.ownerName} disabled={!canEdit || bpPending} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Phone</span>
+              <input name="phone" defaultValue={settings.phone} disabled={!canEdit || bpPending} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>WhatsApp support</span>
+              <input name="whatsappSupport" defaultValue={settings.whatsappSupport} disabled={!canEdit || bpPending} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Email</span>
+              <input name="email" type="email" defaultValue={settings.email} disabled={!canEdit || bpPending} className={inputClass} />
+            </label>
+            <label className="block min-w-0 md:col-span-2">
+              <span className={labelTextClass}>Address</span>
+              <textarea name="address" defaultValue={settings.address} disabled={!canEdit || bpPending} className={textareaClass} />
+            </label>
           </div>
+          <BlockSaveButton pending={bpPending} canEdit={canEdit} label="Save business profile" />
+          <BlockMessage state={bpState} />
+        </form>
+
+        {/* App / Shop Logo — inline sub-form inside same section */}
+        <div className="mt-6 border-t border-slate-100 pt-6">
+          <form action={makeAction("app_logo")}>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">App / Shop Logo</p>
+            <p className="mt-1 text-xs text-slate-400">Shown in the app sidebar/header next to the SaleDock logo.</p>
+            <input type="hidden" name="appLogoUrl" value={appLogoUrlInput} />
+            <div className="mt-3">
+              <ImageUpload
+                bucket="public-branding"
+                folderPath={`orgs/${organizationId}/app-logo`}
+                currentUrl={settings.appLogoUrl || null}
+                onUploadComplete={handleAppLogoUpload}
+                onRemove={handleAppLogoRemove}
+                aspectRatio="landscape"
+                uploadingText="Uploading logo..."
+                removeLabel="Remove shop logo"
+              />
+            </div>
+            <BlockSaveButton pending={logoPending} canEdit={canEdit} label="Save shop logo" />
+            <BlockMessage state={logoState} />
+          </form>
         </div>
       </Section>
 
+      {/* Branch Profile */}
       <Section
         title="Branch Profile"
         description="Branch-level name and contact details shown on invoices, repair receipts, and reports."
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className={labelClass}>
-            <span className={labelTextClass}>Branch name</span>
-            <input name="branchName" required defaultValue={settings.branchName} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Branch phone</span>
-            <input name="branchPhone" defaultValue={settings.branchPhone} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className="block min-w-0 md:col-span-2">
-            <span className={labelTextClass}>Branch address</span>
-            <textarea name="branchAddress" defaultValue={settings.branchAddress} disabled={!canEdit || pending} className={textareaClass} />
-          </label>
-        </div>
+        <form action={makeAction("branch_profile")}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className={labelClass}>
+              <span className={labelTextClass}>Branch name</span>
+              <input name="branchName" required defaultValue={settings.branchName} disabled={!canEdit || brPending} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Branch phone</span>
+              <input name="branchPhone" defaultValue={settings.branchPhone} disabled={!canEdit || brPending} className={inputClass} />
+            </label>
+            <label className="block min-w-0 md:col-span-2">
+              <span className={labelTextClass}>Branch address</span>
+              <textarea name="branchAddress" defaultValue={settings.branchAddress} disabled={!canEdit || brPending} className={textareaClass} />
+            </label>
+          </div>
+          <BlockSaveButton pending={brPending} canEdit={canEdit} label="Save branch profile" />
+          <BlockMessage state={brState} />
+        </form>
       </Section>
 
+      {/* Invoice & Receipt Branding */}
       <Section
         title="Invoice & Receipt Branding"
         description="Branding fields used by invoice prints, repair receipts, and reports."
       >
-        <div className="grid gap-5 lg:grid-cols-[300px_1fr]">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex aspect-square items-center justify-center rounded-xl bg-white p-5">
-              {logoError ? (
-                <div className="flex flex-col items-center gap-2">
-                  <ImageIcon className="size-10 text-slate-300" />
-                  <span className="text-xs text-slate-400">Preview unavailable</span>
-                  <span className="text-[10px] text-slate-400 text-center leading-tight">Upload a new image or remove it.</span>
-                </div>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  key={effectiveLogoUrl}
-                  src={effectiveLogoUrl}
-                  alt="Shop logo preview"
-                  className="h-auto max-h-28 w-auto object-contain"
-                  onError={handleLogoError}
-                />
+        <form action={makeAction("invoice_branding")}>
+          <div className="grid gap-5 lg:grid-cols-[300px_1fr]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex aspect-square items-center justify-center rounded-xl bg-white p-5">
+                {logoError ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <ImageIcon className="size-10 text-slate-300" />
+                    <span className="text-xs text-slate-400">Preview unavailable</span>
+                    <span className="text-[10px] text-slate-400 text-center leading-tight">Upload a new image or remove it.</span>
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    key={effectiveLogoUrl}
+                    src={effectiveLogoUrl}
+                    alt="Invoice logo preview"
+                    className="h-auto max-h-28 w-auto object-contain"
+                    onError={handleLogoError}
+                  />
+                )}
+              </div>
+              {isDefaultLogo && (
+                <p className="mt-2 text-center text-[10px] text-slate-400">
+                  Using default SaleDock logo
+                </p>
               )}
+              <div className="mt-3 space-y-2">
+                <ImageUpload
+                  bucket="public-branding"
+                  folderPath={`orgs/${organizationId}/logo`}
+                  currentUrl={null}
+                  onUploadComplete={handleLogoUpload}
+                  onRemove={handleLogoRemove}
+                  aspectRatio="landscape"
+                  uploadingText="Uploading logo..."
+                  removeLabel="Remove logo"
+                />
+              </div>
             </div>
-            {isDefaultLogo && (
-              <p className="mt-2 text-center text-[10px] text-slate-400">
-                Using default SaleDock logo
-              </p>
-            )}
-            <div className="mt-3 space-y-2">
-              <ImageUpload
-                bucket="public-branding"
-                folderPath={`orgs/${organizationId}/logo`}
-                currentUrl={null}
-                onUploadComplete={handleLogoUpload}
-                onRemove={handleLogoRemove}
-                aspectRatio="landscape"
-                uploadingText="Uploading logo..."
-                removeLabel="Remove logo"
-              />
+            <div className="grid gap-4">
+              <label className={labelClass}>
+                <span className={labelTextClass}>Logo URL or path</span>
+                <input name="logoUrl" value={logoUrlInput} onChange={(e) => setLogoUrlInput(e.target.value)} disabled={!canEdit || invPending} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>Invoice footer / note</span>
+                <textarea name="invoiceFooter" defaultValue={settings.invoiceFooter} disabled={!canEdit || invPending} className={textareaClass} />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>Repair receipt terms</span>
+                <textarea name="receiptTerms" defaultValue={settings.receiptTerms} disabled={!canEdit || invPending} className={textareaClass} />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>Default print format</span>
+                <select name="printFormat" defaultValue={settings.printFormat} disabled={!canEdit || invPending} className={inputClass}>
+                  <option value="a4">A4 default</option>
+                  <option value="80mm_planned">80mm planned / deferred</option>
+                </select>
+              </label>
             </div>
           </div>
-          <div className="grid gap-4">
-            <label className={labelClass}>
-              <span className={labelTextClass}>Logo URL or path</span>
-              <input name="logoUrl" value={logoUrlInput} onChange={(e) => setLogoUrlInput(e.target.value)} disabled={!canEdit || pending} className={inputClass} />
-            </label>
-            <label className={labelClass}>
-              <span className={labelTextClass}>Invoice footer / note</span>
-              <textarea name="invoiceFooter" defaultValue={settings.invoiceFooter} disabled={!canEdit || pending} className={textareaClass} />
-            </label>
-            <label className={labelClass}>
-              <span className={labelTextClass}>Repair receipt terms</span>
-              <textarea name="receiptTerms" defaultValue={settings.receiptTerms} disabled={!canEdit || pending} className={textareaClass} />
-            </label>
-            <label className={labelClass}>
-              <span className={labelTextClass}>Default print format</span>
-              <select name="printFormat" defaultValue={settings.printFormat} disabled={!canEdit || pending} className={inputClass}>
-                <option value="a4">A4 default</option>
-                <option value="80mm_planned">80mm planned / deferred</option>
-              </select>
-            </label>
-          </div>
-        </div>
+          <BlockSaveButton pending={invPending} canEdit={canEdit} label="Save invoice branding" />
+          <BlockMessage state={invState} />
+        </form>
       </Section>
 
+      {/* Theme & Appearance */}
       <Section
         title="Theme & Appearance"
         description="Custom brand colors and default theme mode for your shop."
       >
-        <div className="grid gap-4 md:grid-cols-3">
-          <label className={labelClass}>
-            <span className={labelTextClass}>Primary color</span>
-            <div className="mt-1 flex items-center gap-2">
-              <input
-                type="color"
-                name="primaryColor"
-                defaultValue={settings.primaryColor ?? "#3B82F6"}
-                disabled={!canEdit || pending}
-                className="h-11 w-14 rounded-lg border border-slate-200 p-1 cursor-pointer"
-              />
-              <input
-                name="primaryColor"
-                defaultValue={settings.primaryColor ?? "#3B82F6"}
-                disabled={!canEdit || pending}
+        <form action={makeAction("theme")}>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className={labelClass}>
+              <span className={labelTextClass}>Primary color</span>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="color"
+                  name="primaryColor"
+                  defaultValue={settings.primaryColor ?? "#3B82F6"}
+                  disabled={!canEdit || thPending}
+                  className="h-11 w-14 rounded-lg border border-slate-200 p-1 cursor-pointer"
+                />
+                <input
+                  name="primaryColor"
+                  defaultValue={settings.primaryColor ?? "#3B82F6"}
+                  disabled={!canEdit || thPending}
+                  className={inputClass}
+                  placeholder="#3B82F6"
+                  maxLength={7}
+                />
+              </div>
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Accent color</span>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="color"
+                  name="accentColor"
+                  defaultValue={settings.accentColor ?? "#10B981"}
+                  disabled={!canEdit || thPending}
+                  className="h-11 w-14 rounded-lg border border-slate-200 p-1 cursor-pointer"
+                />
+                <input
+                  name="accentColor"
+                  defaultValue={settings.accentColor ?? "#10B981"}
+                  disabled={!canEdit || thPending}
+                  className={inputClass}
+                  placeholder="#10B981"
+                  maxLength={7}
+                />
+              </div>
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Default theme</span>
+              <select
+                name="defaultTheme"
+                defaultValue={settings.defaultTheme ?? "system"}
+                disabled={!canEdit || thPending}
                 className={inputClass}
-                placeholder="#3B82F6"
-                maxLength={7}
-              />
-            </div>
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Accent color</span>
-            <div className="mt-1 flex items-center gap-2">
-              <input
-                type="color"
-                name="accentColor"
-                defaultValue={settings.accentColor ?? "#10B981"}
-                disabled={!canEdit || pending}
-                className="h-11 w-14 rounded-lg border border-slate-200 p-1 cursor-pointer"
-              />
-              <input
-                name="accentColor"
-                defaultValue={settings.accentColor ?? "#10B981"}
-                disabled={!canEdit || pending}
-                className={inputClass}
-                placeholder="#10B981"
-                maxLength={7}
-              />
-            </div>
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Default theme</span>
-            <select
-              name="defaultTheme"
-              defaultValue={settings.defaultTheme ?? "system"}
-              disabled={!canEdit || pending}
-              className={inputClass}
-            >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-        </div>
+              >
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </label>
+          </div>
+          <BlockSaveButton pending={thPending} canEdit={canEdit} label="Save theme" />
+          <BlockMessage state={thState} />
+        </form>
       </Section>
 
+      {/* Profile Picture */}
       <Section
         title="Profile Picture"
         description="Your profile photo shown in the app header and staff list."
@@ -340,33 +404,39 @@ export function SettingsForm({
         </form>
       </Section>
 
+      {/* Regional / Currency */}
       <Section
         title="Regional / Currency"
         description="Regional defaults for money formatting, reporting, and future branch operations."
       >
-        <div className="grid gap-4 md:grid-cols-3">
-          <label className={labelClass}>
-            <span className={labelTextClass}>Currency</span>
-            <input name="currencyCode" defaultValue={settings.currencyCode || "PKR"} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className="block min-w-0 md:col-span-2">
-            <span className={labelTextClass}>Timezone</span>
-            <input name="timezone" defaultValue={settings.timezone || "Asia/Karachi"} disabled={!canEdit || pending} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className={labelTextClass}>Low-stock default threshold</span>
-            <input
-              name="lowStockDefaultThreshold"
-              type="number"
-              min={0}
-              defaultValue={settings.lowStockDefaultThreshold}
-              disabled={!canEdit || pending}
-              className={inputClass}
-            />
-          </label>
-        </div>
+        <form action={makeAction("regional")}>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className={labelClass}>
+              <span className={labelTextClass}>Currency</span>
+              <input name="currencyCode" defaultValue={settings.currencyCode || "PKR"} disabled={!canEdit || regPending} className={inputClass} />
+            </label>
+            <label className="block min-w-0 md:col-span-2">
+              <span className={labelTextClass}>Timezone</span>
+              <input name="timezone" defaultValue={settings.timezone || "Asia/Karachi"} disabled={!canEdit || regPending} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>Low-stock default threshold</span>
+              <input
+                name="lowStockDefaultThreshold"
+                type="number"
+                min={0}
+                defaultValue={settings.lowStockDefaultThreshold}
+                disabled={!canEdit || regPending}
+                className={inputClass}
+              />
+            </label>
+          </div>
+          <BlockSaveButton pending={regPending} canEdit={canEdit} label="Save regional settings" />
+          <BlockMessage state={regState} />
+        </form>
       </Section>
 
+      {/* System Info / Safe Notes */}
       <Section
         title="System Info / Safe Notes"
         description="Reference details for support. IDs are shown for troubleshooting only."
@@ -389,16 +459,6 @@ export function SettingsForm({
           </details>
         </dl>
       </Section>
-
-      <div className="sticky bottom-0 z-10 -mx-3 border-t border-slate-200 bg-slate-50/95 px-3 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
-        <button
-          type="submit"
-          disabled={!canEdit || pending}
-          className="min-h-12 w-full rounded-xl bg-blue-700 px-5 text-sm font-black text-white transition hover:bg-blue-800 disabled:opacity-60 sm:w-auto"
-        >
-          {pending || ppPending ? "Saving settings..." : "Save settings"}
-        </button>
-      </div>
-    </form>
+    </div>
   );
 }
