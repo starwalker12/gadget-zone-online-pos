@@ -298,9 +298,9 @@ export default async function HomePage() {
       {/* ── STICKY NAV ── */}
       <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-gradient-to-r from-[#0b2f6f] to-[#0d9488] shadow-lg shadow-blue-900/20 dark:border-white/[0.06] dark:bg-[#050c1a]/95">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center">
+          <Link href="/" className="inline-flex items-center rounded-2xl bg-white/95 px-4 py-2 shadow-sm ring-1 ring-white/40 dark:bg-white/95">
             <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={488} height={178}
-              className="h-8 w-auto object-contain drop-shadow-[0_0_10px_rgba(20,184,166,0.3)] sm:h-9 dark:drop-shadow-[0_0_12px_rgba(20,184,166,0.4)]" priority />
+              className="h-8 w-auto object-contain sm:h-9" priority />
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -394,7 +394,7 @@ export default async function HomePage() {
               <div aria-hidden className="pointer-events-none absolute inset-0 animate-logo-shimmer rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent dark:via-white/15" />
               {/* Logo image */}
               <Image src="/saledock-logo-full.png" alt="SaleDock Cloud POS" width={488} height={178}
-                className="relative z-10 max-w-[200px] w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(20,184,166,0.25)] sm:max-w-[280px] dark:drop-shadow-[0_0_30px_rgba(20,184,166,0.4)]" priority />
+                className="relative z-10 max-w-[280px] w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(20,184,166,0.25)] sm:max-w-[380px] lg:max-w-[520px] xl:max-w-[580px] dark:drop-shadow-[0_0_30px_rgba(20,184,166,0.4)]" priority />
             </div>
 
             {/* Badge */}
