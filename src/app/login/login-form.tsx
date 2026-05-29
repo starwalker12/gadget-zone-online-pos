@@ -9,7 +9,7 @@ import {
   resetPasswordAction,
   type AuthState,
 } from "@/app/(auth)/actions";
-import { Recaptcha } from "@/components/auth/recaptcha";
+import { Recaptcha, type RecaptchaStatus } from "@/components/auth/recaptcha";
 
 const initialState: AuthState = { error: null };
 
@@ -39,6 +39,7 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
   const action = mode === "sign-in" ? signInAction : mode === "sign-up" ? signUpAction : resetPasswordAction;
   const [state, formAction, pending] = useActionState(action, initialState);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaStatus, setRecaptchaStatus] = useState<RecaptchaStatus>("unconfigured");
   const recaptchaResetRef = useRef<(() => void) | null>(null);
 
   const switchMode = useCallback((newMode: "sign-in" | "sign-up" | "forgot") => {
@@ -47,9 +48,18 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
     recaptchaResetRef.current?.();
   }, []);
 
+  // Suppress "Please complete the security check" when no visible widget was shown
+  const isRecaptchaMissing = recaptchaStatus === "unconfigured" || recaptchaStatus === "failed";
+  const suppressedError =
+    state.error === "Please complete the security check." && isRecaptchaMissing
+      ? (process.env.NODE_ENV === "development"
+          ? "Security check not configured for this preview. Set NEXT_PUBLIC_RECAPTCHA_SITE_KEY and RECAPTCHA_SECRET_KEY."
+          : null)
+      : state.error;
+
   const fbError = callbackError === "facebook_invalid_scopes" ? FACEBOOK_SCOPE_HELP : null;
   const genericCallbackError = friendlyCallbackError(callbackError);
-  const displayError = fbError ?? state.error ?? genericCallbackError;
+  const displayError = fbError ?? suppressedError ?? genericCallbackError;
   const isDuplicateSignup = !state.error && state.info?.includes("already exist");
 
   if (mode === "forgot") {
@@ -80,7 +90,7 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
               {displayError}
             </p>
           )}
-          <Recaptcha onChange={setRecaptchaToken} resetRef={recaptchaResetRef} />
+          <Recaptcha onChange={setRecaptchaToken} onStatus={setRecaptchaStatus} resetRef={recaptchaResetRef} />
           <input type="hidden" name="recaptchaToken" value={recaptchaToken ?? ""} />
           <button
             type="submit"
@@ -196,7 +206,7 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
           </p>
         )}
 
-        <Recaptcha onChange={setRecaptchaToken} resetRef={recaptchaResetRef} />
+        <Recaptcha onChange={setRecaptchaToken} onStatus={setRecaptchaStatus} resetRef={recaptchaResetRef} />
         <input type="hidden" name="recaptchaToken" value={recaptchaToken ?? ""} />
 
         <button

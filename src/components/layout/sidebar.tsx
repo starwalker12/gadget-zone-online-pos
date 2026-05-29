@@ -31,7 +31,6 @@ const items = [
   { href: "/expenses", label: "Expenses", icon: Wallet },
   { href: "/daily-closing", label: "Daily Closing", icon: CalendarCheck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export async function Sidebar() {
@@ -44,6 +43,7 @@ export async function Sidebar() {
       : []),
     ...(canViewAuditLog(profile?.role) ? [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }] : []),
     ...(canManageUsers(profile?.role) ? [{ href: "/users", label: "Users", icon: UserCog }] : []),
+    { href: "/settings", label: "Settings", icon: Settings },
     ...(platformAdmin ? [{ href: "/platform", label: "Platform", icon: MonitorCog }] : []),
   ];
 
