@@ -1,37 +1,20 @@
 import Link from "next/link";
-import {
-  BarChart3,
-  Boxes,
-  LayoutDashboard,
-  ReceiptText,
-  RotateCcw,
-  Settings,
-  ShoppingCart,
-  Users,
-  CalendarCheck,
-  Wallet,
-  Wrench,
-  UserCog,
-  ScrollText,
-  Truck,
-  MonitorCog,
-} from "lucide-react";
 import { getCurrentContext } from "@/lib/auth/session";
 import { canManageUsers, canViewAuditLog, canManageSupplierPurchases } from "@/lib/permissions";
 import { isPlatformAdmin } from "@/lib/platform/admin";
 import { SidebarNav, type NavItem } from "@/components/layout/sidebar-nav";
 
 const items: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pos", label: "POS", icon: ShoppingCart },
-  { href: "/products", label: "Products", icon: Boxes },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/invoices", label: "Invoices", icon: ReceiptText },
-  { href: "/returns", label: "Returns", icon: RotateCcw },
-  { href: "/repairs", label: "Repairs", icon: Wrench },
-  { href: "/expenses", label: "Expenses", icon: Wallet },
-  { href: "/daily-closing", label: "Daily Closing", icon: CalendarCheck },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/pos", label: "POS", icon: "pos" },
+  { href: "/products", label: "Products", icon: "products" },
+  { href: "/customers", label: "Customers", icon: "customers" },
+  { href: "/invoices", label: "Invoices", icon: "invoices" },
+  { href: "/returns", label: "Returns", icon: "returns" },
+  { href: "/repairs", label: "Repairs", icon: "repairs" },
+  { href: "/expenses", label: "Expenses", icon: "expenses" },
+  { href: "/daily-closing", label: "Daily Closing", icon: "dailyClosing" },
+  { href: "/reports", label: "Reports", icon: "reports" },
 ];
 
 export async function Sidebar() {
@@ -40,12 +23,12 @@ export async function Sidebar() {
   const visibleItems: NavItem[] = [
     ...items,
     ...(canManageSupplierPurchases(profile?.role)
-      ? [{ href: "/suppliers/purchases", label: "Purchases", icon: Truck }]
+      ? [{ href: "/suppliers/purchases", label: "Purchases", icon: "purchases" }]
       : []),
-    ...(canViewAuditLog(profile?.role) ? [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }] : []),
-    ...(canManageUsers(profile?.role) ? [{ href: "/users", label: "Users", icon: UserCog }] : []),
-    { href: "/settings", label: "Settings", icon: Settings },
-    ...(platformAdmin ? [{ href: "/platform", label: "Platform", icon: MonitorCog }] : []),
+    ...(canViewAuditLog(profile?.role) ? [{ href: "/audit-log", label: "Audit Log", icon: "auditLog" }] : []),
+    ...(canManageUsers(profile?.role) ? [{ href: "/users", label: "Users", icon: "users" }] : []),
+    { href: "/settings", label: "Settings", icon: "settings" },
+    ...(platformAdmin ? [{ href: "/platform", label: "Platform", icon: "platform" }] : []),
   ];
 
   return (

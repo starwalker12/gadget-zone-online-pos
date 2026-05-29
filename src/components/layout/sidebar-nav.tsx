@@ -3,11 +3,34 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
+import {
+  LayoutDashboard, ShoppingCart, Boxes, Users, ReceiptText,
+  RotateCcw, Wrench, Wallet, CalendarCheck, BarChart3,
+  Truck, ScrollText, UserCog, Settings, MonitorCog,
+} from "lucide-react";
+
+const iconMap: Record<string, ComponentType<{ className?: string }>> = {
+  dashboard: LayoutDashboard,
+  pos: ShoppingCart,
+  products: Boxes,
+  customers: Users,
+  invoices: ReceiptText,
+  returns: RotateCcw,
+  repairs: Wrench,
+  expenses: Wallet,
+  dailyClosing: CalendarCheck,
+  reports: BarChart3,
+  purchases: Truck,
+  auditLog: ScrollText,
+  users: UserCog,
+  settings: Settings,
+  platform: MonitorCog,
+};
 
 export type NavItem = {
   href: string;
   label: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: string;
 };
 
 export function SidebarNav({ items }: { items: NavItem[] }) {
@@ -29,7 +52,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
   return (
     <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
       {items.map((item) => {
-        const Icon = item.icon;
+        const Icon = iconMap[item.icon];
         const active = isActive(item.href);
         return (
           <Link
