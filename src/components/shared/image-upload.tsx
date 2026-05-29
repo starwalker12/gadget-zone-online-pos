@@ -34,18 +34,18 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setError(null);
+    setUploadError(null);
 
     const validationError = validateImageFile(file);
     if (validationError) {
-      setError(validationError);
+      setUploadError(validationError);
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
@@ -58,7 +58,7 @@ export function ImageUpload({
     uploadImage(bucket, folderPath, file).then((result: UploadResult) => {
       setUploading(false);
       if (result.error) {
-        setError(result.error);
+        setUploadError(result.error);
         setImgError(false);
         setPreview(currentUrl ?? null);
         return;
@@ -71,14 +71,14 @@ export function ImageUpload({
     }).catch(() => {
       setUploading(false);
       setImgError(false);
-      setError("Unexpected upload error. Please try again.");
+      setUploadError("Unexpected upload error. Please try again.");
       setPreview(currentUrl ?? null);
     });
   }
 
   function handleRemove() {
     setPreview(null);
-    setError(null);
+    setUploadError(null);
     setImgError(false);
     onRemove?.();
     if (inputRef.current) inputRef.current.value = "";
@@ -179,14 +179,14 @@ export function ImageUpload({
           </p>
           {showErrorState && !preview?.startsWith("blob:") && (
             <p className="text-[10px] text-slate-400 leading-relaxed">
-              This image could not be loaded. Re-upload it or use a different file.
+              Preview unavailable. Upload a new image or remove it.
             </p>
           )}
         </div>
       </div>
 
-      {error && (
-        <p className="text-xs text-red-500">{error}</p>
+      {uploadError && (
+        <p className="text-xs text-red-500">{uploadError}</p>
       )}
     </div>
   );
