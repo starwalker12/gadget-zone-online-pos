@@ -225,6 +225,12 @@ body {
   animation: logo-glow-pulse 4s ease-in-out infinite;
 }
 
+/* Urdu font: Noto Nastaliq Urdu for Nastaliq-style Urdu script */
+[data-lang="ur"] {
+  font-family: var(--font-urdu), "Noto Naskh Arabic", "Traditional Arabic", serif;
+  line-height: 1.8;
+}
+
 /* Hero logo: white in dark mode (avoids Tailwind v4 dark:variant specificity issues) */
 .dark .hero-logo-filter {
   filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(20,184,166,0.4));

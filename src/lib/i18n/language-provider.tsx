@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { getDictionary, type Lang } from "./translations";
 
 const COOKIE_NAME = "saledock_lang";
@@ -43,7 +43,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setCookie(COOKIE_NAME, newLang);
     try { localStorage.setItem(STORAGE_KEY, newLang); } catch {}
     document.documentElement.lang = newLang === "ur-roman" ? "ur" : newLang;
+    document.documentElement.setAttribute("data-lang", newLang);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-lang", lang);
+  }, [lang]);
 
   const dict = getDictionary(lang) as Record<string, unknown>;
 
