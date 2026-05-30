@@ -4,31 +4,18 @@ import {
   ShoppingCart, Wrench, BarChart3,
   TrendingUp, Users, Wallet, CalendarCheck,
   Bell, PackageSearch, CreditCard,
-  Boxes, Clock,
+  Boxes, Clock, RotateCcw, Briefcase,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentContext } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
-import { catalogCounts } from "@/lib/data/catalog";
 import { invoiceCounts } from "@/lib/data/invoices";
 import { expenseCounts } from "@/lib/data/expenses";
 import { getClosing, getDayActivity, todayLocalDate } from "@/lib/data/daily-closing";
+import { getDashboardSummary } from "@/lib/data/dashboard";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
-import { getRepairsStats } from "@/lib/data/repairs";
-
-async function debtorStats(organizationId: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("customers")
-    .select("outstanding_balance")
-    .eq("organization_id", organizationId)
-    .gt("outstanding_balance", 0);
-  if (error) return { totalDebt: 0, debtorCount: 0 };
-  const debtorCount = data?.length ?? 0;
-  const totalDebt = data?.reduce((acc, c) => acc + Number(c.outstanding_balance ?? 0), 0) ?? 0;
-  return { totalDebt, debtorCount };
-}
+import { getServerDict } from "@/lib/i18n/server";
 
 async function stockValueStats(organizationId: string) {
   const supabase = await createClient();
@@ -208,11 +195,8 @@ export default async function DashboardPage() {
   const branchId = profile.branch_id ?? null;
   const currency = organization?.currency_code ?? "PKR";
 
-  const [catalog, invoices, repairsStats, debt, stockValue, expenses, todayActivity, todayClosing, weekSales, activity, monthSales] = await Promise.all([
-    catalogCounts(orgId),
+  const [invoices, stockValue, expenses, todayActivity, todayClosing, weekSales, activity, monthSales, dashSummary] = await Promise.all([
     invoiceCounts(orgId),
-    getRepairsStats(orgId),
-    debtorStats(orgId),
     stockValueStats(orgId),
     expenseCounts(orgId),
     branchId ? getDayActivity(orgId, branchId, today) : Promise.resolve(null),
@@ -220,7 +204,11 @@ export default async function DashboardPage() {
     weeklySales(orgId, branchId),
     recentActivity(orgId),
     monthlySales(orgId, branchId),
+    getDashboardSummary(orgId, branchId),
   ]);
+
+  const { dict } = await getServerDict();
+  const t = dict.dashboard as Record<string, string>;
 
   const todayNet = invoices.todaySalesTotal - expenses.todayTotal;
   const expectedCashToday = todayActivity?.expectedCash ?? 0;
@@ -230,34 +218,64 @@ export default async function DashboardPage() {
 
   const isPrivileged = profile?.role === "owner" || profile?.role === "admin" || profile?.role === "manager";
 
-  const kpiCards = [
+  const isProfitPositive = dashSummary.todayProfit >= 0;
+
+  const statCards = [
     {
-      label: "Today Sales",
-      value: formatCurrency(invoices.todaySalesTotal, currency),
-      change: invoices.todayCount > 0 ? `${formatNumber(invoices.todayCount)} invoice${invoices.todayCount === 1 ? "" : "s"}` : "No sales today",
-      color: "#3b82f6",
+      label: t.todayProfit,
+      value: formatCurrency(dashSummary.todayProfit, currency),
+      change: isProfitPositive ? `${t.fromSales} ${t.today}` : `${t.estimatedProfit}`,
+      color: isProfitPositive ? "#059669" : "#dc2626",
       icon: TrendingUp,
     },
     {
-      label: "Inventory Alerts",
-      value: catalog.lowStock > 0 ? `${formatNumber(catalog.lowStock)} item${catalog.lowStock === 1 ? "" : "s"}` : "0 items",
-      change: catalog.lowStock > 0 ? "Below reorder level" : "All stocked",
-      color: "#f59e0b",
+      label: t.grossSales,
+      value: formatCurrency(dashSummary.grossSales, currency),
+      change: dashSummary.grossSales > 0 ? `${formatNumber(dashSummary.returnsCount + 1)} ${t.invoices}` : t.noSalesYet,
+      color: "#3b82f6",
+      icon: ShoppingCart,
+    },
+    {
+      label: t.returns,
+      value: formatCurrency(dashSummary.returnsTotal, currency),
+      change: dashSummary.returnsCount > 0 ? `${formatNumber(dashSummary.returnsCount)} return${dashSummary.returnsCount === 1 ? "" : "s"}` : "0 returns",
+      color: "#dc2626",
+      icon: RotateCcw,
+    },
+    {
+      label: t.expenses,
+      value: formatCurrency(dashSummary.expensesTotal, currency),
+      change: dashSummary.expensesTotal > 0 ? `${t.today}` : "0 expenses",
+      color: "#d97706",
+      icon: Wallet,
+    },
+    {
+      label: t.lowStock,
+      value: dashSummary.lowStockCount > 0 ? `${formatNumber(dashSummary.lowStockCount)} item${dashSummary.lowStockCount === 1 ? "" : "s"}` : "0 items",
+      change: dashSummary.lowStockCount > 0 ? "Below minimum stock" : "All stocked",
+      color: "#d97706",
       icon: PackageSearch,
     },
     {
-      label: "Repairs Open",
-      value: `${formatNumber(repairsStats.openCount)} job${repairsStats.openCount === 1 ? "" : "s"}`,
-      change: repairsStats.readyCount > 0 ? `${formatNumber(repairsStats.readyCount)} ready for delivery` : "No open repairs",
+      label: t.pendingRepairs,
+      value: `${formatNumber(dashSummary.pendingRepairsCount)} job${dashSummary.pendingRepairsCount === 1 ? "" : "s"}`,
+      change: dashSummary.pendingRepairsCount > 0 ? "In progress" : "No pending jobs",
       color: "#8b5cf6",
       icon: Wrench,
     },
     {
-      label: "Due Payments",
-      value: formatCurrency(debt.totalDebt, currency),
-      change: debt.debtorCount > 0 ? `${formatNumber(debt.debtorCount)} customer${debt.debtorCount === 1 ? "" : "s"}` : "All settled",
-      color: "#10b981",
-      icon: CreditCard,
+      label: t.supplierDues,
+      value: formatCurrency(dashSummary.supplierDuesTotal, currency),
+      change: dashSummary.supplierDuesTotal > 0 ? t.suppliersPayable : "All settled",
+      color: "#d97706",
+      icon: Briefcase,
+    },
+    {
+      label: t.customerDues,
+      value: formatCurrency(dashSummary.customerDuesTotal, currency),
+      change: dashSummary.customerDuesTotal > 0 ? t.customersOwe : "All settled",
+      color: "#d97706",
+      icon: Users,
     },
   ];
 
@@ -322,9 +340,9 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* KPI row */}
+            {/* Stat cards row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-              {kpiCards.map((k) => {
+              {statCards.map((k) => {
                 const Icon = k.icon;
                 return (
                   <div
@@ -332,22 +350,61 @@ export default async function DashboardPage() {
                     className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] font-semibold tracking-wider text-slate-500 dark:text-slate-400">
                         {k.label}
                       </span>
-                      <span className="inline-block h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: k.color }} />
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md" style={{ background: `${k.color}18`, color: k.color }}>
+                        <Icon className="size-3.5" />
+                      </span>
                     </div>
                     <p className="mt-1.5 text-sm font-bold text-slate-950 dark:text-white sm:text-base">
                       {k.value}
                     </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold" style={{ color: k.color }}>
-                      <Icon className="size-3" />
+                    <p className="mt-0.5 text-[10px] font-medium" style={{ color: k.color }}>
                       {k.change}
                     </p>
                   </div>
                 );
               })}
             </div>
+
+            {/* Top-selling products */}
+            {dashSummary.topSellingProducts.length > 0 && (
+              <div className="mt-3 sm:mt-4">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t.topSelling}
+                    </p>
+                    <Link href="/products" className="text-[10px] font-semibold text-blue-700 hover:underline dark:text-blue-400">
+                      {t.viewReport}
+                    </Link>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[11px]">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-white/[0.06]">
+                          <th className="pb-1.5 font-semibold text-slate-500 dark:text-slate-400">#</th>
+                          <th className="pb-1.5 font-semibold text-slate-500 dark:text-slate-400">Product</th>
+                          <th className="pb-1.5 text-right font-semibold text-slate-500 dark:text-slate-400">{t.itemsSold}</th>
+                          <th className="pb-1.5 text-right font-semibold text-slate-500 dark:text-slate-400">Revenue</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dashSummary.topSellingProducts.map((p, i) => (
+                          <tr key={p.productName} className="border-b border-slate-100 last:border-0 dark:border-white/[0.04]">
+                            <td className="py-1.5 text-slate-400">{i + 1}</td>
+                            <td className="py-1.5 font-medium text-slate-950 dark:text-white">{p.productName}</td>
+                            <td className="py-1.5 text-right text-slate-700 dark:text-slate-300">{formatNumber(p.quantity)}</td>
+                            <td className="py-1.5 text-right font-semibold text-slate-950 dark:text-white">{formatCurrency(p.revenue, currency)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Activity + weekly chart */}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-4 lg:grid-cols-[1fr_180px]">
