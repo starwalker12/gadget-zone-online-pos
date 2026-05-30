@@ -44,13 +44,11 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
   const [state, formAction, pending] = useActionState(action, initialState);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [recaptchaStatus, setRecaptchaStatus] = useState<RecaptchaStatus>("unconfigured");
-  const [confirmError, setConfirmError] = useState<string | null>(null);
   const recaptchaResetRef = useRef<(() => void) | null>(null);
 
   const switchMode = useCallback((newMode: "sign-in" | "sign-up" | "forgot") => {
     setMode(newMode);
     setRecaptchaToken(null);
-    setConfirmError(null);
     recaptchaResetRef.current?.();
   }, []);
 
@@ -135,23 +133,7 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
         )}
       </div>
 
-      <form
-        action={formAction}
-        onSubmit={(e) => {
-          if (mode === "sign-up") {
-            const form = e.currentTarget;
-            const password = (form.elements.namedItem("password") as HTMLInputElement)?.value;
-            const confirmPassword = (form.elements.namedItem("confirmPassword") as HTMLInputElement)?.value;
-            if (password !== confirmPassword) {
-              e.preventDefault();
-              setConfirmError(t("passwordsDoNotMatch", "Passwords do not match."));
-              return;
-            }
-            setConfirmError(null);
-          }
-        }}
-        className="space-y-4"
-      >
+      <form action={formAction} className="space-y-4">
         {mode === "sign-up" && (
           <label className="block">
             <span className="text-sm font-semibold text-slate-700">{t("fullName", "Full name")}</span>
@@ -230,11 +212,6 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
           </p>
         )}
 
-        {confirmError && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-            {confirmError}
-          </p>
-        )}
         {displayError && !isDuplicateSignup && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
             {displayError}

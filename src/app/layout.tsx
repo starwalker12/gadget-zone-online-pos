@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Syne } from "next/font/google";
+import { Geist, Geist_Mono, Syne, Noto_Nastaliq_Urdu } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
@@ -19,6 +19,12 @@ const syne = Syne({
   variable: "--font-syne",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+});
+
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+  variable: "--font-urdu",
+  subsets: ["arabic"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -42,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${notoNastaliqUrdu.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-200">
