@@ -19,17 +19,20 @@ export function BarcodeScanner({ onDetected, disabled }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number>(0);
   const detectorRef = useRef<any>(null);
-  const [supported, setSupported] = useState(true);
+  const readerRef = useRef<any>(null);
+  const [hasNative, setHasNative] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!("BarcodeDetector" in window)) {
-      setSupported(false);
-    }
+    setHasNative("BarcodeDetector" in window);
   }, []);
 
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
+    if (readerRef.current) {
+      try { readerRef.current.reset(); } catch { /* noop */ }
+      readerRef.current = null;
+    }
     if (state.status === "scanning") {
       state.stream.getTracks().forEach((t) => t.stop());
     }
@@ -39,6 +42,9 @@ export function BarcodeScanner({ onDetected, disabled }: Props) {
   useEffect(() => {
     return () => {
       cancelAnimationFrame(rafRef.current);
+      if (readerRef.current) {
+        try { readerRef.current.reset(); } catch { /* noop */ }
+      }
       if (state.status === "scanning") {
         state.stream.getTracks().forEach((t) => t.stop());
       }
@@ -46,8 +52,58 @@ export function BarcodeScanner({ onDetected, disabled }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Native BarcodeDetector path (Chromium) ──
+  const startNative = useCallback(async (stream: MediaStream) => {
+    const BarcodeDetectorCtor = (window as any).BarcodeDetector;
+    detectorRef.current = new BarcodeDetectorCtor({
+      formats: [
+        "qr_code", "ean_13", "ean_8", "upc_a", "upc_e",
+        "code_128", "code_39", "code_93", "codabar",
+        "itf", "data_matrix", "pdf417", "aztec",
+      ],
+    });
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+
+    const detect = async () => {
+      if (!videoRef.current || !detectorRef.current) return;
+      try {
+        const codes = await detectorRef.current.detect(videoRef.current);
+        if (codes.length > 0 && codes[0].rawValue) {
+          onDetected(codes[0].rawValue);
+          stopCamera();
+          return;
+        }
+      } catch {
+        // continue
+      }
+      rafRef.current = requestAnimationFrame(detect);
+    };
+    rafRef.current = requestAnimationFrame(detect);
+  }, [onDetected, stopCamera]);
+
+  // ── ZXing fallback path (Safari/Firefox) ──
+  const startFallback = useCallback(async (stream: MediaStream) => {
+    const { BrowserMultiFormatReader } = await import("@zxing/browser");
+    const reader = new BrowserMultiFormatReader();
+    readerRef.current = reader;
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+
+    reader.decodeFromVideoElement(videoRef.current!, (result, err) => {
+      if (result) {
+        onDetected(result.getText());
+        stopCamera();
+      }
+    });
+  }, [onDetected, stopCamera]);
+
   const startCamera = useCallback(async () => {
-    if (!supported) return;
+    if (!hasNative && typeof window === "undefined") return;
     setState({ status: "opening" });
 
     try {
@@ -68,46 +124,13 @@ export function BarcodeScanner({ onDetected, disabled }: Props) {
         });
       }
 
-      const BarcodeDetectorCtor = (window as any).BarcodeDetector;
-      detectorRef.current = new BarcodeDetectorCtor({
-        formats: [
-          "qr_code",
-          "ean_13",
-          "ean_8",
-          "upc_a",
-          "upc_e",
-          "code_128",
-          "code_39",
-          "code_93",
-          "codabar",
-          "itf",
-          "data_matrix",
-          "pdf417",
-          "aztec",
-        ],
-      });
-
       setState({ status: "scanning", stream });
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (hasNative) {
+        await startNative(stream);
+      } else {
+        await startFallback(stream);
       }
-
-      const detect = async () => {
-        if (!videoRef.current || !detectorRef.current) return;
-        try {
-          const codes = await detectorRef.current.detect(videoRef.current);
-          if (codes.length > 0 && codes[0].rawValue) {
-            onDetected(codes[0].rawValue);
-            stopCamera();
-            return;
-          }
-        } catch {
-          // continue
-        }
-        rafRef.current = requestAnimationFrame(detect);
-      };
-      rafRef.current = requestAnimationFrame(detect);
     } catch (err) {
       const msg =
         err instanceof DOMException && err.name === "NotAllowedError"
@@ -115,10 +138,9 @@ export function BarcodeScanner({ onDetected, disabled }: Props) {
           : "Could not open camera.";
       setState({ status: "error", message: msg });
     }
-  }, [supported, onDetected, stopCamera]);
+  }, [hasNative, startNative, startFallback]);
 
-  if (!supported) return null;
-
+  // ── Render ──
   if (state.status === "scanning") {
     return (
       <div className="relative mt-2 overflow-hidden rounded-lg border border-slate-200 bg-black sm:col-span-2">
