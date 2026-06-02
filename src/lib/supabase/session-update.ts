@@ -18,6 +18,7 @@ const protectedPrefixes = [
   "/audit-log",
   "/suppliers",
   "/platform",
+  "/purchases",
 ];
 
 export async function updateSession(request: NextRequest) {

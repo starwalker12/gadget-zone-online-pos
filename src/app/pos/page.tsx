@@ -12,6 +12,7 @@ export default async function PosPage() {
   const { user, profile, organization } = await getCurrentContext();
   if (!user) redirect("/login");
   if (!profile?.organization_id) redirect("/setup");
+  if (!canUsePos(profile.role)) redirect("/dashboard");
 
   const orgId = profile.organization_id;
   const [products, customers, categories] = await Promise.all([
