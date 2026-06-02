@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Search, Trash2, UserPlus2 } from "lucide-react";
 import { checkoutAction, quickCreateCustomerAction } from "./actions";
+import { BarcodeScanner } from "@/app/products/barcode-scanner";
 import {
   PAYMENT_METHODS,
   SERVICE_DIRECTIONS,
@@ -22,6 +23,7 @@ type Props = {
   categories: { id: string; name: string }[];
   currency: string;
   canCheckout: boolean;
+  canWriteCatalog: boolean;
 };
 
 type ServiceFields = {
@@ -73,12 +75,13 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   customer_credit: "Customer credit",
 };
 
-export function PosClient({ products: initialProducts, customers: initialCustomers, categories, currency, canCheckout }: Props) {
+export function PosClient({ products: initialProducts, customers: initialCustomers, categories, currency, canCheckout, canWriteCatalog }: Props) {
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [customers, setCustomers] = useState(initialCustomers);
 
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const [categoryId, setCategoryId] = useState<string>("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
@@ -94,6 +97,22 @@ export function PosClient({ products: initialProducts, customers: initialCustome
   const [success, setSuccess] = useState<{ id: string; no: string } | null>(null);
   const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
   const [pending, startTransition] = useTransition();
+  const [scanResult, setScanResult] = useState<{ barcode: string } | null>(null);
+
+  function handleBarcodeScan(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const match = products.find((p) => p.barcode === trimmed);
+    if (match) {
+      addToCart(match);
+      setSearch("");
+      setScanResult(null);
+      searchRef.current?.focus();
+      return;
+    }
+    setScanResult({ barcode: trimmed });
+    setTimeout(() => setScanResult(null), 8000);
+  }
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -328,19 +347,32 @@ export function PosClient({ products: initialProducts, customers: initialCustome
       <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
       {/* Products column */}
       <section className={`${mobileTab === "products" ? "block" : "hidden"} rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5 xl:block`}>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
           <label className="min-w-0">
             <span className="sr-only">Search</span>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <input
+                ref={searchRef}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleBarcodeScan(search);
+                  }
+                }}
                 placeholder="Search by name, SKU, or barcode"
                 className="h-11 w-full rounded-lg border border-slate-200 pl-9 pr-3 outline-none focus:border-blue-600"
               />
             </div>
           </label>
+          <BarcodeScanner
+            onDetected={(code) => {
+              handleBarcodeScan(code);
+            }}
+            disabled={false}
+          />
           <label className="min-w-0">
             <span className="sr-only">Category</span>
             <select
@@ -357,6 +389,19 @@ export function PosClient({ products: initialProducts, customers: initialCustome
             </select>
           </label>
         </div>
+        {scanResult && (
+          <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+            <span>No product found for barcode {scanResult.barcode}.</span>
+            {canWriteCatalog && (
+              <Link
+                href={`/products?tab=products&barcode=${encodeURIComponent(scanResult.barcode)}`}
+                className="ml-2 font-bold text-blue-700 underline hover:text-blue-800"
+              >
+                Create product?
+              </Link>
+            )}
+          </div>
+        )}
 
         {filteredProducts.length === 0 ? (
           <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">

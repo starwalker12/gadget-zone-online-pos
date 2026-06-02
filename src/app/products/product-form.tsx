@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { saveProductAction, type ActionState } from "./actions";
 import type { CategoryRow, ProductRow, SupplierRow } from "@/lib/data/catalog";
+import { BarcodeScanner } from "./barcode-scanner";
 
 const initial: ActionState = { error: null, success: null };
 
@@ -25,6 +26,8 @@ export function ProductForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [isService, setIsService] = useState(initialValues?.type === "service");
   const [allowSellAtLoss, setAllowSellAtLoss] = useState(initialValues?.allow_sell_at_loss ?? false);
+  const [barcode, setBarcode] = useState(initialValues?.barcode ?? "");
+  const barcodeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state.success && !initialValues?.id) {
@@ -50,10 +53,35 @@ export function ProductForm({
         <span className="text-sm font-semibold text-slate-700">SKU (optional)</span>
         <input name="sku" defaultValue={initialValues?.sku ?? ""} disabled={!canWrite} className={input} />
       </label>
-      <label className="block">
+      <div className="block">
         <span className="text-sm font-semibold text-slate-700">Barcode (optional)</span>
-        <input name="barcode" defaultValue={initialValues?.barcode ?? ""} disabled={!canWrite} className={input} />
-      </label>
+        <div className="mt-1 flex gap-2">
+          <input
+            ref={barcodeRef}
+            name="barcode"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            disabled={!canWrite}
+            className={`${input} flex-1`}
+            onKeyDown={(e) => {
+              // USB scanners emulate a keyboard press of Enter after the value.
+              // Prevent Enter from submitting the whole form.
+              if (e.key === "Enter") {
+                e.preventDefault();
+              }
+            }}
+          />
+          {canWrite && (
+            <BarcodeScanner
+              onDetected={(code) => {
+                setBarcode(code);
+                barcodeRef.current?.focus();
+              }}
+              disabled={pending}
+            />
+          )}
+        </div>
+      </div>
 
       <label className="block">
         <span className="text-sm font-semibold text-slate-700">Category</span>
