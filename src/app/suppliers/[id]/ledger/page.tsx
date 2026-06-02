@@ -65,9 +65,15 @@ export default async function SupplierLedgerPage({
 
   return (
     <AppShell pageTitle={`Supplier: ${supplier.name}`}>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <Link href="/suppliers/purchases" className="text-xs font-semibold text-slate-600 underline">
           ← Back to purchases
+        </Link>
+        <Link
+          href={`/suppliers/${id}/statement`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          View statement
         </Link>
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
