@@ -160,6 +160,7 @@ export async function saveProductAction(
   const id = (formData.get("id") as string | null) || null;
   const supabase = await createClient();
   const isService = parsed.data.is_service;
+  const orgId = w.ctx.profile!.organization_id!;
 
   // Enforce role permission gating for below-cost overrides
   const attemptOverride = parsed.data.allow_sell_at_loss;
@@ -167,12 +168,27 @@ export async function saveProductAction(
     return err("Only owner or admin can authorize selling below cost.");
   }
 
+  // Server-side barcode uniqueness check within the organization
+  const rawBarcode = parsed.data.barcode?.trim();
+  if (rawBarcode) {
+    let query = supabase
+      .from("products")
+      .select("id")
+      .eq("organization_id", orgId)
+      .eq("barcode", rawBarcode);
+    if (id) query = query.neq("id", id);
+    const { data: dupes } = await query.maybeSingle();
+    if (dupes) {
+      return err("This barcode is already used by another product.");
+    }
+  }
+
   const payload = {
-    organization_id: w.ctx.profile!.organization_id!,
+    organization_id: orgId,
     branch_id: w.ctx.profile!.branch_id ?? null,
     name: parsed.data.name,
     sku: parsed.data.sku ?? null,
-    barcode: parsed.data.barcode ?? null,
+    barcode: rawBarcode || null,
     category_id: parsed.data.category_id ?? null,
     supplier_id: parsed.data.supplier_id ?? null,
     type: isService ? ("service" as const) : ("product" as const),
