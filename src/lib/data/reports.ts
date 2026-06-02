@@ -705,3 +705,61 @@ export async function getReportsData(
     },
   };
 }
+
+export type PotentialProfitReport = {
+  totalInventorySaleValue: number;
+  totalInventoryCostValue: number;
+  potentialProfitInStock: number;
+  marginPercent: number | null;
+};
+
+export async function getPotentialProfitInStock(orgId: string): Promise<PotentialProfitReport> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("product_stock_lots")
+    .select(`
+      quantity_remaining,
+      unit_cost,
+      products!inner(sale_price, type, is_active)
+    `)
+    .eq("organization_id", orgId)
+    .eq("is_active", true)
+    .gt("quantity_remaining", 0);
+
+  if (error) {
+    console.error("Error fetching potential profit data:", error);
+    return {
+      totalInventorySaleValue: 0,
+      totalInventoryCostValue: 0,
+      potentialProfitInStock: 0,
+      marginPercent: null,
+    };
+  }
+
+  let saleValue = 0;
+  let costValue = 0;
+
+  for (const lot of data ?? []) {
+    const products = lot.products as unknown as
+      | { sale_price: number; type: string; is_active: boolean }
+      | null
+      | undefined;
+    if (products?.type !== "product" || !products?.is_active) continue;
+    const qty = Number(lot.quantity_remaining ?? 0);
+    const unitCost = Number(lot.unit_cost ?? 0);
+    const salePrice = Number(products.sale_price ?? 0);
+    saleValue += qty * salePrice;
+    costValue += qty * unitCost;
+  }
+
+  const profit = saleValue - costValue;
+  const margin = saleValue > 0 ? (profit / saleValue) * 100 : null;
+
+  return {
+    totalInventorySaleValue: saleValue,
+    totalInventoryCostValue: costValue,
+    potentialProfitInStock: profit,
+    marginPercent: margin !== null ? Math.round(margin * 100) / 100 : null,
+  };
+}
