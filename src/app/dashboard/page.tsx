@@ -14,6 +14,7 @@ import { invoiceCounts } from "@/lib/data/invoices";
 import { expenseCounts } from "@/lib/data/expenses";
 import { getClosing, getDayActivity, todayLocalDate } from "@/lib/data/daily-closing";
 import { getDashboardSummary } from "@/lib/data/dashboard";
+import { getPotentialProfitInStock } from "@/lib/data/reports";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
 import { getServerDict } from "@/lib/i18n/server";
 
@@ -195,7 +196,7 @@ export default async function DashboardPage() {
   const branchId = profile.branch_id ?? null;
   const currency = organization?.currency_code ?? "PKR";
 
-  const [invoices, stockValue, expenses, todayActivity, todayClosing, weekSales, activity, monthSales, dashSummary] = await Promise.all([
+  const [invoices, stockValue, expenses, todayActivity, todayClosing, weekSales, activity, monthSales, dashSummary, potentialProfit] = await Promise.all([
     invoiceCounts(orgId),
     stockValueStats(orgId),
     expenseCounts(orgId),
@@ -205,6 +206,7 @@ export default async function DashboardPage() {
     recentActivity(orgId),
     monthlySales(orgId, branchId),
     getDashboardSummary(orgId, branchId),
+    getPotentialProfitInStock(orgId),
   ]);
 
   const { dict } = await getServerDict();
@@ -600,6 +602,25 @@ export default async function DashboardPage() {
                 </p>
                 <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
                   At purchase cost
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-amber-50/40 p-3 dark:border-amber-800/30 dark:bg-amber-900/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Potential profit in stock
+                </p>
+                <p className="mt-1 text-base font-bold text-amber-800 dark:text-amber-300">
+                  {formatCurrency(potentialProfit.potentialProfitInStock, currency)}
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span>Sale value: {formatCurrency(potentialProfit.totalInventorySaleValue, currency)}</span>
+                  <span>Cost: {formatCurrency(potentialProfit.totalInventoryCostValue, currency)}</span>
+                  {potentialProfit.marginPercent !== null && (
+                    <span>Margin: {potentialProfit.marginPercent}%</span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-[10px] italic text-amber-600 dark:text-amber-400">
+                  If all current stock sold at current prices (not yet earned).
                 </p>
               </div>
             </div>
