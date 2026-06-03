@@ -97,8 +97,35 @@ export function Recaptcha({ onChange, onStatus, resetRef }: RecaptchaProps) {
       }
     }
 
+    // Use grecaptcha.ready() when available — it fires after the full
+    // reCAPTCHA API (including render()) has loaded from the secondary
+    // script (recaptcha__en.js). The bootstrap script's onload fires
+    // before that secondary script finishes, so calling renderWidget
+    // from onload would find render() not yet available and silently
+    // exit — the widget would never appear.
+    function scheduleRender() {
+      if (getGrecaptcha()) {
+        renderWidget();
+        return;
+      }
+      const w = (window as unknown as { grecaptcha?: { ready?: (cb: () => void) => void } }).grecaptcha;
+      if (w && typeof w.ready === "function") {
+        w.ready(() => { renderWidget(); });
+        return;
+      }
+      renderWidget();
+    }
+
     if (getGrecaptcha()) {
       renderWidget();
+      return;
+    }
+
+    // If grecaptcha already exists but render() isn't ready yet,
+    // use ready() instead of loading a duplicate script.
+    const existing = (window as unknown as { grecaptcha?: { ready?: (cb: () => void) => void } }).grecaptcha;
+    if (existing && typeof existing.ready === "function") {
+      existing.ready(() => { renderWidget(); });
       return;
     }
 
@@ -106,7 +133,7 @@ export function Recaptcha({ onChange, onStatus, resetRef }: RecaptchaProps) {
     script.src = "https://www.google.com/recaptcha/api.js?render=explicit";
     script.async = true;
     script.defer = true;
-    script.onload = renderWidget;
+    script.onload = scheduleRender;
     script.onerror = () => {
       reportStatus("failed");
     };
