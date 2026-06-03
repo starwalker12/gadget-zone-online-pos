@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentContext } from "@/lib/auth/session";
-import { canManageSupplierPurchases, canManageUsers } from "@/lib/permissions";
+import { canManageSupplierPurchases, canManageSupplierWriteOffs } from "@/lib/permissions";
 import {
   createPurchaseSchema,
   recordPaymentSchema,
@@ -154,7 +154,7 @@ export async function recordSupplierWriteOffAction(
     return { ok: false, error: "No branch assigned for this user." };
   }
 
-  if (!canManageUsers(ctx.profile.role)) {
+  if (!canManageSupplierWriteOffs(ctx.profile.role)) {
     return { ok: false, error: "Only owner or admin can write off supplier dues." };
   }
 
