@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentContext } from "@/lib/auth/session";
-import { canManageSupplierPurchases, canManageUsers } from "@/lib/permissions";
+import { canManageSupplierPurchases, canManageSupplierWriteOffs } from "@/lib/permissions";
 import { env } from "@/lib/env";
 import {
   listSupplierLedger,
@@ -63,7 +63,7 @@ export default async function SupplierLedgerPage({
 
   const outstanding = Number(supplier.outstanding_balance ?? 0);
   const canPay = canManageSupplierPurchases(profile.role);
-  const canWriteOff = canManageUsers(profile.role);
+  const canWriteOff = canManageSupplierWriteOffs(profile.role);
 
   return (
     <AppShell pageTitle={`Supplier: ${supplier.name}`}>

@@ -74,6 +74,12 @@ export function canManageLossOverride(role: Role | null | undefined): boolean {
   return role !== null && role !== undefined && LOSS_OVERRIDE_MANAGERS.includes(role);
 }
 
+const SUPPLIER_WRITE_OFF_MANAGERS: Role[] = ["owner", "admin"];
+
+export function canManageSupplierWriteOffs(role: Role | null | undefined): boolean {
+  return role !== null && role !== undefined && SUPPLIER_WRITE_OFF_MANAGERS.includes(role);
+}
+
 const SHIFT_OPENERS: Role[] = ["owner", "admin", "manager"];
 const SHIFT_CLOSERS: Role[] = ["owner", "admin", "manager"];
 const PURCHASE_MANAGERS: Role[] = ["owner", "admin", "manager"];
