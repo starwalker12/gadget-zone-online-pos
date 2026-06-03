@@ -41,7 +41,10 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
   const { dict } = useLanguage();
   const sidebarDict = dict.sidebar as Record<string, string> | undefined;
 
-  const t = (key: string) => sidebarDict?.[key] || key;
+  const labelFallback: Record<string, string> = {
+    supplierDues: "Supplier Dues",
+  };
+  const t = (key: string) => sidebarDict?.[key] || labelFallback[key] || key;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {

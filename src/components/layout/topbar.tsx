@@ -5,6 +5,7 @@ import { GlobalSearch } from "@/components/search/global-search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
+import { MobileDrawerWrapper } from "@/components/layout/mobile-drawer-wrapper";
 import { getPublicPlatformSetting, isPlatformAdmin } from "@/lib/platform/admin";
 import { getServerDict } from "@/lib/i18n/server";
 
@@ -33,7 +34,8 @@ export async function Topbar({ pageTitle }: { pageTitle?: string }) {
         </div>
       )}
       <div className="flex min-h-20 min-w-0 flex-col gap-3 px-3 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <MobileDrawerWrapper />
           <h1 className="truncate text-xl font-black text-slate-950 dark:text-slate-50 sm:text-2xl">{title}</h1>
         </div>
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:max-w-[680px]">
