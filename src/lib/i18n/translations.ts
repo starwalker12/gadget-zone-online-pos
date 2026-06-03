@@ -97,6 +97,7 @@ const en: Dict = {
     dailyClosing: "Daily Closing",
     reports: "Reports",
     purchases: "Purchases",
+    dues: "Supplier Dues",
     replenishment: "Replenishment",
     auditLog: "Audit Log",
     users: "Users",
@@ -105,7 +106,7 @@ const en: Dict = {
   },
   language: {
     en: "English",
-    ur: "\u0627\u0631\u062F\u0648",
+    ur: "اردو",
     "ur-roman": "Roman Urdu",
   },
   faq: {
@@ -291,6 +292,7 @@ const ur: Dict = {
     dailyClosing: "\u0631\u0648\u0632\u0627\u0646\u06C1 \u06A9\u0644\u0648\u0632\u0646\u06AF",
     reports: "\u0631\u06CC\u067E\u0648\u0631\u0679\u0633",
     purchases: "\u062E\u0631\u06CC\u062F\u0627\u0631\u06CC",
+    dues: "\u0633\u067E\u0644\u0627\u0626\u0631 \u06A9\u06D2 \u0628\u0642\u0627\u06CC\u0627",
     replenishment: "\u0631\u06CC \u067E\u0644\u0646\u0634\u0645\u0646\u0679",
     auditLog: "\u0622\u0688\u0679 \u0644\u0627\u06AF",
     users: "\u0635\u0627\u0631\u0641\u06CC\u0646",
@@ -485,6 +487,7 @@ const urRoman: Dict = {
     dailyClosing: "Daily Closing",
     reports: "Reports",
     purchases: "Purchases",
+    dues: "Supplier Dues",
     replenishment: "Replenishment",
     auditLog: "Audit Log",
     users: "Users",
