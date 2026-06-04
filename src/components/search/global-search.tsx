@@ -133,7 +133,10 @@ export function GlobalSearch() {
     const delayDebounce = setTimeout(async () => {
       try {
         const res = await executeGlobalSearchAction(query);
-        setResults(res);
+        if (res.error) {
+          console.error("Global search error:", res.error);
+        }
+        setResults(res.results);
         setHighlightIndex(0);
       } catch (err) {
         console.error("Global search failed:", err);
