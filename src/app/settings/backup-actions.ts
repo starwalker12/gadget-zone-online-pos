@@ -252,15 +252,6 @@ async function saveRowMappingsBatch(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Desktop → online field mapping helpers.
-//
-// Desktop SQLite uses C#-style PascalCase column names that don't match the
-// online (Supabase) snake_case schema. The desktop schema also drifted across
-// versions (e.g. Products has `ItemName` not `Name`, `Stock` not
-// `StockQuantity`, `MinimumStock` not `MinStock`; Bills has `BillDate` not
-// `Date`; BillItems has `Qty` not `Quantity` and `Price` not `UnitPrice`;
-// ReturnItems has `QtyReturned` not `Quantity`). These helpers + enum
-// normalisers replace the brittle direct-field-access pattern that caused
-// every product to be skipped with "empty name" during the first real import.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
