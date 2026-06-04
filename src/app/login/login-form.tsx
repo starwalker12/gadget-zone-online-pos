@@ -55,11 +55,14 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // After every server response (success or error), reset the captcha widget
-  // so the stale/consumed token is discarded and a fresh one is required.
+  // Only reset the captcha widget when the server explicitly requires a fresh tick.
+  // The server-side captcha-pass cookie (captcha_ok) normally skips Google verify
+  // on subsequent submits, so resetting on every state change is unnecessary.
   useEffect(() => {
-    recaptchaResetRef.current?.();
-  }, [state]);
+    if (state?.error === "Please complete the security check.") {
+      recaptchaResetRef.current?.();
+    }
+  }, [state?.error]);
 
   const passwordChecks = {
     minChars: passwordVal.length >= 8,
