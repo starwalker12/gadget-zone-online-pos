@@ -263,8 +263,7 @@ async function saveRowMappingsBatch(
 // every product to be skipped with "empty name" during the first real import.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pickString(row: any, keys: string[]): string {
+function pickString(row: Record<string, unknown>, keys: string[]): string {
   for (const k of keys) {
     const v = row?.[k];
     if (v === undefined || v === null) continue;
@@ -274,8 +273,7 @@ function pickString(row: any, keys: string[]): string {
   return "";
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pickNumber(row: any, keys: string[], fallback = 0): number {
+function pickNumber(row: Record<string, unknown>, keys: string[], fallback = 0): number {
   for (const k of keys) {
     const v = row?.[k];
     if (v === undefined || v === null || v === "") continue;
@@ -285,8 +283,7 @@ function pickNumber(row: any, keys: string[], fallback = 0): number {
   return fallback;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pickBool(row: any, keys: string[], fallback = false): boolean {
+function pickBool(row: Record<string, unknown>, keys: string[], fallback = false): boolean {
   for (const k of keys) {
     const v = row?.[k];
     if (v === undefined || v === null || v === "") continue;
