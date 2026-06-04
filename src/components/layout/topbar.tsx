@@ -42,8 +42,11 @@ export async function Topbar({ pageTitle }: { pageTitle?: string }) {
           <GlobalSearch />
           <ThemeToggle />
           <LanguageToggle />
-          <button className="flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 px-4 text-slate-600 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800">
-            <Bell className="size-4" />
+          <button
+            className="flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 px-4 text-slate-600 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+            aria-label="Notifications"
+          >
+            <Bell className="size-4" aria-hidden="true" />
           </button>
           {user ? (
             <UserMenu
