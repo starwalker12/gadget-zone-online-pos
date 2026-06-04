@@ -20,7 +20,7 @@ describe('readCaptchaPass', () => {
       delete: vi.fn(),
       has: vi.fn(),
       getAll: vi.fn(),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
   });
 
   afterEach(() => {
@@ -28,7 +28,7 @@ describe('readCaptchaPass', () => {
     vi.resetAllMocks();
   });
 
-  const generateValidCookie = (data: any, key: string) => {
+  const generateValidCookie = (data: Record<string, unknown>, key: string) => {
     const payload = JSON.stringify(data);
     const sig = createHmac('sha256', key).update(payload).digest('hex');
     return `${payload}.${sig}`;
@@ -43,7 +43,7 @@ describe('readCaptchaPass', () => {
   it('returns null if cookie is missing', async () => {
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue(undefined),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -51,7 +51,7 @@ describe('readCaptchaPass', () => {
   it('returns null if cookie format is invalid (no dot)', async () => {
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: 'invalid-cookie-format' }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -63,7 +63,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: tamperedCookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -75,7 +75,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -86,7 +86,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -97,7 +97,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -108,7 +108,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -119,7 +119,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -130,7 +130,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toBeNull();
   });
@@ -141,7 +141,7 @@ describe('readCaptchaPass', () => {
 
     vi.mocked(cookies).mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: cookie }),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof cookies>>);
     const result = await readCaptchaPass(mockIp);
     expect(result).toEqual(validData);
   });
