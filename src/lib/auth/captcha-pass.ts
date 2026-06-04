@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "crypto";
+import { env } from "@/lib/env";
 
 const COOKIE_NAME = "captcha_ok";
 const CAPTCHA_WINDOW_SECONDS = 300;
@@ -13,7 +14,7 @@ type CaptchaPassData = {
 };
 
 function getHmacKey(): string | null {
-  return process.env.RECAPTCHA_SECRET_KEY ?? null;
+  return env.RECAPTCHA_SECRET_KEY ?? null;
 }
 
 function signPayload(payload: string, key: string): string {
