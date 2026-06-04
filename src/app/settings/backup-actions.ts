@@ -956,7 +956,6 @@ export async function importTableChunkAction(
         const bErr =
           assertNonNeg(grandTotal, "grand_total", row.Id) ??
           assertNonNeg(amountPaid, "amount_paid", row.Id) ??
-          assertNonNeg(balanceDue, "balance_due", row.Id) ??
           assertNonNeg(subtotal, "subtotal", row.Id) ??
           assertNonNeg(discountTotal, "discount_total", row.Id);
         if (bErr) { failed++; warnings.push(bErr); continue; }
@@ -1196,9 +1195,7 @@ export async function importTableChunkAction(
 
         const ledAmount = Number(row.Amount || 0);
         const ledBalance = Number(row.BalanceAfter || 0);
-        const ledErr =
-          assertNonNeg(ledAmount, "amount", row.Id) ??
-          assertNonNeg(ledBalance, "balance_after", row.Id);
+        const ledErr = assertNonNeg(ledAmount, "amount", row.Id);
         if (ledErr) { failed++; warnings.push(ledErr); continue; }
 
         const { error } = await supabase
