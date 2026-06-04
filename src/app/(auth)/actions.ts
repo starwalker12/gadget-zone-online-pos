@@ -9,6 +9,7 @@ import { sanitizePlainText } from "@/lib/security/sanitize";
 import { verifyRecaptchaToken } from "@/lib/security/recaptcha";
 import { logAudit } from "@/lib/audit";
 import { checkRateLimit, recordAttempt, clearAttempts, extractClientIp } from "@/lib/auth/rate-limit";
+import { setCaptchaPass, readCaptchaPass, decrementCaptchaPass, clearCaptchaPass } from "@/lib/auth/captcha-pass";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters.")
@@ -59,10 +60,20 @@ const POST_AUTH_PATH = "/auth/callback?next=%2Fdashboard";
 export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   if (!env.isSupabaseConfigured) return configError();
 
-  const recaptchaToken = formData.get("recaptchaToken") as string | null;
-  const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
-  if (!recaptchaResult.success) {
-    return { error: recaptchaResult.error ?? "Security check failed." };
+  const h = await headers();
+  const ip = extractClientIp(h.get("x-forwarded-for"));
+
+  // Captcha-pass: skip Google verify if a valid signed cookie exists
+  const captchaPass = ip ? await readCaptchaPass(ip) : null;
+  if (!captchaPass) {
+    const recaptchaToken = formData.get("recaptchaToken") as string | null;
+    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
+    if (!recaptchaResult.success) {
+      return { error: recaptchaResult.error ?? "Security check failed." };
+    }
+    if (ip) {
+      await setCaptchaPass(ip);
+    }
   }
 
   const parsed = credentialsSchema.safeParse({
@@ -73,8 +84,6 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
     return { error: parsed.error.issues[0]?.message ?? "Please enter your email and password." };
   }
 
-  const h = await headers();
-  const ip = extractClientIp(h.get("x-forwarded-for"));
   if (ip) {
     const rateCheck = await checkRateLimit(parsed.data.email, ip);
     if (!rateCheck.allowed) {
@@ -88,10 +97,12 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
     console.error("[security] Failed sign-in attempt for", parsed.data.email);
     if (ip) {
       await recordAttempt(parsed.data.email, ip, false);
+      await decrementCaptchaPass(ip);
     }
     return { error: "Invalid email or password." };
   }
 
+  await clearCaptchaPass();
   if (ip) {
     await clearAttempts(parsed.data.email, ip);
   }
@@ -101,10 +112,20 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   if (!env.isSupabaseConfigured) return configError();
 
-  const recaptchaToken = formData.get("recaptchaToken") as string | null;
-  const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
-  if (!recaptchaResult.success) {
-    return { error: recaptchaResult.error ?? "Security check failed." };
+  const h = await headers();
+  const ip = extractClientIp(h.get("x-forwarded-for"));
+
+  // Captcha-pass: skip Google verify if a valid signed cookie exists
+  const captchaPass = ip ? await readCaptchaPass(ip) : null;
+  if (!captchaPass) {
+    const recaptchaToken = formData.get("recaptchaToken") as string | null;
+    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
+    if (!recaptchaResult.success) {
+      return { error: recaptchaResult.error ?? "Security check failed." };
+    }
+    if (ip) {
+      await setCaptchaPass(ip);
+    }
   }
 
   // Enforce public_signup_enabled platform setting server-side
@@ -150,8 +171,13 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
       };
     }
     console.error("[security] signUp failed:", error.message);
+    if (ip) {
+      await decrementCaptchaPass(ip);
+    }
     return { error: "Something went wrong. Please try again." };
   }
+
+  await clearCaptchaPass();
 
   // If email confirmation is enabled, no session is created yet — tell the user.
   if (!data.session) {
@@ -204,10 +230,20 @@ export async function signInWithGoogleAction(_prev: AuthState, _formData: FormDa
 export async function resetPasswordAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   if (!env.isSupabaseConfigured) return configError();
 
-  const recaptchaToken = formData.get("recaptchaToken") as string | null;
-  const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
-  if (!recaptchaResult.success) {
-    return { error: recaptchaResult.error ?? "Security check failed." };
+  const h = await headers();
+  const ip = extractClientIp(h.get("x-forwarded-for"));
+
+  // Captcha-pass: skip Google verify if a valid signed cookie exists
+  const captchaPass = ip ? await readCaptchaPass(ip) : null;
+  if (!captchaPass) {
+    const recaptchaToken = formData.get("recaptchaToken") as string | null;
+    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
+    if (!recaptchaResult.success) {
+      return { error: recaptchaResult.error ?? "Security check failed." };
+    }
+    if (ip) {
+      await setCaptchaPass(ip);
+    }
   }
 
   const parsed = resetSchema.safeParse({ email: formData.get("email") ?? "" });
@@ -221,6 +257,9 @@ export async function resetPasswordAction(_prev: AuthState, formData: FormData):
   });
   if (error) {
     console.error("[security] resetPassword failed:", error.message);
+    if (ip) {
+      await decrementCaptchaPass(ip);
+    }
     return { error: "Something went wrong. Please try again." };
   }
   return {
