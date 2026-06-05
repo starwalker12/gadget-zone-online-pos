@@ -105,4 +105,31 @@ but the true cause was invisible from reading source code alone.
 ## PR
 - #173 — MERGED, live on https://saledock.site (squash-merged into main)
 
+# Session Summary — Migration 0034 Idempotent Fix
+
+## Goal
+Fix false-failing "Supabase Preview" CI check: `ERROR: relation "login_attempts" already exists (SQLSTATE 42P07)`
+when migration 0034 re-runs against a project where the table already exists.
+
+## Root Cause
+`CREATE TABLE`, `CREATE INDEX`, and `CREATE POLICY` in `0034_login_rate_limit.sql` had no `IF NOT EXISTS` guards,
+so re-running against an existing project errored.
+
+## What Changed
+- `CREATE TABLE` → `CREATE TABLE IF NOT EXISTS`
+- Both `CREATE INDEX` → `CREATE INDEX IF NOT EXISTS`
+- Each `CREATE POLICY` now preceded by `DROP POLICY IF EXISTS`
+- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` unchanged (already idempotent)
+- Same columns, types, defaults, indexes, policy names, policy definitions — guards only
+
+## Verifications
+- `npm run lint` — 0 errors, 2 pre-existing warnings
+- `npm run typecheck` — passes
+- `npm run build` — passes
+- `https://saledock.site/` — HTTP 200
+- `https://saledock.site/login` — HTTP 200
+
+## PR
+- #174 — MERGED (squash-merged to main, branch deleted)
+
 <!-- END:session-summary -->
