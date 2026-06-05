@@ -76,6 +76,8 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
   const [parseError, setParseError] = useState<string | null>(null);
   const [isOnlineBackup, setIsOnlineBackup] = useState(false);
   const [manifestMissingWarning, setManifestMissingWarning] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [onlineData, setOnlineData] = useState<any>(null);
 
   // Config parameters
   const [applyBranding, setApplyBranding] = useState(false);
@@ -334,6 +336,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
       setOrphanPolicy(null);
       setDryRunBlockers([]);
       setIsOnlineBackup(false);
+      setOnlineData(null);
       setManifestMissingWarning(false);
 
       const zip = await JSZip.loadAsync(file);
@@ -401,9 +404,8 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
           invoiceItems: "BillItems",
           payments: "Payments",
           ledgerEntries: "CustomerLedgerEntries",
-          returns: "Returns",
+          returns: "ReturnRefunds",
           returnItems: "ReturnItems",
-          returnStockAllocations: "ReturnStockAllocations",
           expenses: "Expenses",
           repairs: "RepairJobs",
           closings: "DailyClosings",
@@ -425,6 +427,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
           });
         }
 
+        setOnlineData(onlineData);
         setTableProgress(counts);
         setDbFileDetected(`Online JSON found at: ${onlineJsonMatch.path}`);
         setStep("preview");
@@ -893,6 +896,151 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
     setIsParsing(false);
   }
 
+  // Convert online JSON rows to desktop-style row shapes for importTableChunkAction
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function convertOnlineRows(tableName: string, rows: any[]): any[] {
+    // Build lookup maps from categories data if available
+    const cats = onlineData?.categories || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const catIdToName = new Map(cats.map((c: any) => [c.id, c.name]));
+
+    switch (tableName) {
+      case "Categories":
+        return rows.map((r) => ({ Id: r.id, Name: r.name, Description: r.description || "", IsActive: r.is_active }));
+      case "Suppliers":
+        return rows.map((r) => ({ Id: r.id, Name: r.name, Company: r.company || "", Phone: r.phone || "", Email: r.email || "", Address: r.address || "", Notes: r.notes || "", IsActive: r.is_active }));
+      case "Customers":
+        return rows.map((r) => ({ Id: r.id, Name: r.name, Phone: r.phone || "", Email: r.email || "", OutstandingBalance: r.outstanding_balance ?? 0, Address: r.address || "", Notes: r.notes || "" }));
+      case "Products":
+        return rows.map((r) => ({
+          Id: r.id, ItemName: r.name, Sku: r.sku || "", Barcode: r.barcode || "", Type: r.type || "product",
+          Category: catIdToName.get(r.category_id) || "", SupplierId: r.supplier_id || "",
+          PurchasePrice: r.purchase_price ?? 0, SalePrice: r.sale_price ?? 0, Stock: r.stock_quantity ?? 0,
+          MinimumStock: r.minimum_stock ?? 0, DefaultCommissionAmount: r.default_commission_amount ?? 0,
+          DefaultCommissionPercent: r.default_commission_percent ?? 0,
+          AllowSellAtLoss: r.allow_sell_at_loss, SellAtLossReason: r.sell_at_loss_reason || "",
+          Notes: r.notes || "", IsActive: r.is_active,
+          ServiceType: r.service_type || "", ServicePricingMode: r.service_pricing_mode || "",
+          RequiresAccountNumber: r.requires_account_number, RequiresProvider: r.requires_provider,
+          RequiresReference: r.requires_reference
+        }));
+      case "ProductStockLots":
+        return rows.map((r) => ({
+          Id: r.id, ProductId: r.product_id, SupplierId: r.supplier_id || "",
+          BatchNumber: r.lot_number || "", AddedAt: r.purchase_date || "",
+          QuantityAdded: r.quantity_received ?? 0, QuantityRemaining: r.quantity_remaining ?? 0,
+          PurchasePrice: r.unit_cost ?? 0, IsActive: r.is_active
+        }));
+      case "StockMovements":
+        return rows.map((r) => ({
+          Id: r.id, ProductId: r.product_id, StockLotId: r.stock_lot_id || "",
+          MovementType: r.movement_type, Quantity: r.quantity ?? 0,
+          unit_cost: r.unit_cost ?? 0, reference_type: r.reference_type || "manual",
+          reference_id: r.reference_id || null, Reason: r.notes || "Imported from online backup",
+          CreatedAt: r.created_at || new Date().toISOString()
+        }));
+      case "Bills":
+        return rows.map((r) => ({
+          Id: r.id, CustomerId: r.customer_id || "", BillNo: r.invoice_no,
+          GrandTotal: r.grand_total ?? 0, AmountPaid: r.amount_paid ?? 0,
+          BalanceDue: r.balance_due ?? 0, Subtotal: r.subtotal ?? 0,
+          DiscountTotal: r.discount_total ?? 0, Status: r.status || "unpaid",
+          BillDate: r.invoice_date || r.created_at || "", Note: r.note || ""
+        }));
+      case "BillItems":
+        return rows.map((r) => ({
+          Id: r.id, BillId: r.invoice_id, ProductId: r.product_id || "",
+          ItemName: r.product_name || "Unknown Product", Price: r.unit_price ?? 0,
+          Qty: r.quantity ?? 1, PurchasePrice: r.purchase_price ?? 0,
+          ItemDiscount: r.item_discount ?? 0, LineTotal: r.line_total ?? 0,
+          ServiceTransactionAmount: r.service_transaction_amount ?? 0,
+          ServiceCommission: r.service_commission ?? 0,
+          ServiceTotalCharged: r.service_total_charged ?? 0,
+          ServiceProvider: r.service_provider || "",
+          ServiceDirection: r.service_direction || "",
+          ServiceAccountNumber: r.service_account_number || "",
+          ServiceReceiverAccount: r.service_receiver_account || "",
+          ServiceReferenceNo: r.service_reference_no || "",
+          ServiceNote: r.service_note || "",
+          ProductType: r.product_type || ""
+        }));
+      case "BillItemBatchAllocations":
+        return rows.map((r) => ({
+          Id: r.id, BillItemId: r.invoice_item_id, StockLotId: r.stock_lot_id || "",
+          Qty: r.quantity ?? 0, PurchasePrice: r.unit_cost ?? 0
+        }));
+      case "Payments":
+        return rows.map((r) => ({
+          Id: r.id, BillId: r.invoice_id, CustomerId: r.customer_id || "",
+          Amount: r.amount ?? 0, Method: r.method || "cash",
+          ReferenceNo: r.reference_no || "", Note: r.note || "",
+          CreatedAt: r.paid_at || r.created_at || new Date().toISOString()
+        }));
+      case "CustomerLedgerEntries":
+        return rows.map((r) => ({
+          Id: r.id, CustomerId: r.customer_id, BillId: r.invoice_id || "",
+          Amount: r.amount ?? 0, BalanceAfter: r.balance_after ?? 0,
+          EntryType: r.entry_type || "invoice_credit", Direction: r.direction || "debit",
+          Description: r.description || "", Date: r.created_at || new Date().toISOString()
+        }));
+      case "ReturnRefunds":
+        return rows.map((r) => ({
+          Id: r.id, BillId: r.invoice_id, CustomerId: r.customer_id || "",
+          ReturnNo: r.return_no || `RET-${r.id}`, RefundAmount: r.refund_amount ?? 0,
+          Status: r.status || "completed", Method: r.refund_method || "cash",
+          Notes: r.notes || "", CreatedAt: r.created_at || new Date().toISOString()
+        }));
+      case "ReturnItems":
+        return rows.map((r) => ({
+          Id: r.id, ReturnId: r.return_id, BillItemId: r.invoice_item_id,
+          ProductId: r.product_id, QtyReturned: r.quantity ?? 1,
+          UnitPrice: r.unit_price ?? 0, LineTotal: r.line_total ?? 0,
+          Restocked: r.restock
+        }));
+      case "Expenses":
+        return rows.map((r) => ({
+          Id: r.id, Category: r.category || "General", Amount: r.amount ?? 0,
+          PaymentMethod: r.payment_method || "cash",
+          VendorName: r.vendor_name || "", Notes: r.notes || "",
+          Date: r.spent_at || r.created_at || new Date().toISOString(),
+          Status: r.status || "active"
+        }));
+      case "RepairJobs":
+        return rows.map((r) => ({
+          Id: r.id, CustomerId: r.customer_id || "",
+          JobNo: r.job_no || `JOB-${r.id}`,
+          EstimatedCost: r.estimated_cost ?? 0, AdvancePaid: r.advance_paid ?? 0,
+          CustomerName: r.customer_name || "Walk-in customer",
+          CustomerPhone: r.customer_phone || "",
+          DeviceType: r.device_type || "Other", DeviceModel: r.device_model || "",
+          SerialImei: r.serial_imei || "", Problem: r.problem_description || "",
+          Accessories: r.accessories_received || "",
+          PaymentMethod: r.payment_method || "cash", Status: r.status || "received",
+          Notes: r.notes || "",
+          ExpectedDelivery: r.expected_delivery_at || null,
+          DeliveredAt: r.delivered_at || null,
+          CreatedAt: r.created_at || new Date().toISOString()
+        }));
+      case "DailyClosings":
+        return rows.map((r) => ({
+          Id: r.id, ClosingDate: (r.closing_date || "").split("T")[0],
+          CashExpected: r.expected_closing_cash ?? 0,
+          CashCounted: r.actual_closing_cash ?? 0,
+          CashDifference: r.cash_difference ?? 0,
+          Notes: r.notes || "Imported daily closing from online backup",
+          FinalizedAt: r.finalized_at || null
+        }));
+      case "ActivityLog":
+        return rows.map((r) => ({
+          Id: r.id, Details: r.details || "",
+          Module: r.module || "system", Action: r.action || "online_restore_activity",
+          Actor: r.actor_id || null, Date: r.created_at || new Date().toISOString()
+        }));
+      default:
+        return [];
+    }
+  }
+
   // Stepper Stage 6: Sequential Chunked Database Import Execution
   async function triggerBackupImport() {
     try {
@@ -985,9 +1133,25 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
         setTableProgress([...updatedProgress]);
         setCurrentProgressIndex(i);
 
-        // Fetch sqlite data chunk
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const allRows = getTableRows(sqliteDb, table.name) as any[];
+        let allRows: any[];
+        if (isOnlineBackup && onlineData) {
+          // Map table name back to the online JSON key
+          const tableKey = Object.entries({
+            categories: "Categories", suppliers: "Suppliers", customers: "Customers",
+            products: "Products", lots: "ProductStockLots", movements: "StockMovements",
+            invoices: "Bills", invoiceItems: "BillItems", payments: "Payments",
+            ledgerEntries: "CustomerLedgerEntries", returns: "ReturnRefunds",
+            returnItems: "ReturnItems", expenses: "Expenses", repairs: "RepairJobs",
+            closings: "DailyClosings", auditLogs: "ActivityLog"
+          }).find(([, v]) => v === table.name)?.[0] || "";
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rawRows = (onlineData as any)?.[tableKey];
+          allRows = convertOnlineRows(table.name, Array.isArray(rawRows) ? rawRows : []);
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          allRows = getTableRows(sqliteDb, table.name) as any[];
+        }
         // Filter orphan rows out before upload when the policy is "drop".
         // The server re-validates this with the same policy as a safety net.
         const orphanIds = orphanIdsByTable[table.name];
@@ -1060,7 +1224,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
 
     } catch (err: unknown) {
       console.error(err);
-      const msg = err instanceof Error ? err.message : "Desktop import interrupted due to an error.";
+      const msg = err instanceof Error ? err.message : "Backup import interrupted due to an error.";
       setImportError(msg);
       if (jobId) {
         await updateImportJobStatusAction(jobId, "failed", msg);
@@ -1294,11 +1458,11 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
           )}
 
           {isOnlineBackup && (
-            <div className="rounded-xl bg-blue-50 p-4 border border-blue-200 flex items-start gap-3 text-xs text-blue-900">
-              <ShieldCheck className="size-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-200 flex items-start gap-3 text-xs text-emerald-900">
+              <ShieldCheck className="size-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Online Restore Preview Available</p>
-                <p className="mt-1">Online backup restore execution is planned; this ZIP can currently be inspected safely.</p>
+                <p className="font-bold">Online Restore Available</p>
+                <p className="mt-1">This online JSON backup can be inspected below and then executed in the confirmation step. All existing per-row value validation (rejecting negative prices, stock, amounts) runs before any insert.</p>
               </div>
             </div>
           )}
@@ -1620,22 +1784,26 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
             </div>
 
             {isOnlineBackup ? (
-              <div className="space-y-4">
-                <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-xs text-blue-900 flex gap-2">
-                  <ShieldCheck className="size-5 text-blue-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold">Online Restore Preview Available</p>
-                    <p className="mt-1">Online backup restore execution is planned; this ZIP can currently be inspected safely.</p>
-                  </div>
+              dryRunBlockers.length > 0 ? (
+                <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs text-rose-900">
+                  Import is blocked because dry-run found a mapping failure.
+                  Go back to the Dry Run step for details. Fix the source backup
+                  (or update the importer) and re-upload.
                 </div>
+              ) : (
                 <button
-                  disabled
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-400 cursor-not-allowed"
+                  onClick={triggerBackupImport}
+                  disabled={
+                    confirmText !== "IMPORT DESKTOP BACKUP" ||
+                    !confirmCheckbox ||
+                    !backupImportEnabled
+                  }
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"
                 >
                   <Upload className="size-4" />
-                  Online Restore Planned (Disabled)
+                  Begin Online Restore
                 </button>
-              </div>
+              )
             ) : (
               dryRunBlockers.length > 0 ? (
                 <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs text-rose-900">
@@ -1742,7 +1910,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
                 <div className="rounded-xl bg-emerald-50 p-4 text-xs text-emerald-955 border border-emerald-100 flex gap-2">
                   <CheckCircle className="size-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-sm text-emerald-900">Desktop Backup Restored Successfully</p>
+                    <p className="font-bold text-sm text-emerald-900">Backup Restored Successfully</p>
                     <p className="mt-1 text-emerald-800">All compatible entities are successfully mapped, deduped, and merged into the Supabase database.</p>
                   </div>
                 </div>
