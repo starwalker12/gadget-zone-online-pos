@@ -9,7 +9,7 @@ import {
   RotateCcw, Wrench, Wallet, CalendarCheck, BarChart3,
   Truck, ScrollText, UserCog, Settings, MonitorCog, PackageCheck, ListChecks,
   GripVertical, PanelLeftClose, PanelLeftOpen, Archive, ArchiveRestore,
-  RefreshCcw,
+  Check, RefreshCcw,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
@@ -139,6 +139,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
   const prefs = useMemo(() => parseStoredPreferences(preferenceSnapshot), [preferenceSnapshot]);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [draggingHref, setDraggingHref] = useState<string | null>(null);
+  const [pendingArchiveHref, setPendingArchiveHref] = useState<string | null>(null);
   const draggingHrefRef = useRef<string | null>(null);
   const lastDragTargetRef = useRef<string | null>(null);
   const archivePanelRef = useRef<HTMLDivElement>(null);
@@ -149,6 +150,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
     expandSidebar: "Expand sidebar",
     dragToReorder: "Drag to reorder",
     archiveNavItem: "Archive tab",
+    confirmArchiveNavItem: "Confirm archive",
     archived: "Archived",
     noArchivedItems: "No archived tabs",
     unarchiveNavItem: "Unarchive",
@@ -188,6 +190,39 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [archiveOpen]);
+
+  useEffect(() => {
+    if (!pendingArchiveHref) return;
+
+    const cancelPendingArchive = () => {
+      setPendingArchiveHref((current) => (current === pendingArchiveHref ? null : current));
+    };
+    const timeoutId = window.setTimeout(cancelPendingArchive, 3000);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") cancelPendingArchive();
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      const archiveButton = event.target instanceof Element
+        ? event.target.closest("[data-sidebar-archive-href]")
+        : null;
+      if (
+        archiveButton instanceof HTMLElement &&
+        archiveButton.dataset.sidebarArchiveHref === pendingArchiveHref
+      ) {
+        return;
+      }
+
+      cancelPendingArchive();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [pendingArchiveHref]);
 
   const itemMap = useMemo(() => new Map(items.map((item) => [item.href, item])), [items]);
   const orderedHrefs = useMemo(() => normalizeOrder(items, prefs.order), [items, prefs.order]);
@@ -239,6 +274,16 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
       ...current,
       archived: [...new Set([...current.archived, item.href])],
     }));
+  };
+
+  const handleArchiveAction = (item: NavItem, isConfirming: boolean) => {
+    if (isConfirming) {
+      setPendingArchiveHref(null);
+      archiveItem(item);
+      return;
+    }
+
+    setPendingArchiveHref(item.href);
   };
 
   const unarchiveItem = (href: string) => {
@@ -348,11 +393,17 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
             const label = t(item.label);
             const canArchive = !PROTECTED_HREFS.has(item.href) && !active;
             const dragging = draggingHref === item.href;
+            const isConfirmingArchive = pendingArchiveHref === item.href;
 
             return (
               <li
                 key={item.href}
                 data-sidebar-nav-href={item.href}
+                onPointerLeave={() => {
+                  if (isConfirmingArchive) {
+                    setPendingArchiveHref((current) => (current === item.href ? null : current));
+                  }
+                }}
                 className={`group/navitem relative flex min-h-12 items-center gap-1 rounded-xl ${
                   dragging ? "opacity-70 ring-2 ring-teal-500" : ""
                 }`}
@@ -389,15 +440,32 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                 </Link>
 
                 {!collapsed && canArchive && (
-                  <div className="flex shrink-0 items-center opacity-0 transition group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100">
+                  <div
+                    className={`flex shrink-0 items-center transition ${
+                      isConfirmingArchive
+                        ? "opacity-100"
+                        : "opacity-0 group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100"
+                    }`}
+                  >
                     <button
                       type="button"
-                      onClick={() => archiveItem(item)}
-                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-amber-100 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:hover:bg-amber-500/15 dark:hover:text-amber-200"
-                      aria-label={`${t("archiveNavItem")}: ${label}`}
-                      title={`${t("archiveNavItem")}: ${label}`}
+                      data-sidebar-archive-href={item.href}
+                      onClick={() => handleArchiveAction(item, isConfirmingArchive)}
+                      onBlur={() => {
+                        if (isConfirmingArchive) {
+                          setPendingArchiveHref((current) => (current === item.href ? null : current));
+                        }
+                      }}
+                      className={`flex size-8 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
+                        isConfirmingArchive
+                          ? "bg-amber-600 text-white shadow-sm hover:bg-amber-700 dark:bg-amber-300 dark:text-slate-950 dark:hover:bg-amber-200"
+                          : "text-slate-400 hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-500/15 dark:hover:text-amber-200"
+                      }`}
+                      aria-label={`${t(isConfirmingArchive ? "confirmArchiveNavItem" : "archiveNavItem")}: ${label}`}
+                      aria-pressed={isConfirmingArchive}
+                      title={`${t(isConfirmingArchive ? "confirmArchiveNavItem" : "archiveNavItem")}: ${label}`}
                     >
-                      <Archive className="size-3.5" />
+                      {isConfirmingArchive ? <Check className="size-3.5" /> : <Archive className="size-3.5" />}
                     </button>
                   </div>
                 )}
