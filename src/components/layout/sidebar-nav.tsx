@@ -9,7 +9,7 @@ import {
   RotateCcw, Wrench, Wallet, CalendarCheck, BarChart3,
   Truck, ScrollText, UserCog, Settings, MonitorCog, PackageCheck, ListChecks,
   GripVertical, PanelLeftClose, PanelLeftOpen, Archive, ArchiveRestore,
-  ArrowUp, ArrowDown, RefreshCcw,
+  RefreshCcw,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
@@ -148,8 +148,6 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
     collapseSidebar: "Collapse sidebar",
     expandSidebar: "Expand sidebar",
     dragToReorder: "Drag to reorder",
-    moveUp: "Move up",
-    moveDown: "Move down",
     archiveNavItem: "Archive tab",
     archived: "Archived",
     noArchivedItems: "No archived tabs",
@@ -232,13 +230,6 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
       nextOrder.splice(placement === "after" ? targetIndex + 1 : targetIndex, 0, sourceHref);
       return { ...current, order: nextOrder };
     });
-  };
-
-  const moveVisibleItem = (href: string, direction: -1 | 1) => {
-    const currentIndex = visibleItems.findIndex((item) => item.href === href);
-    const target = visibleItems[currentIndex + direction];
-    if (!target) return;
-    moveHref(href, target.href, direction > 0 ? "after" : "before");
   };
 
   const archiveItem = (item: NavItem) => {
@@ -351,7 +342,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
 
       <nav className={`min-h-0 flex-1 overflow-y-auto py-4 ${collapsed ? "px-2" : "px-3"}`} aria-label="Main navigation">
         <ul className="space-y-1">
-          {visibleItems.map((item, index) => {
+          {visibleItems.map((item) => {
             const Icon = iconMap[item.icon];
             const active = isActive(item.href);
             const label = t(item.label);
@@ -397,39 +388,17 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                   {!collapsed && <span className="truncate">{label}</span>}
                 </Link>
 
-                {!collapsed && (
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100">
+                {!collapsed && canArchive && (
+                  <div className="flex shrink-0 items-center opacity-0 transition group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100">
                     <button
                       type="button"
-                      onClick={() => moveVisibleItem(item.href, -1)}
-                      disabled={index === 0}
-                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-[#e2e8f0] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-[#1e293b] dark:hover:text-slate-200"
-                      aria-label={`${t("moveUp")}: ${label}`}
-                      title={`${t("moveUp")}: ${label}`}
+                      onClick={() => archiveItem(item)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-amber-100 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:hover:bg-amber-500/15 dark:hover:text-amber-200"
+                      aria-label={`${t("archiveNavItem")}: ${label}`}
+                      title={`${t("archiveNavItem")}: ${label}`}
                     >
-                      <ArrowUp className="size-3.5" />
+                      <Archive className="size-3.5" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => moveVisibleItem(item.href, 1)}
-                      disabled={index === visibleItems.length - 1}
-                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-[#e2e8f0] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-[#1e293b] dark:hover:text-slate-200"
-                      aria-label={`${t("moveDown")}: ${label}`}
-                      title={`${t("moveDown")}: ${label}`}
-                    >
-                      <ArrowDown className="size-3.5" />
-                    </button>
-                    {canArchive && (
-                      <button
-                        type="button"
-                        onClick={() => archiveItem(item)}
-                        className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-amber-100 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:hover:bg-amber-500/15 dark:hover:text-amber-200"
-                        aria-label={`${t("archiveNavItem")}: ${label}`}
-                        title={`${t("archiveNavItem")}: ${label}`}
-                      >
-                        <Archive className="size-3.5" />
-                      </button>
-                    )}
                   </div>
                 )}
               </li>

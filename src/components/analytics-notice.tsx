@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Cookie } from "lucide-react";
 
 const STORAGE_KEY = "analytics-consent";
 const LEGACY_NOTICE_STORAGE_KEY = "analytics-notice-dismissed";
@@ -23,6 +22,11 @@ type AnalyticsNoticeProps = {
   gaMeasurementId?: string;
   clarityProjectId?: string;
 };
+
+export function openCookieSettings() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT));
+}
 
 function parseStoredConsent(raw: string | null): StoredConsent | null {
   try {
@@ -196,12 +200,12 @@ export default function AnalyticsNotice({
   const [bannerOpen, setBannerOpen] = useState(false);
 
   useEffect(() => {
-    function openCookieSettings() {
+    function handleOpenCookieSettings() {
       setBannerOpen(true);
     }
 
-    window.addEventListener(OPEN_COOKIE_SETTINGS_EVENT, openCookieSettings);
-    return () => window.removeEventListener(OPEN_COOKIE_SETTINGS_EVENT, openCookieSettings);
+    window.addEventListener(OPEN_COOKIE_SETTINGS_EVENT, handleOpenCookieSettings);
+    return () => window.removeEventListener(OPEN_COOKIE_SETTINGS_EVENT, handleOpenCookieSettings);
   }, [hasAnalytics]);
 
   function handleAccept() {
@@ -271,18 +275,6 @@ export default function AnalyticsNotice({
             </div>
           </div>
         </div>
-      )}
-
-      {!shouldShowBanner && parsedConsent && (
-        <button
-          type="button"
-          onClick={() => setBannerOpen(true)}
-          aria-label="Open cookie settings"
-          className="fixed bottom-3 left-3 z-30 flex items-center gap-1.5 rounded-full border border-[#cbd5e1] bg-[#f8fafc] px-3 py-2 text-xs font-bold text-[#334155] shadow-md transition hover:bg-[#e2e8f0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] dark:border-[#475569] dark:bg-[#0f172a] dark:text-[#e2e8f0] dark:hover:bg-[#1e293b]"
-        >
-          <Cookie className="size-3.5" aria-hidden="true" />
-          Cookie settings
-        </button>
       )}
     </>
   );
