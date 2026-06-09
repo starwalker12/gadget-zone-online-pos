@@ -12,6 +12,7 @@ import { ConnectedAccounts } from "./connected-accounts";
 import { PrivacyCenter } from "./privacy-center";
 import { getLinkedProviders } from "@/lib/auth/identities";
 import { createClient } from "@/lib/supabase/server";
+import { getServerDict } from "@/lib/i18n/server";
 import { AlertTriangle } from "lucide-react";
 import { SettingsTabShell, type TabDef } from "@/components/settings/settings-tab-shell";
 import { SettingsSecurity } from "./settings-security";
@@ -39,6 +40,7 @@ export default async function SettingsPage({
   const params = await searchParams;
   const currentTab = params.tab ?? "general";
   const linkParam = params.link ?? null;
+  const { dict } = await getServerDict();
 
   // Fetch fresh auth user for linked provider detection (server-side has full identities)
   const supabase = await createClient();
@@ -95,7 +97,11 @@ export default async function SettingsPage({
 
         {currentTab === "backup" && (
           isPrivileged ? (
-            <BackupTab backupImportEnabled={backupImportEnabled} factoryResetEnabled={factoryResetEnabled} />
+            <BackupTab
+              backupImportEnabled={backupImportEnabled}
+              factoryResetEnabled={factoryResetEnabled}
+              backupGuardLabels={dict.backupGuard as Record<string, string>}
+            />
           ) : (
             <AccessDeniedView />
           )

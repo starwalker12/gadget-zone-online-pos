@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   fetchExportDataAction,
   startImportJobAction,
@@ -23,6 +23,127 @@ import {
   Check,
   Lock,
 } from "lucide-react";
+
+type BackupGuardLabels = {
+  busyTitle: string;
+  exportTitle: string;
+  importPreviewTitle: string;
+  importTitle: string;
+  busyDescription: string;
+  busyFooter: string;
+  exportSuccess: string;
+  exportError: string;
+  previewSuccess: string;
+  previewError: string;
+  importSuccess: string;
+  importError: string;
+  beforeUnload: string;
+};
+
+type BackupOperation = "export" | "import-preview" | "import";
+type BackupOperationNotice = {
+  type: "success" | "error";
+  message: string;
+};
+
+const DEFAULT_BACKUP_GUARD_LABELS: BackupGuardLabels = {
+  busyTitle: "Backup in progress",
+  exportTitle: "Creating backup ZIP",
+  importPreviewTitle: "Reading backup file",
+  importTitle: "Restoring backup",
+  busyDescription:
+    "Please do not close this tab, refresh, navigate away, or use the app until this finishes. Leaving early can make the backup incomplete or corrupted.",
+  busyFooter: "This screen will unlock automatically when the operation finishes.",
+  exportSuccess: "Backup ZIP is ready. Check your downloads.",
+  exportError: "Backup export failed. No file was completed.",
+  previewSuccess: "Backup file preview is ready.",
+  previewError: "Backup file preview failed. No data was imported.",
+  importSuccess: "Backup restore finished. Review the report below.",
+  importError: "Backup restore stopped. Review the error report below.",
+  beforeUnload: "A backup is in progress. Leaving now may make it incomplete.",
+};
+
+function BackupOperationOverlay({
+  operation,
+  labels,
+}: {
+  operation: BackupOperation;
+  labels: BackupGuardLabels;
+}) {
+  const titleByOperation: Record<BackupOperation, string> = {
+    export: labels.exportTitle,
+    "import-preview": labels.importPreviewTitle,
+    import: labels.importTitle,
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020617]/75 p-4 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="backup-operation-title"
+        aria-describedby="backup-operation-description"
+        className="w-full max-w-lg rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] p-5 text-[#0f172a] shadow-2xl dark:border-[#334155] dark:bg-[#0f172a] dark:text-[#e2e8f0] sm:p-6"
+      >
+        <div className="flex items-start gap-4">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--primary-accent-soft)] text-[var(--primary-accent-bg)]">
+            <RefreshCw className="size-5 animate-spin" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 space-y-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider text-[var(--primary-accent-bg)]">
+                {labels.busyTitle}
+              </p>
+              <h3 id="backup-operation-title" className="mt-1 text-lg font-black text-[#0f172a] dark:text-[#f8fafc]">
+                {titleByOperation[operation]}
+              </h3>
+            </div>
+            <p id="backup-operation-description" className="text-sm leading-6 text-[#334155] dark:text-[#cbd5e1]">
+              {labels.busyDescription}
+            </p>
+            <div className="h-2 overflow-hidden rounded-full bg-[#e2e8f0] dark:bg-[#1e293b]">
+              <div className="h-full w-1/2 animate-pulse rounded-full bg-[var(--primary-accent-bg)]" />
+            </div>
+            <p className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8]">
+              {labels.busyFooter}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BackupOperationNotice({
+  notice,
+}: {
+  notice: BackupOperationNotice;
+}) {
+  const isSuccess = notice.type === "success";
+  const Icon = isSuccess ? CheckCircle : AlertTriangle;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={`fixed inset-x-3 bottom-3 z-[60] rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl sm:left-auto sm:right-5 sm:w-[min(420px,calc(100%-2rem))] ${
+        isSuccess
+          ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100"
+          : "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100"
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <Icon
+          className={`mt-0.5 size-4 shrink-0 ${
+            isSuccess ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300"
+          }`}
+          aria-hidden="true"
+        />
+        <span>{notice.message}</span>
+      </div>
+    </div>
+  );
+}
 
 type ManifestData = {
   AppName: string;
@@ -62,9 +183,23 @@ type OrphanFinding = {
 
 type OrphanPolicy = "drop" | "stop";
 
-export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = true }: { backupImportEnabled?: boolean; factoryResetEnabled?: boolean }) {
+export function BackupTab({
+  backupImportEnabled = true,
+  factoryResetEnabled = true,
+  backupGuardLabels,
+}: {
+  backupImportEnabled?: boolean;
+  factoryResetEnabled?: boolean;
+  backupGuardLabels?: Partial<BackupGuardLabels>;
+}) {
+  const guardLabels = useMemo(
+    () => ({ ...DEFAULT_BACKUP_GUARD_LABELS, ...backupGuardLabels }),
+    [backupGuardLabels],
+  );
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [activeBackupOperation, setActiveBackupOperation] = useState<BackupOperation | null>(null);
+  const [operationNotice, setOperationNotice] = useState<BackupOperationNotice | null>(null);
 
   // Import / Restore Stepper Wizard
   const [step, setStep] = useState<"upload" | "preview" | "config" | "dryrun" | "confirm" | "progress" | "report">("upload");
@@ -127,6 +262,54 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
   const [typedConfirmationPhrase, setTypedConfirmationPhrase] = useState("");
   const [resetBrandingSettings, setResetBrandingSettings] = useState(false);
   const [resettingError, setResettingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activeBackupOperation) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = guardLabels.beforeUnload;
+      return guardLabels.beforeUnload;
+    };
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.hasAttribute("download") || anchor.href.startsWith("blob:")) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    };
+
+    const handlePopState = () => {
+      window.history.pushState({ saledockBackupGuard: true }, "", window.location.href);
+    };
+
+    window.history.pushState({ saledockBackupGuard: true }, "", window.location.href);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("click", handleDocumentClick, true);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, [activeBackupOperation, guardLabels.beforeUnload]);
+
+  useEffect(() => {
+    if (!operationNotice) return;
+
+    const timer = window.setTimeout(() => setOperationNotice(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [operationNotice]);
 
   // Open Factory Reset and fetch preview details
   async function openFactoryResetFlow() {
@@ -209,6 +392,8 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
   // Handle Organization Backup Export
   async function handleExport() {
     try {
+      setActiveBackupOperation("export");
+      setOperationNotice(null);
       setIsExporting(true);
       setExportError(null);
 
@@ -267,13 +452,16 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+      setOperationNotice({ type: "success", message: guardLabels.exportSuccess });
 
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "An error occurred during export.";
       setExportError(msg);
+      setOperationNotice({ type: "error", message: guardLabels.exportError });
     } finally {
       setIsExporting(false);
+      setActiveBackupOperation(null);
     }
   }
 
@@ -321,6 +509,8 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
     const wasmPath = "/sql-wasm.wasm";
 
     try {
+      setActiveBackupOperation("import-preview");
+      setOperationNotice(null);
       setZipFile(file);
       setIsParsing(true);
       setParseError(null);
@@ -431,6 +621,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
         setTableProgress(counts);
         setDbFileDetected(`Online JSON found at: ${onlineJsonMatch.path}`);
         setStep("preview");
+        setOperationNotice({ type: "success", message: guardLabels.previewSuccess });
         return;
       }
 
@@ -531,6 +722,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
         }
         setManifest(manifestObj);
         setStep("preview");
+        setOperationNotice({ type: "success", message: guardLabels.previewSuccess });
       }
 
     } catch (err: unknown) {
@@ -547,8 +739,10 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
         ? `${msg}\n${friendlyDetails.join("\n")}`
         : `Could not preview backup ZIP. ${msg}\n${friendlyDetails.join("\n")}`;
       setParseError(friendlyMessage);
+      setOperationNotice({ type: "error", message: guardLabels.previewError });
     } finally {
       setIsParsing(false);
+      setActiveBackupOperation(null);
     }
   }
 
@@ -1043,6 +1237,7 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
 
   // Stepper Stage 6: Sequential Chunked Database Import Execution
   async function triggerBackupImport() {
+    let guardedImportStarted = false;
     try {
       // The orphan policy is required if any orphans were detected.
       // "stop" should never reach here (the UI hides the import button) but
@@ -1059,6 +1254,9 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
       const effectiveOrphanPolicy: OrphanPolicy =
         hasOrphans && orphanPolicy ? orphanPolicy : "drop";
 
+      guardedImportStarted = true;
+      setActiveBackupOperation("import");
+      setOperationNotice(null);
       setImportError(null);
       setStep("progress");
       setImportReportLogs([]);
@@ -1220,16 +1418,22 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
 
       // Complete job
       await updateImportJobStatusAction(activeJobId, "completed");
+      setOperationNotice({ type: "success", message: guardLabels.importSuccess });
       setStep("report");
 
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "Backup import interrupted due to an error.";
       setImportError(msg);
+      setOperationNotice({ type: "error", message: guardLabels.importError });
       if (jobId) {
         await updateImportJobStatusAction(jobId, "failed", msg);
       }
       setStep("report");
+    } finally {
+      if (guardedImportStarted) {
+        setActiveBackupOperation(null);
+      }
     }
   }
 
@@ -1261,6 +1465,13 @@ export function BackupTab({ backupImportEnabled = true, factoryResetEnabled = tr
 
   return (
     <div className="space-y-6">
+      {activeBackupOperation && (
+        <BackupOperationOverlay operation={activeBackupOperation} labels={guardLabels} />
+      )}
+      {!activeBackupOperation && operationNotice && (
+        <BackupOperationNotice notice={operationNotice} />
+      )}
+
       {/* Dynamic Breadcrumb Stepper Indicator */}
       {step !== "upload" && (
         <div className="print-hidden flex flex-wrap gap-2 items-center bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs font-semibold text-slate-500">
