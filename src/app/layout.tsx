@@ -5,6 +5,20 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import AnalyticsNotice from "@/components/analytics-notice";
 import { env } from "@/lib/env";
+import { COLOR_THEME_STORAGE_KEY, COLOR_THEME_VALUES, DEFAULT_COLOR_THEME } from "@/lib/color-theme";
+
+const colorThemeInitScript = `
+(() => {
+  try {
+    const allowed = ${JSON.stringify(COLOR_THEME_VALUES)};
+    const stored = window.localStorage.getItem("${COLOR_THEME_STORAGE_KEY}");
+    const theme = allowed.includes(stored) ? stored : "${DEFAULT_COLOR_THEME}";
+    document.documentElement.setAttribute("data-color-theme", theme);
+  } catch {
+    document.documentElement.setAttribute("data-color-theme", "${DEFAULT_COLOR_THEME}");
+  }
+})();
+`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,9 +66,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-color-theme={DEFAULT_COLOR_THEME}
       className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${notoNastaliqUrdu.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: colorThemeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-200">
         <ThemeProvider
           attribute="class"

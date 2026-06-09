@@ -10,6 +10,76 @@
   --brand-soft: #eaf1ff;
   --surface: #ffffff;
   --border: #d8e1ef;
+  --sidebar-bg: #0F2A43;
+  --sidebar-popover-bg: #12324F;
+  --sidebar-active-bg: #1E4A6B;
+  --sidebar-active-accent: #38BDF8;
+  --sidebar-count-bg: rgba(56,189,248,0.20);
+  --sidebar-inactive: #CBD5E1;
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-drag-handle: rgba(255,255,255,0.45);
+  --sidebar-drag-handle-hover: rgba(255,255,255,0.75);
+  --sidebar-hover-overlay: rgba(255,255,255,0.08);
+  --sidebar-border: rgba(255,255,255,0.12);
+  --sidebar-border-strong: rgba(255,255,255,0.18);
+  --sidebar-border-popover: rgba(255,255,255,0.16);
+  --sidebar-border-dashed: rgba(255,255,255,0.20);
+  --sidebar-control-bg: rgba(255,255,255,0.04);
+  --sidebar-control-bg-strong: rgba(255,255,255,0.05);
+  --sidebar-control-hover: rgba(255,255,255,0.10);
+  --sidebar-ring: rgba(255,255,255,0.10);
+  --sidebar-confirm-bg: #F59E0B;
+  --sidebar-confirm-hover: #FBBF24;
+  --sidebar-confirm-text: #0F2A43;
+  --primary-accent-bg: #2563EB;
+  --primary-accent-hover: #1D4ED8;
+  --primary-accent-text: #FFFFFF;
+  --primary-accent-soft: rgba(37,99,235,0.10);
+}
+
+:root[data-color-theme="ocean"] {
+  --sidebar-bg: #0F2A43;
+  --sidebar-popover-bg: #12324F;
+  --sidebar-active-bg: #1E4A6B;
+  --sidebar-active-accent: #38BDF8;
+  --sidebar-count-bg: rgba(56,189,248,0.20);
+  --sidebar-inactive: #CBD5E1;
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-confirm-text: #0F2A43;
+  --primary-accent-bg: #2563EB;
+  --primary-accent-hover: #1D4ED8;
+  --primary-accent-text: #FFFFFF;
+  --primary-accent-soft: rgba(37,99,235,0.10);
+}
+
+:root[data-color-theme="slate"] {
+  --sidebar-bg: #1E293B;
+  --sidebar-popover-bg: #27364A;
+  --sidebar-active-bg: #334155;
+  --sidebar-active-accent: #FBBF24;
+  --sidebar-count-bg: rgba(251,191,36,0.22);
+  --sidebar-inactive: #CBD5E1;
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-confirm-text: #1E293B;
+  --primary-accent-bg: #B45309;
+  --primary-accent-hover: #92400E;
+  --primary-accent-text: #FFFFFF;
+  --primary-accent-soft: rgba(180,83,9,0.12);
+}
+
+:root[data-color-theme="forest"] {
+  --sidebar-bg: #14532D;
+  --sidebar-popover-bg: #155E34;
+  --sidebar-active-bg: #166534;
+  --sidebar-active-accent: #4ADE80;
+  --sidebar-count-bg: rgba(74,222,128,0.22);
+  --sidebar-inactive: #DCE7DC;
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-confirm-text: #14532D;
+  --primary-accent-bg: #15803D;
+  --primary-accent-hover: #166534;
+  --primary-accent-text: #FFFFFF;
+  --primary-accent-soft: rgba(21,128,61,0.12);
 }
 
 .dark {

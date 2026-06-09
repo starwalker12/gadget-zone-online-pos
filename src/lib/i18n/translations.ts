@@ -113,6 +113,16 @@ const en: Dict = {
     unarchiveNavItem: "Unarchive",
     resetSidebar: "Reset sidebar to default",
   },
+  colorTheme: {
+    title: "Color theme",
+    description:
+      "Choose the sidebar and accent color theme. This is separate from Light, Dark, and System mode.",
+    ocean: "Ocean",
+    slateAmber: "Slate & Amber",
+    forest: "Forest",
+    current: "Current",
+    reset: "Reset to default",
+  },
   language: {
     en: "English",
     ur: "اردو",
@@ -317,6 +327,16 @@ const ur: Dict = {
     unarchiveNavItem: "\u0648\u0627\u067E\u0633 \u0644\u0627\u0626\u06CC\u06BA",
     resetSidebar: "\u0633\u0627\u0626\u06CC\u0688 \u0628\u0627\u0631 \u0688\u06CC\u0641\u0627\u0644\u0679 \u06A9\u0631\u06CC\u06BA",
   },
+  colorTheme: {
+    title: "\u06A9\u0644\u0631 \u062A\u06BE\u06CC\u0645",
+    description:
+      "\u0633\u0627\u0626\u06CC\u0688 \u0628\u0627\u0631 \u0627\u0648\u0631 \u0627\u06CC\u06A9\u0633\u0646\u0679 \u06A9\u0627 \u0631\u0646\u06AF \u062A\u06BE\u06CC\u0645 \u0686\u0646\u06CC\u06BA\u06D4 \u06CC\u06C1 \u0644\u0627\u0626\u0679\u060C \u0688\u0627\u0631\u06A9 \u0627\u0648\u0631 \u0633\u0633\u0679\u0645 \u0645\u0648\u0688 \u0633\u06D2 \u0627\u0644\u06AF \u06C1\u06D2\u06D4",
+    ocean: "\u0627\u0648\u0634\u0646",
+    slateAmber: "\u0633\u0644\u06CC\u0679 \u0627\u0648\u0631 \u0627\u06CC\u0645\u0628\u0631",
+    forest: "\u0641\u0627\u0631\u0633\u0679",
+    current: "\u0645\u0648\u062C\u0648\u062F\u06C1",
+    reset: "\u0688\u06CC\u0641\u0627\u0644\u0679 \u067E\u0631 \u0648\u0627\u067E\u0633",
+  },
   language: {
     en: "\u0627\u0646\u06AF\u0631\u06CC\u0632\u06CC",
     ur: "\u0627\u0631\u062F\u0648",
@@ -520,6 +540,16 @@ const urRoman: Dict = {
     noArchivedItems: "Koi archived tab nahi",
     unarchiveNavItem: "Wapas layein",
     resetSidebar: "Sidebar default karein",
+  },
+  colorTheme: {
+    title: "Color theme",
+    description:
+      "Sidebar aur accent color theme chunein. Yeh Light, Dark aur System mode se alag hai.",
+    ocean: "Ocean",
+    slateAmber: "Slate & Amber",
+    forest: "Forest",
+    current: "Current",
+    reset: "Default par wapas",
   },
   language: {
     en: "English",

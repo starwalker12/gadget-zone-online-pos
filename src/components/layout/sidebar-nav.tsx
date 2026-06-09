@@ -339,14 +339,14 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
 
   return (
     <aside
-      className={`hidden h-dvh shrink-0 flex-col border-r border-[rgba(255,255,255,0.12)] bg-[#0F2A43] text-[#CBD5E1] transition-[width] duration-200 lg:flex ${
+      className={`hidden h-dvh shrink-0 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] text-[var(--sidebar-inactive)] transition-[width] duration-200 lg:flex ${
         collapsed ? "w-24" : "w-72"
       }`}
     >
-      <div className={`flex h-20 shrink-0 items-center gap-3 border-b border-[rgba(255,255,255,0.12)] ${collapsed ? "justify-center px-3" : "px-6"}`}>
+      <div className={`flex h-20 shrink-0 items-center gap-3 border-b border-[var(--sidebar-border)] ${collapsed ? "justify-center px-3" : "px-6"}`}>
         <Link
           href="/dashboard"
-          className={`flex min-w-0 items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+          className={`flex min-w-0 items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
             collapsed ? "justify-center" : ""
           }`}
           aria-label="SaleDock Cloud POS"
@@ -360,7 +360,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
           />
           {!collapsed && appLogoUrl && (
             <>
-              <div className="h-8 w-px shrink-0 bg-[rgba(255,255,255,0.15)]" />
+              <div className="h-8 w-px shrink-0 bg-[var(--sidebar-border-strong)]" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={appLogoUrl}
@@ -373,11 +373,11 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
         </Link>
       </div>
 
-      <div className="flex items-center justify-end border-b border-[rgba(255,255,255,0.12)] px-3 py-2">
+      <div className="flex items-center justify-end border-b border-[var(--sidebar-border)] px-3 py-2">
         <button
           type="button"
           onClick={toggleCollapsed}
-          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.04)] text-[#CBD5E1] transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]"
+          className="flex size-10 items-center justify-center rounded-xl border border-[var(--sidebar-border-strong)] bg-[var(--sidebar-control-bg)] text-[var(--sidebar-inactive)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)]"
           aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
           title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
         >
@@ -405,7 +405,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                   }
                 }}
                 className={`group/navitem relative flex min-h-12 items-center gap-1 rounded-xl ${
-                  dragging ? "opacity-70 ring-2 ring-[#38BDF8]" : ""
+                  dragging ? "opacity-70 ring-2 ring-[var(--sidebar-active-accent)]" : ""
                 }`}
               >
                 <button
@@ -414,7 +414,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                   onPointerMove={updateDrag}
                   onPointerUp={endDrag}
                   onPointerCancel={endDrag}
-                  className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-lg text-[rgba(255,255,255,0.45)] transition hover:bg-[rgba(255,255,255,0.08)] hover:text-[rgba(255,255,255,0.75)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+                  className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-lg text-[var(--sidebar-drag-handle)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-drag-handle-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
                     collapsed ? "" : "opacity-70 group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100"
                   }`}
                   aria-label={`${t("dragToReorder")}: ${label}`}
@@ -427,12 +427,12 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                   href={item.href}
                   aria-label={collapsed ? label : undefined}
                   title={collapsed ? label : undefined}
-                  className={`relative flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+                  className={`relative flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
                     collapsed ? "justify-center" : ""
                   } ${
                     active
-                      ? "bg-[#1E4A6B] text-white ring-1 ring-[rgba(255,255,255,0.10)] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-[#38BDF8]"
-                      : "text-[#CBD5E1] hover:bg-[rgba(255,255,255,0.08)] hover:text-white"
+                      ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] ring-1 ring-[var(--sidebar-ring)] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-[var(--sidebar-active-accent)]"
+                      : "text-[var(--sidebar-inactive)] hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)]"
                   }`}
                 >
                   {Icon && <Icon className="size-4 shrink-0" />}
@@ -456,10 +456,10 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                           setPendingArchiveHref((current) => (current === item.href ? null : current));
                         }
                       }}
-                      className={`flex size-8 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+                      className={`flex size-8 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
                         isConfirmingArchive
-                          ? "bg-[#F59E0B] text-[#0F2A43] shadow-sm hover:bg-[#FBBF24]"
-                          : "text-[#CBD5E1] hover:bg-[rgba(255,255,255,0.08)] hover:text-white"
+                          ? "bg-[var(--sidebar-confirm-bg)] text-[var(--sidebar-confirm-text)] shadow-sm hover:bg-[var(--sidebar-confirm-hover)]"
+                          : "text-[var(--sidebar-inactive)] hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)]"
                       }`}
                       aria-label={`${t(isConfirmingArchive ? "confirmArchiveNavItem" : "archiveNavItem")}: ${label}`}
                       aria-pressed={isConfirmingArchive}
@@ -475,22 +475,22 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
         </ul>
       </nav>
 
-      <div ref={archivePanelRef} className="relative shrink-0 border-t border-[rgba(255,255,255,0.12)] p-3">
+      <div ref={archivePanelRef} className="relative shrink-0 border-t border-[var(--sidebar-border)] p-3">
         {archiveOpen && (
           <div
             id="sidebar-archive-panel"
-            className={`absolute bottom-full z-30 mb-2 max-h-96 overflow-y-auto rounded-2xl border border-[rgba(255,255,255,0.16)] bg-[#12324F] p-3 shadow-xl shadow-black/35 ${
+            className={`absolute bottom-full z-30 mb-2 max-h-96 overflow-y-auto rounded-2xl border border-[var(--sidebar-border-popover)] bg-[var(--sidebar-popover-bg)] p-3 shadow-xl shadow-black/35 ${
               collapsed ? "left-2 w-72" : "left-3 right-3"
             }`}
           >
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-xs font-black uppercase tracking-wide text-[#CBD5E1]">
+              <p className="text-xs font-black uppercase tracking-wide text-[var(--sidebar-inactive)]">
                 {t("archived")}
               </p>
               <button
                 type="button"
                 onClick={resetSidebar}
-                className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.16)] bg-[rgba(255,255,255,0.05)] px-2.5 py-1.5 text-xs font-bold text-[#CBD5E1] transition hover:bg-[rgba(255,255,255,0.10)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]"
+                className="flex items-center gap-2 rounded-lg border border-[var(--sidebar-border-popover)] bg-[var(--sidebar-control-bg-strong)] px-2.5 py-1.5 text-xs font-bold text-[var(--sidebar-inactive)] transition hover:bg-[var(--sidebar-control-hover)] hover:text-[var(--sidebar-active-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)]"
               >
                 <RefreshCcw className="size-3.5" />
                 {t("resetSidebar")}
@@ -498,7 +498,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
             </div>
 
             {archivedItems.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-[rgba(255,255,255,0.20)] px-3 py-4 text-center text-sm font-semibold text-[#CBD5E1]">
+              <p className="rounded-xl border border-dashed border-[var(--sidebar-border-dashed)] px-3 py-4 text-center text-sm font-semibold text-[var(--sidebar-inactive)]">
                 {t("noArchivedItems")}
               </p>
             ) : (
@@ -511,7 +511,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                       <Link
                         href={item.href}
                         onClick={() => unarchiveItem(item.href)}
-                        className="flex min-h-10 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[#CBD5E1] transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]"
+                        className="flex min-h-10 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[var(--sidebar-inactive)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)]"
                       >
                         {Icon && <Icon className="size-4 shrink-0" />}
                         <span className="truncate">{label}</span>
@@ -519,7 +519,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                       <button
                         type="button"
                         onClick={() => unarchiveItem(item.href)}
-                        className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[#CBD5E1] transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[var(--sidebar-inactive)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)]"
                         aria-label={`${t("unarchiveNavItem")}: ${label}`}
                         title={`${t("unarchiveNavItem")}: ${label}`}
                       >
@@ -536,7 +536,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
         <button
           type="button"
           onClick={() => setArchiveOpen((open) => !open)}
-          className={`flex min-h-11 w-full items-center gap-3 rounded-xl border border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.04)] px-3 text-sm font-bold text-[#CBD5E1] transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+          className={`flex min-h-11 w-full items-center gap-3 rounded-xl border border-[var(--sidebar-border-strong)] bg-[var(--sidebar-control-bg)] px-3 text-sm font-bold text-[var(--sidebar-inactive)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
             collapsed ? "justify-center" : ""
           }`}
           aria-controls="sidebar-archive-panel"
@@ -548,7 +548,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
           {!collapsed && (
             <>
               <span className="min-w-0 flex-1 truncate text-left">{t("archived")}</span>
-              <span className="rounded-full bg-[#38BDF8]/20 px-2 py-0.5 text-[11px] font-black text-white">
+              <span className="rounded-full bg-[var(--sidebar-count-bg)] px-2 py-0.5 text-[11px] font-black text-[var(--sidebar-active-text)]">
                 {archivedItems.length}
               </span>
             </>

@@ -1,11 +1,19 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import type { BrandingSettings } from "@/lib/data/settings";
 import { updateSettingsAction, updateProfilePictureAction, type SettingsActionState, type SettingsIntent } from "./actions";
 import { ImageUpload } from "@/components/shared/image-upload";
-import { ImageIcon } from "lucide-react";
+import { Check, ImageIcon, RotateCcw } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-provider";
+import {
+  COLOR_THEME_OPTIONS,
+  COLOR_THEME_STORAGE_KEY,
+  DEFAULT_COLOR_THEME,
+  type ColorTheme,
+  isColorTheme,
+} from "@/lib/color-theme";
 
 const initialState: SettingsActionState = { error: null, success: null };
 
@@ -49,7 +57,7 @@ function BlockSaveButton({
     <button
       type="submit"
       disabled={!canEdit || pending}
-      className="mt-4 h-10 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
+      className="mt-4 h-10 rounded-lg bg-[var(--primary-accent-bg)] px-5 text-sm font-bold text-[var(--primary-accent-text)] transition hover:bg-[var(--primary-accent-hover)] disabled:opacity-60"
     >
       {pending ? "Saving..." : label}
     </button>
@@ -66,6 +74,126 @@ function BlockMessage({ state }: { state: SettingsActionState }) {
         <p className="mt-3 text-xs font-semibold text-red-600">{state.error}</p>
       )}
     </>
+  );
+}
+
+function readStoredColorTheme(): ColorTheme {
+  if (typeof window === "undefined") return DEFAULT_COLOR_THEME;
+  try {
+    const stored = window.localStorage.getItem(COLOR_THEME_STORAGE_KEY);
+    return isColorTheme(stored) ? stored : DEFAULT_COLOR_THEME;
+  } catch {
+    return DEFAULT_COLOR_THEME;
+  }
+}
+
+function applyColorTheme(theme: ColorTheme) {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-color-theme", theme);
+}
+
+function ColorThemePicker() {
+  const { dict } = useLanguage();
+  const colorThemeDict = dict.colorTheme as Record<string, string> | undefined;
+  const t = (key: string, fallback: string) => colorThemeDict?.[key] || fallback;
+  const [mounted, setMounted] = useState(false);
+  const [colorTheme, setColorTheme] = useState<ColorTheme>(DEFAULT_COLOR_THEME);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const storedTheme = readStoredColorTheme();
+      setColorTheme(storedTheme);
+      applyColorTheme(storedTheme);
+      setMounted(true);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  const activeTheme = mounted ? colorTheme : DEFAULT_COLOR_THEME;
+
+  function chooseTheme(theme: ColorTheme) {
+    setColorTheme(theme);
+    applyColorTheme(theme);
+    try {
+      window.localStorage.setItem(COLOR_THEME_STORAGE_KEY, theme);
+    } catch {}
+  }
+
+  function resetTheme() {
+    setColorTheme(DEFAULT_COLOR_THEME);
+    applyColorTheme(DEFAULT_COLOR_THEME);
+    try {
+      window.localStorage.removeItem(COLOR_THEME_STORAGE_KEY);
+    } catch {}
+  }
+
+  return (
+    <div className="mb-5 rounded-2xl border border-slate-200 bg-[#f8fafc] p-4 dark:border-slate-700 dark:bg-[#0f172a]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-sm font-black text-slate-950 dark:text-slate-50">
+            {t("title", "Color theme")}
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            {t("description", "Choose the sidebar and accent color theme. This is separate from Light, Dark, and System mode.")}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={resetTheme}
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-[#eef2f7] px-3 text-xs font-bold text-slate-600 transition hover:bg-[#e2e8f0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-accent-bg)] dark:border-slate-700 dark:bg-[#111827] dark:text-slate-300 dark:hover:bg-[#1f2937]"
+        >
+          <RotateCcw className="size-3.5" aria-hidden="true" />
+          {t("reset", "Reset to default")}
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        {COLOR_THEME_OPTIONS.map((option) => {
+          const isActive = option.value === activeTheme;
+          const label = t(option.labelKey, option.value);
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => chooseTheme(option.value)}
+              aria-pressed={isActive}
+              className={`min-h-24 rounded-2xl border p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-accent-bg)] ${
+                isActive
+                  ? "border-[var(--primary-accent-bg)] bg-[var(--primary-accent-soft)] shadow-sm"
+                  : "border-slate-200 bg-[#f8fafc] hover:border-slate-300 hover:bg-[#eef2f7] dark:border-slate-700 dark:bg-[#111827] dark:hover:border-slate-600 dark:hover:bg-[#1f2937]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2">
+                  <span
+                    className="flex h-8 w-12 overflow-hidden rounded-lg border border-black/10 shadow-sm dark:border-white/10"
+                    aria-hidden="true"
+                  >
+                    <span className="h-full flex-1" style={{ backgroundColor: option.sidebarBg }} />
+                    <span className="h-full w-3" style={{ backgroundColor: option.activeBg }} />
+                    <span className="h-full w-1.5" style={{ backgroundColor: option.accent }} />
+                  </span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{label}</span>
+                </span>
+                {isActive && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-accent-bg)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--primary-accent-text)]">
+                    <Check className="size-3" aria-hidden="true" />
+                    {t("current", "Current")}
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: option.sidebarBg }} />
+                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: option.activeBg }} />
+                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: option.primaryBg }} />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -305,6 +433,7 @@ export function SettingsForm({
         title="Theme & Appearance"
         description="Custom brand colors and default theme mode for your shop."
       >
+        <ColorThemePicker />
         <form action={makeAction("theme")}>
           <div className="grid gap-4 md:grid-cols-3">
             <label className={labelClass}>
