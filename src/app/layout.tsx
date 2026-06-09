@@ -5,17 +5,107 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import AnalyticsNotice from "@/components/analytics-notice";
 import { env } from "@/lib/env";
-import { COLOR_THEME_STORAGE_KEY, COLOR_THEME_VALUES, DEFAULT_COLOR_THEME } from "@/lib/color-theme";
+import {
+  COLOR_THEME_STORAGE_KEY,
+  COLOR_THEME_VALUES,
+  CUSTOM_THEME_CSS_VARIABLES,
+  CUSTOM_THEME_FIELDS,
+  CUSTOM_THEME_STORAGE_KEY,
+  DEFAULT_COLOR_THEME,
+} from "@/lib/color-theme";
 
 const colorThemeInitScript = `
 (() => {
+  const root = document.documentElement;
+  const defaultTheme = "${DEFAULT_COLOR_THEME}";
+  const customTheme = "custom";
+  const fields = ${JSON.stringify(CUSTOM_THEME_FIELDS)};
+  const customVariables = ${JSON.stringify(CUSTOM_THEME_CSS_VARIABLES)};
+  const hexPattern = /^#[0-9A-Fa-f]{6}$/;
+
+  const clearCustomVariables = () => {
+    customVariables.forEach((name) => root.style.removeProperty(name));
+  };
+
+  const hexToRgb = (hex) => {
+    const clean = hex.replace("#", "");
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16),
+    };
+  };
+
+  const toHex = (value) => Math.max(0, Math.min(255, Math.round(value)))
+    .toString(16)
+    .padStart(2, "0")
+    .toUpperCase();
+
+  const mixHex = (hex, targetHex, amount) => {
+    const color = hexToRgb(hex);
+    const target = hexToRgb(targetHex);
+    return "#" + toHex(color.r + (target.r - color.r) * amount)
+      + toHex(color.g + (target.g - color.g) * amount)
+      + toHex(color.b + (target.b - color.b) * amount);
+  };
+
+  const hexToRgba = (hex, alpha) => {
+    const color = hexToRgb(hex);
+    return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha + ")";
+  };
+
+  const applyCustomVariables = (colors) => {
+    root.style.setProperty("--sidebar-bg", colors.sidebarBg);
+    root.style.setProperty("--sidebar-inactive", colors.sidebarInactive);
+    root.style.setProperty("--sidebar-active-bg", colors.sidebarActiveBg);
+    root.style.setProperty("--sidebar-active-text", colors.sidebarActiveText);
+    root.style.setProperty("--sidebar-active-accent", colors.sidebarActiveAccent);
+    root.style.setProperty("--primary-accent-bg", colors.primaryAccentBg);
+    root.style.setProperty("--primary-accent-text", colors.primaryAccentText);
+    root.style.setProperty("--sidebar-popover-bg", mixHex(colors.sidebarBg, "#FFFFFF", 0.06));
+    root.style.setProperty("--sidebar-count-bg", hexToRgba(colors.sidebarActiveAccent, 0.22));
+    root.style.setProperty("--sidebar-confirm-text", colors.sidebarBg);
+    root.style.setProperty("--primary-accent-hover", mixHex(colors.primaryAccentBg, "#000000", 0.16));
+    root.style.setProperty("--primary-accent-soft", hexToRgba(colors.primaryAccentBg, 0.12));
+  };
+
+  const readCustomColors = () => {
+    const raw = window.localStorage.getItem("${CUSTOM_THEME_STORAGE_KEY}");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+
+    return fields.reduce((colors, field) => {
+      const color = parsed[field.key];
+      if (!hexPattern.test(color)) throw new Error("Invalid custom theme color");
+      colors[field.key] = color.toUpperCase();
+      return colors;
+    }, {});
+  };
+
   try {
     const allowed = ${JSON.stringify(COLOR_THEME_VALUES)};
     const stored = window.localStorage.getItem("${COLOR_THEME_STORAGE_KEY}");
-    const theme = allowed.includes(stored) ? stored : "${DEFAULT_COLOR_THEME}";
-    document.documentElement.setAttribute("data-color-theme", theme);
+    const theme = allowed.includes(stored) ? stored : defaultTheme;
+
+    if (theme === customTheme) {
+      const customColors = readCustomColors();
+      if (!customColors) {
+        clearCustomVariables();
+        root.setAttribute("data-color-theme", defaultTheme);
+        return;
+      }
+
+      root.setAttribute("data-color-theme", customTheme);
+      applyCustomVariables(customColors);
+      return;
+    }
+
+    clearCustomVariables();
+    root.setAttribute("data-color-theme", theme);
   } catch {
-    document.documentElement.setAttribute("data-color-theme", "${DEFAULT_COLOR_THEME}");
+    clearCustomVariables();
+    root.setAttribute("data-color-theme", defaultTheme);
   }
 })();
 `;

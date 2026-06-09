@@ -10,9 +10,17 @@ import { useLanguage } from "@/lib/i18n/language-provider";
 import {
   COLOR_THEME_OPTIONS,
   COLOR_THEME_STORAGE_KEY,
+  CUSTOM_THEME_CSS_VARIABLES,
+  CUSTOM_THEME_FIELDS,
+  CUSTOM_THEME_STORAGE_KEY,
+  DEFAULT_CUSTOM_THEME_COLORS,
   DEFAULT_COLOR_THEME,
   type ColorTheme,
+  type CustomThemeColors,
+  type CustomThemeFieldKey,
   isColorTheme,
+  isHexColor,
+  normalizeCustomThemeColors,
 } from "@/lib/color-theme";
 
 const initialState: SettingsActionState = { error: null, success: null };
@@ -23,6 +31,7 @@ const textareaClass =
   "mt-1 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-blue-600 disabled:bg-slate-50 disabled:text-slate-500";
 const labelClass = "block min-w-0";
 const labelTextClass = "text-xs font-bold uppercase tracking-wide text-slate-500";
+const MINIMUM_CONTRAST_RATIO = 4.5;
 
 function Section({
   title,
@@ -77,19 +86,121 @@ function BlockMessage({ state }: { state: SettingsActionState }) {
   );
 }
 
+function readStoredCustomThemeColors(): CustomThemeColors | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY);
+    if (!raw) return null;
+    return normalizeCustomThemeColors(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
 function readStoredColorTheme(): ColorTheme {
   if (typeof window === "undefined") return DEFAULT_COLOR_THEME;
   try {
     const stored = window.localStorage.getItem(COLOR_THEME_STORAGE_KEY);
-    return isColorTheme(stored) ? stored : DEFAULT_COLOR_THEME;
+    if (!isColorTheme(stored)) return DEFAULT_COLOR_THEME;
+    if (stored === "custom" && !readStoredCustomThemeColors()) return DEFAULT_COLOR_THEME;
+    return stored;
   } catch {
     return DEFAULT_COLOR_THEME;
   }
 }
 
-function applyColorTheme(theme: ColorTheme) {
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace("#", "");
+  return {
+    r: Number.parseInt(clean.slice(0, 2), 16),
+    g: Number.parseInt(clean.slice(2, 4), 16),
+    b: Number.parseInt(clean.slice(4, 6), 16),
+  };
+}
+
+function toHex(value: number): string {
+  return Math.max(0, Math.min(255, Math.round(value)))
+    .toString(16)
+    .padStart(2, "0")
+    .toUpperCase();
+}
+
+function mixHex(hex: string, targetHex: string, amount: number): string {
+  const color = hexToRgb(hex);
+  const target = hexToRgb(targetHex);
+  return `#${toHex(color.r + (target.r - color.r) * amount)}${toHex(
+    color.g + (target.g - color.g) * amount,
+  )}${toHex(color.b + (target.b - color.b) * amount)}`;
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const color = hexToRgb(hex);
+  return `rgba(${color.r},${color.g},${color.b},${alpha})`;
+}
+
+function getCustomThemeVariables(colors: CustomThemeColors): Record<string, string> {
+  return {
+    "--sidebar-bg": colors.sidebarBg,
+    "--sidebar-inactive": colors.sidebarInactive,
+    "--sidebar-active-bg": colors.sidebarActiveBg,
+    "--sidebar-active-text": colors.sidebarActiveText,
+    "--sidebar-active-accent": colors.sidebarActiveAccent,
+    "--primary-accent-bg": colors.primaryAccentBg,
+    "--primary-accent-text": colors.primaryAccentText,
+    "--sidebar-popover-bg": mixHex(colors.sidebarBg, "#FFFFFF", 0.06),
+    "--sidebar-count-bg": hexToRgba(colors.sidebarActiveAccent, 0.22),
+    "--sidebar-confirm-text": colors.sidebarBg,
+    "--primary-accent-hover": mixHex(colors.primaryAccentBg, "#000000", 0.16),
+    "--primary-accent-soft": hexToRgba(colors.primaryAccentBg, 0.12),
+  };
+}
+
+function clearCustomThemeVariables() {
   if (typeof document === "undefined") return;
+  for (const variable of CUSTOM_THEME_CSS_VARIABLES) {
+    document.documentElement.style.removeProperty(variable);
+  }
+}
+
+function applyCustomThemeVariables(colors: CustomThemeColors) {
+  if (typeof document === "undefined") return;
+  const variables = getCustomThemeVariables(colors);
+  for (const [variable, value] of Object.entries(variables)) {
+    document.documentElement.style.setProperty(variable, value);
+  }
+}
+
+function applyColorTheme(theme: ColorTheme, customColors: CustomThemeColors) {
+  if (typeof document === "undefined") return;
+  if (theme === "custom") {
+    document.documentElement.setAttribute("data-color-theme", theme);
+    applyCustomThemeVariables(customColors);
+    return;
+  }
+
+  clearCustomThemeVariables();
   document.documentElement.setAttribute("data-color-theme", theme);
+}
+
+function getContrastRatio(foreground: string, background: string): number {
+  const luminance = (hex: string) => {
+    const channel = (value: number) => {
+      const normalized = value / 255;
+      return normalized <= 0.03928
+        ? normalized / 12.92
+        : Math.pow((normalized + 0.055) / 1.055, 2.4);
+    };
+    const { r, g, b } = hexToRgb(hex);
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  };
+
+  const light = Math.max(luminance(foreground), luminance(background));
+  const dark = Math.min(luminance(foreground), luminance(background));
+  return (light + 0.05) / (dark + 0.05);
+}
+
+function formatContrastRatio(ratio: number): string {
+  return ratio.toFixed(1);
 }
 
 function ColorThemePicker() {
@@ -98,32 +209,76 @@ function ColorThemePicker() {
   const t = (key: string, fallback: string) => colorThemeDict?.[key] || fallback;
   const [mounted, setMounted] = useState(false);
   const [colorTheme, setColorTheme] = useState<ColorTheme>(DEFAULT_COLOR_THEME);
+  const [customColors, setCustomColors] = useState<CustomThemeColors>(DEFAULT_CUSTOM_THEME_COLORS);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       const storedTheme = readStoredColorTheme();
+      const storedCustomColors = readStoredCustomThemeColors() ?? DEFAULT_CUSTOM_THEME_COLORS;
+      setCustomColors(storedCustomColors);
       setColorTheme(storedTheme);
-      applyColorTheme(storedTheme);
+      applyColorTheme(storedTheme, storedCustomColors);
       setMounted(true);
     }, 0);
     return () => window.clearTimeout(id);
   }, []);
 
   const activeTheme = mounted ? colorTheme : DEFAULT_COLOR_THEME;
+  const contrastChecks = [
+    {
+      key: "sidebar",
+      label: t("contrastSidebar", "Sidebar text vs background"),
+      ratio: getContrastRatio(customColors.sidebarInactive, customColors.sidebarBg),
+    },
+    {
+      key: "active",
+      label: t("contrastActive", "Active text vs background"),
+      ratio: getContrastRatio(customColors.sidebarActiveText, customColors.sidebarActiveBg),
+    },
+    {
+      key: "button",
+      label: t("contrastButton", "Button text vs background"),
+      ratio: getContrastRatio(customColors.primaryAccentText, customColors.primaryAccentBg),
+    },
+  ];
+  const contrastWarnings = contrastChecks.filter((check) => check.ratio < MINIMUM_CONTRAST_RATIO);
 
   function chooseTheme(theme: ColorTheme) {
+    const nextCustomColors = theme === "custom" ? customColors : DEFAULT_CUSTOM_THEME_COLORS;
     setColorTheme(theme);
-    applyColorTheme(theme);
+    applyColorTheme(theme, nextCustomColors);
     try {
       window.localStorage.setItem(COLOR_THEME_STORAGE_KEY, theme);
+      if (theme === "custom") {
+        window.localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(customColors));
+      }
     } catch {}
   }
 
   function resetTheme() {
     setColorTheme(DEFAULT_COLOR_THEME);
-    applyColorTheme(DEFAULT_COLOR_THEME);
+    setCustomColors(DEFAULT_CUSTOM_THEME_COLORS);
+    applyColorTheme(DEFAULT_COLOR_THEME, DEFAULT_CUSTOM_THEME_COLORS);
     try {
       window.localStorage.removeItem(COLOR_THEME_STORAGE_KEY);
+      window.localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY);
+    } catch {}
+  }
+
+  function updateCustomColor(key: CustomThemeFieldKey, value: string) {
+    if (!isHexColor(value)) return;
+    const nextColors = {
+      ...customColors,
+      [key]: value.toUpperCase(),
+    };
+
+    setCustomColors(nextColors);
+    setColorTheme("custom");
+    applyColorTheme("custom", nextColors);
+
+    try {
+      window.localStorage.setItem(COLOR_THEME_STORAGE_KEY, "custom");
+      window.localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(nextColors));
     } catch {}
   }
 
@@ -148,10 +303,18 @@ function ColorThemePicker() {
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
         {COLOR_THEME_OPTIONS.map((option) => {
           const isActive = option.value === activeTheme;
           const label = t(option.labelKey, option.value);
+          const preview = option.value === "custom"
+            ? {
+                sidebarBg: customColors.sidebarBg,
+                activeBg: customColors.sidebarActiveBg,
+                accent: customColors.sidebarActiveAccent,
+                primaryBg: customColors.primaryAccentBg,
+              }
+            : option;
 
           return (
             <button
@@ -171,9 +334,9 @@ function ColorThemePicker() {
                     className="flex h-8 w-12 overflow-hidden rounded-lg border border-black/10 shadow-sm dark:border-white/10"
                     aria-hidden="true"
                   >
-                    <span className="h-full flex-1" style={{ backgroundColor: option.sidebarBg }} />
-                    <span className="h-full w-3" style={{ backgroundColor: option.activeBg }} />
-                    <span className="h-full w-1.5" style={{ backgroundColor: option.accent }} />
+                    <span className="h-full flex-1" style={{ backgroundColor: preview.sidebarBg }} />
+                    <span className="h-full w-3" style={{ backgroundColor: preview.activeBg }} />
+                    <span className="h-full w-1.5" style={{ backgroundColor: preview.accent }} />
                   </span>
                   <span className="font-bold text-slate-800 dark:text-slate-100">{label}</span>
                 </span>
@@ -185,14 +348,137 @@ function ColorThemePicker() {
                 )}
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: option.sidebarBg }} />
-                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: option.activeBg }} />
-                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: option.primaryBg }} />
+                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: preview.sidebarBg }} />
+                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: preview.activeBg }} />
+                <span className="h-2 flex-1 rounded-full" style={{ backgroundColor: preview.primaryBg }} />
               </div>
             </button>
           );
         })}
       </div>
+
+      {activeTheme === "custom" && (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-[#eef2f7] p-4 dark:border-slate-700 dark:bg-[#111827]">
+          <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+            <div>
+              <h4 className="text-sm font-black text-slate-900 dark:text-slate-50">
+                {t("customPanelTitle", "Custom colors")}
+              </h4>
+              <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                {t(
+                  "customPanelDescription",
+                  "Pick your own sidebar and accent colors. Changes preview and save instantly on this browser.",
+                )}
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {CUSTOM_THEME_FIELDS.map((field) => (
+                  <label
+                    key={field.key}
+                    className="rounded-xl border border-slate-200 bg-[#f8fafc] p-3 dark:border-slate-700 dark:bg-[#0f172a]"
+                  >
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {t(field.labelKey, field.labelKey)}
+                      </span>
+                      <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        {customColors[field.key]}
+                      </span>
+                    </span>
+                    <input
+                      type="color"
+                      value={customColors[field.key]}
+                      onChange={(event) => updateCustomColor(field.key, event.target.value)}
+                      aria-label={t(field.labelKey, field.labelKey)}
+                      className="mt-3 h-10 w-full cursor-pointer rounded-lg border border-slate-200 bg-[#f8fafc] p-1 dark:border-slate-700 dark:bg-[#0f172a]"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t("preview", "Live preview")}
+              </p>
+              <div
+                className="mt-3 rounded-2xl p-3 shadow-sm"
+                style={{ backgroundColor: customColors.sidebarBg }}
+              >
+                <div
+                  className="relative flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-bold"
+                  style={{
+                    backgroundColor: customColors.sidebarActiveBg,
+                    color: customColors.sidebarActiveText,
+                  }}
+                >
+                  <span
+                    className="absolute bottom-2 left-0 top-2 w-1 rounded-r-full"
+                    style={{ backgroundColor: customColors.sidebarActiveAccent }}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="size-3 rounded-full"
+                    style={{ backgroundColor: customColors.sidebarActiveAccent }}
+                    aria-hidden="true"
+                  />
+                  {t("activeItem", "Active item")}
+                </div>
+                <div
+                  className="mt-2 flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold"
+                  style={{ color: customColors.sidebarInactive }}
+                >
+                  <span
+                    className="size-3 rounded-full border"
+                    style={{ borderColor: customColors.sidebarInactive }}
+                    aria-hidden="true"
+                  />
+                  {t("inactiveItem", "Inactive item")}
+                </div>
+                <div
+                  className="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold"
+                  style={{ color: customColors.sidebarInactive }}
+                >
+                  <span
+                    className="size-3 rounded-full border"
+                    style={{ borderColor: customColors.sidebarInactive }}
+                    aria-hidden="true"
+                  />
+                  {t("inactiveItemTwo", "Another item")}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="mt-3 h-10 w-full rounded-lg text-sm font-black transition"
+                style={{
+                  backgroundColor: customColors.primaryAccentBg,
+                  color: customColors.primaryAccentText,
+                }}
+              >
+                {t("sampleButton", "Sample button")}
+              </button>
+
+              <div className="mt-3 space-y-2">
+                {contrastWarnings.length === 0 ? (
+                  <p className="rounded-xl border border-emerald-200 bg-[#ecfdf5] px-3 py-2 text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    {t("contrastOk", "Readability looks good for the checked pairs.")}
+                  </p>
+                ) : (
+                  contrastWarnings.map((warning) => (
+                    <p
+                      key={warning.key}
+                      className="rounded-xl border border-amber-200 bg-[#fffbeb] px-3 py-2 text-xs font-semibold text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
+                    >
+                      {warning.label}: {t("contrastWarning", "Hard to read")} (
+                      {formatContrastRatio(warning.ratio)}:1)
+                    </p>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

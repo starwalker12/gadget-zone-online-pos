@@ -82,6 +82,21 @@
   --primary-accent-soft: rgba(21,128,61,0.12);
 }
 
+:root[data-color-theme="custom"] {
+  --sidebar-bg: #0F2A43;
+  --sidebar-popover-bg: #12324F;
+  --sidebar-active-bg: #1E4A6B;
+  --sidebar-active-accent: #38BDF8;
+  --sidebar-count-bg: rgba(56,189,248,0.20);
+  --sidebar-inactive: #CBD5E1;
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-confirm-text: #0F2A43;
+  --primary-accent-bg: #2563EB;
+  --primary-accent-hover: #1D4ED8;
+  --primary-accent-text: #FFFFFF;
+  --primary-accent-soft: rgba(37,99,235,0.10);
+}
+
 .dark {
   --background: #070b16; /* Deep premium navy/slate background */
   --foreground: #f8fafc; /* slate-50 text */
