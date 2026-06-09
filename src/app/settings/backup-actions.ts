@@ -280,7 +280,10 @@ async function saveRowMappingsBatch(
   for (let i = 0; i < insertPayload.length; i += size) {
     await client
       .from("import_row_mappings")
-      .insert(insertPayload.slice(i, i + size));
+      .upsert(insertPayload.slice(i, i + size), {
+        onConflict: "organization_id,import_job_id,source_table,source_id",
+        ignoreDuplicates: true
+      });
   }
 }
 
