@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ComponentType, PointerEvent as ReactPointerEvent } from "react";
 import { useReorderAnim } from "@/lib/use-reorder-animation";
 import {
@@ -58,6 +58,13 @@ type DashboardLayoutPreferences = {
   version: 1;
   order: string[];
   updatedAt: string;
+};
+
+type MeasuredDashboardCard = {
+  el: HTMLElement;
+  id: string;
+  index: number;
+  rect: DOMRect;
 };
 
 function uniqueStrings(values: unknown): string[] {
@@ -136,6 +143,70 @@ function normalizeOrder(cards: DashboardStatCard[], storedOrder: string[]): stri
   return [...saved, ...missing];
 }
 
+function getReducedMotionPreference() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function getDashboardTargetIndex(
+  cards: MeasuredDashboardCard[],
+  sourceId: string,
+  clientX: number,
+  clientY: number,
+) {
+  const siblings = cards
+    .filter((card) => card.id !== sourceId)
+    .sort((a, b) => a.rect.top - b.rect.top || a.rect.left - b.rect.left);
+
+  if (siblings.length === 0) {
+    return cards.find((card) => card.id === sourceId)?.index ?? 0;
+  }
+
+  const rows: Array<{
+    top: number;
+    bottom: number;
+    items: MeasuredDashboardCard[];
+  }> = [];
+
+  siblings.forEach((card) => {
+    const lastRow = rows[rows.length - 1];
+    if (!lastRow || card.rect.top > lastRow.bottom - 4) {
+      rows.push({
+        top: card.rect.top,
+        bottom: card.rect.bottom,
+        items: [card],
+      });
+      return;
+    }
+
+    lastRow.top = Math.min(lastRow.top, card.rect.top);
+    lastRow.bottom = Math.max(lastRow.bottom, card.rect.bottom);
+    lastRow.items.push(card);
+  });
+
+  let targetIndex = 0;
+
+  for (const row of rows) {
+    if (clientY < row.top) {
+      return targetIndex;
+    }
+
+    if (clientY <= row.bottom) {
+      const rowItems = [...row.items].sort((a, b) => a.rect.left - b.rect.left);
+      rowItems.forEach((card) => {
+        const midpointX = card.rect.left + card.rect.width / 2;
+        if (clientX > midpointX) {
+          targetIndex += 1;
+        }
+      });
+      return targetIndex;
+    }
+
+    targetIndex += row.items.length;
+  }
+
+  return targetIndex;
+}
+
 export function DashboardStatLayout({
   cards,
   firstName,
@@ -162,29 +233,36 @@ export function DashboardStatLayout({
   const gridRef = useRef<HTMLDivElement>(null);
   const justDraggedRef = useRef<string | null>(null);
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const currentTargetIndexRef = useRef<number | null>(null);
+  const cardRectsRef = useRef<MeasuredDashboardCard[]>([]);
 
   const getDraggedElement = (id: string) => {
     return gridRef.current?.querySelector<HTMLElement>(`[data-dashboard-card-id="${id}"]`) ?? null;
   };
 
-  const cleanupStyles = () => {
+  const cleanupStyles = useCallback(() => {
     if (!gridRef.current) return;
     const items = gridRef.current.querySelectorAll<HTMLElement>("[data-dashboard-card-id]");
     items.forEach((item) => {
       item.style.transform = "";
+      item.style.transition = "";
       item.style.boxShadow = "";
       item.style.opacity = "";
       item.style.zIndex = "";
       item.style.pointerEvents = "";
       item.style.willChange = "";
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (!draggingId) {
       cleanupStyles();
     }
-  }, [draggingId]);
+  }, [cleanupStyles, draggingId]);
+
+  useEffect(() => {
+    return () => cleanupStyles();
+  }, [cleanupStyles]);
 
   const cardMap = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
   const orderedIds = useMemo(() => normalizeOrder(cards, prefs.order), [cards, prefs.order]);
@@ -193,6 +271,67 @@ export function DashboardStatLayout({
     .filter((card): card is DashboardStatCard => Boolean(card));
 
   useReorderAnim(gridRef, "dashboard-card-id", [orderedCards], justDraggedRef);
+
+  const resetDragState = useCallback(() => {
+    draggingIdRef.current = null;
+    lastDragTargetRef.current = null;
+    dragStartPosRef.current = null;
+    currentTargetIndexRef.current = null;
+    cardRectsRef.current = [];
+    setDraggingId(null);
+    cleanupStyles();
+  }, [cleanupStyles]);
+
+  useEffect(() => {
+    if (!draggingId) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") resetDragState();
+    };
+    const handleWindowBlur = () => resetDragState();
+
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("blur", handleWindowBlur);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [draggingId, resetDragState]);
+
+  const applyDashboardGap = (sourceId: string, targetIndex: number) => {
+    if (getReducedMotionPreference()) return;
+
+    const measuredCards = cardRectsRef.current;
+    const sourceCard = measuredCards.find((card) => card.id === sourceId);
+    if (!sourceCard) return;
+
+    const rectByIndex = new Map(measuredCards.map((card) => [card.index, card.rect]));
+
+    measuredCards.forEach((card) => {
+      if (card.id === sourceId) return;
+
+      let destinationIndex = card.index;
+      if (targetIndex < sourceCard.index) {
+        if (card.index >= targetIndex && card.index < sourceCard.index) {
+          destinationIndex = card.index + 1;
+        }
+      } else if (targetIndex > sourceCard.index) {
+        if (card.index > sourceCard.index && card.index <= targetIndex) {
+          destinationIndex = card.index - 1;
+        }
+      }
+
+      const destinationRect = rectByIndex.get(destinationIndex);
+      if (!destinationRect || destinationIndex === card.index) {
+        card.el.style.transform = "none";
+        return;
+      }
+
+      const dx = destinationRect.left - card.rect.left;
+      const dy = destinationRect.top - card.rect.top;
+      card.el.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+  };
 
   const moveCard = (sourceId: string, targetId: string, placement: "before" | "after") => {
     if (sourceId === targetId) return;
@@ -228,12 +367,30 @@ export function DashboardStatLayout({
     lastDragTargetRef.current = null;
     setDraggingId(cardId);
 
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const measuredCards = Array.from(
+      gridRef.current?.querySelectorAll<HTMLElement>("[data-dashboard-card-id]") ?? [],
+    ).map((item, index) => ({
+      el: item,
+      id: item.dataset.dashboardCardId ?? "",
+      index,
+      rect: item.getBoundingClientRect(),
+    })).filter((item) => Boolean(item.id));
+
+    cardRectsRef.current = measuredCards;
+    currentTargetIndexRef.current = measuredCards.find((card) => card.id === cardId)?.index ?? null;
+
+    const prefersReduced = getReducedMotionPreference();
     if (prefersReduced) return;
 
-    dragStartPosRef.current = { x: event.clientX, y: event.clientY };
+    measuredCards.forEach((card) => {
+      if (card.id !== cardId) {
+        card.el.style.transition = "transform 150ms ease";
+      }
+    });
+
     const el = getDraggedElement(cardId);
     if (el) {
+      dragStartPosRef.current = { x: event.clientX, y: event.clientY };
       el.style.transform = "translate(0px, 0px) scale(1.03)";
       el.style.boxShadow = "0 8px 25px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)";
       el.style.opacity = "0.92";
@@ -258,6 +415,18 @@ export function DashboardStatLayout({
         el.style.transform = `translate(${dx}px, ${dy}px) scale(1.03)`;
       }
     }
+
+    const targetIndex = getDashboardTargetIndex(
+      cardRectsRef.current,
+      sourceId,
+      event.clientX,
+      event.clientY,
+    );
+
+    if (targetIndex !== currentTargetIndexRef.current) {
+      currentTargetIndexRef.current = targetIndex;
+      applyDashboardGap(sourceId, targetIndex);
+    }
   };
 
   const endDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -268,33 +437,23 @@ export function DashboardStatLayout({
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
-    const rawTarget = document.elementFromPoint(event.clientX, event.clientY);
-    const targetElement = rawTarget instanceof HTMLElement
-      ? rawTarget.closest("[data-dashboard-card-id]")
-      : null;
-    const targetId = targetElement instanceof HTMLElement ? targetElement.dataset.dashboardCardId : null;
+    const targetIndex = currentTargetIndexRef.current;
+    const sourceIndex = orderedCards.findIndex((card) => card.id === sourceId);
 
-    if (targetId && targetId !== sourceId) {
-      const sourceIndex = orderedCards.findIndex((card) => card.id === sourceId);
-      const targetIndex = orderedCards.findIndex((card) => card.id === targetId);
-      if (sourceIndex !== -1 && targetIndex !== -1) {
+    if (targetIndex !== null && targetIndex !== sourceIndex && targetIndex >= 0) {
+      const targetCard = orderedCards[targetIndex];
+      if (targetCard) {
         justDraggedRef.current = sourceId;
-        moveCard(sourceId, targetId, targetIndex > sourceIndex ? "after" : "before");
+        moveCard(sourceId, targetCard.id, targetIndex > sourceIndex ? "after" : "before");
       }
     }
 
-    draggingIdRef.current = null;
-    lastDragTargetRef.current = null;
-    dragStartPosRef.current = null;
-    setDraggingId(null);
-    cleanupStyles();
+    resetDragState();
   };
 
   const resetLayout = () => {
     clearStoredLayout();
-    setDraggingId(null);
-    draggingIdRef.current = null;
-    lastDragTargetRef.current = null;
+    resetDragState();
   };
 
   return (
