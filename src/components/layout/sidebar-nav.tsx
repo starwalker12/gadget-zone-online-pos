@@ -10,7 +10,7 @@ import {
   RotateCcw, Wrench, Wallet, CalendarCheck, BarChart3,
   Truck, ScrollText, UserCog, Settings, MonitorCog, PackageCheck, ListChecks,
   GripVertical, PanelLeftClose, PanelLeftOpen, Archive, ArchiveRestore,
-  Check, RefreshCcw,
+  Check, RefreshCcw, ArrowUpDown,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
@@ -131,6 +131,8 @@ function normalizeOrder(items: NavItem[], storedOrder: string[]): string[] {
 export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl: string | null }) {
   const pathname = usePathname();
   const { dict } = useLanguage();
+  const [rearrangeMode, setRearrangeMode] = useState(false);
+  const logoUrl = appLogoUrl || "/saledock-logo-mark.png";
   const sidebarDict = dict.sidebar as Record<string, string> | undefined;
   const preferenceSnapshot = useSyncExternalStore(
     subscribeToPreferences,
@@ -473,28 +475,57 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
           aria-label="SaleDock Cloud POS"
           title={collapsed ? "SaleDock Cloud POS" : undefined}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/saledock-logo-full.png"
-            alt="SaleDock Cloud POS"
-            className={`${collapsed ? "h-8 max-w-10" : "h-9 max-w-[160px]"} w-auto object-contain brightness-0 invert`}
-          />
-          {!collapsed && appLogoUrl && (
-            <>
-              <div className="h-8 w-px shrink-0 bg-[var(--sidebar-border-strong)]" />
+          {collapsed ? (
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#fff] p-1.5 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                key={appLogoUrl}
-                src={appLogoUrl}
+                key={logoUrl}
+                src={logoUrl}
                 alt="Shop logo"
-                className="h-8 w-auto max-w-[120px] object-contain"
+                className="size-full object-contain"
               />
+            </div>
+          ) : (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/saledock-logo-full.png"
+                alt="SaleDock Cloud POS"
+                className="h-8 max-w-[120px] w-auto object-contain brightness-0 invert"
+              />
+              <div className="h-8 w-px shrink-0 bg-[var(--sidebar-border-strong)]" />
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#fff] p-1.5 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={logoUrl}
+                  src={logoUrl}
+                  alt="Shop logo"
+                  className="size-full object-contain"
+                />
+              </div>
             </>
           )}
         </Link>
       </div>
 
-      <div className="flex items-center justify-end border-b border-[var(--sidebar-border)] px-3 py-2">
+      <div className={`flex border-b border-[var(--sidebar-border)] px-3 py-2 ${collapsed ? "flex-col items-center gap-2" : "flex-row items-center justify-between"}`}>
+        <button
+          type="button"
+          onClick={() => setRearrangeMode((prev) => !prev)}
+          className={`flex h-10 items-center justify-center rounded-xl border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
+            collapsed ? "w-10" : "px-3 gap-2 text-xs font-bold"
+          } ${
+            rearrangeMode
+              ? "border-[var(--sidebar-active-accent)] bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]"
+              : "border-[var(--sidebar-border-strong)] bg-[var(--sidebar-control-bg)] text-[var(--sidebar-inactive)] hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)]"
+          }`}
+          aria-label={rearrangeMode ? "Done rearranging" : "Rearrange items"}
+          title={rearrangeMode ? "Done rearranging" : "Rearrange items"}
+        >
+          {rearrangeMode ? <Check className="size-4 shrink-0" /> : <ArrowUpDown className="size-4 shrink-0" />}
+          {!collapsed && <span>{rearrangeMode ? "Done" : "Rearrange"}</span>}
+        </button>
+
         <button
           type="button"
           onClick={toggleCollapsed}
@@ -529,20 +560,22 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                   dragging ? "opacity-70 ring-2 ring-[var(--sidebar-active-accent)]" : ""
                 }`}
               >
-                <button
-                  type="button"
-                  onPointerDown={(event) => beginDrag(event, item.href)}
-                  onPointerMove={updateDrag}
-                  onPointerUp={endDrag}
-                  onPointerCancel={endDrag}
-                  className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-lg text-[var(--sidebar-drag-handle)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-drag-handle-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
-                    collapsed ? "" : "opacity-70 group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100"
-                  }`}
-                  aria-label={`${t("dragToReorder")}: ${label}`}
-                  title={`${t("dragToReorder")}: ${label}`}
-                >
-                  <GripVertical className="size-4" />
-                </button>
+                {rearrangeMode && (
+                  <button
+                    type="button"
+                    onPointerDown={(event) => beginDrag(event, item.href)}
+                    onPointerMove={updateDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={endDrag}
+                    className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-lg text-[var(--sidebar-drag-handle)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-drag-handle-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)] ${
+                      collapsed ? "" : "opacity-70 group-hover/navitem:opacity-100 group-focus-within/navitem:opacity-100"
+                    }`}
+                    aria-label={`${t("dragToReorder")}: ${label}`}
+                    title={`${t("dragToReorder")}: ${label}`}
+                  >
+                    <GripVertical className="size-4" />
+                  </button>
+                )}
 
                 <Link
                   href={item.href}
@@ -556,7 +589,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                       : "text-[var(--sidebar-inactive)] hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)]"
                   }`}
                 >
-                  {Icon && <Icon className="size-4 shrink-0" />}
+                  {Icon && <Icon className="size-[22px] shrink-0" />}
                   {!collapsed && <span className="truncate">{label}</span>}
                 </Link>
 
