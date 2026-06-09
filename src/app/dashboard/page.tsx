@@ -17,6 +17,7 @@ import { getDashboardSummary } from "@/lib/data/dashboard";
 import { getPotentialProfitInStock } from "@/lib/data/reports";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
 import { getServerDict } from "@/lib/i18n/server";
+import { STAT_CARD_TONE_STYLES, type StatCardTone } from "@/components/ui/stat-card";
 
 async function stockValueStats(organizationId: string) {
   const supabase = await createClient();
@@ -222,40 +223,49 @@ export default async function DashboardPage() {
 
   const isProfitPositive = dashSummary.todayProfit >= 0;
 
-  const statCards = [
+  type DashboardStatCard = {
+    label: string;
+    value: string;
+    change: string;
+    tone: StatCardTone;
+    icon: React.ComponentType<{ className?: string }>;
+    href?: string;
+  };
+
+  const statCards: DashboardStatCard[] = [
     {
       label: t.todayProfit,
       value: formatCurrency(dashSummary.todayProfit, currency),
       change: isProfitPositive ? `${t.fromSales} ${t.today}` : `${t.estimatedProfit}`,
-      color: isProfitPositive ? "#059669" : "#dc2626",
+      tone: isProfitPositive ? "success" : "danger",
       icon: TrendingUp,
     },
     {
       label: t.grossSales,
       value: formatCurrency(dashSummary.grossSales, currency),
       change: dashSummary.grossSales > 0 ? `${formatNumber(dashSummary.returnsCount + 1)} ${t.invoices}` : t.noSalesYet,
-      color: "#3b82f6",
+      tone: "success",
       icon: ShoppingCart,
     },
     {
       label: t.returns,
       value: formatCurrency(dashSummary.returnsTotal, currency),
       change: dashSummary.returnsCount > 0 ? `${formatNumber(dashSummary.returnsCount)} return${dashSummary.returnsCount === 1 ? "" : "s"}` : "0 returns",
-      color: "#dc2626",
+      tone: "danger",
       icon: RotateCcw,
     },
     {
       label: t.expenses,
       value: formatCurrency(dashSummary.expensesTotal, currency),
       change: dashSummary.expensesTotal > 0 ? `${t.today}` : "0 expenses",
-      color: "#d97706",
+      tone: "danger",
       icon: Wallet,
     },
     {
       label: t.lowStock,
       value: dashSummary.lowStockCount > 0 ? `${formatNumber(dashSummary.lowStockCount)} item${dashSummary.lowStockCount === 1 ? "" : "s"}` : "0 items",
       change: dashSummary.lowStockCount > 0 ? "Below minimum stock" : "All stocked",
-      color: "#d97706",
+      tone: "warning",
       icon: PackageSearch,
       href: "/purchases/replenishment",
     },
@@ -263,21 +273,21 @@ export default async function DashboardPage() {
       label: t.pendingRepairs,
       value: `${formatNumber(dashSummary.pendingRepairsCount)} job${dashSummary.pendingRepairsCount === 1 ? "" : "s"}`,
       change: dashSummary.pendingRepairsCount > 0 ? "In progress" : "No pending jobs",
-      color: "#8b5cf6",
+      tone: "warning",
       icon: Wrench,
     },
     {
       label: t.supplierDues,
       value: formatCurrency(dashSummary.supplierDuesTotal, currency),
       change: dashSummary.supplierDuesTotal > 0 ? t.suppliersPayable : "All settled",
-      color: "#d97706",
+      tone: "warning",
       icon: Briefcase,
     },
     {
       label: t.customerDues,
       value: formatCurrency(dashSummary.customerDuesTotal, currency),
       change: dashSummary.customerDuesTotal > 0 ? t.customersOwe : "All settled",
-      color: "#d97706",
+      tone: "warning",
       icon: Users,
     },
   ];
@@ -347,28 +357,29 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
               {statCards.map((k) => {
                 const Icon = k.icon;
+                const toneStyles = STAT_CARD_TONE_STYLES[k.tone];
                 const card = (
                   <div
-                    className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                    className={`rounded-xl border p-3 ${toneStyles.card}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold tracking-wider text-slate-500 dark:text-slate-400">
+                      <span className={`text-[10px] font-semibold tracking-wider ${toneStyles.label}`}>
                         {k.label}
                       </span>
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md" style={{ background: `${k.color}18`, color: k.color }}>
+                      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md ${toneStyles.icon}`}>
                         <Icon className="size-3.5" />
                       </span>
                     </div>
-                    <p className="mt-1.5 text-sm font-bold text-slate-950 dark:text-white sm:text-base">
+                    <p className={`mt-1.5 text-sm font-bold sm:text-base ${toneStyles.value}`}>
                       {k.value}
                     </p>
-                    <p className="mt-0.5 text-[10px] font-medium" style={{ color: k.color }}>
+                    <p className={`mt-0.5 text-[10px] font-medium ${toneStyles.detail}`}>
                       {k.change}
                     </p>
                   </div>
                 );
                 return "href" in k ? (
-                  <Link key={k.label} href={(k as { href: string }).href} className="transition hover:opacity-80">
+                  <Link key={k.label} href={k.href!} className="transition hover:opacity-80">
                     {card}
                   </Link>
                 ) : (
