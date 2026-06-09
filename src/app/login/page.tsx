@@ -50,7 +50,7 @@ export default async function LoginPage({
   const authCard = (
     <>
       {/* Logo */}
-      <div className="mb-6 text-center">
+      <div className="mb-3.5 text-center">
         <Link
           href={signedInUser ? (signedInUser.needsOnboarding ? "/onboarding" : "/dashboard") : "/"}
           className="inline-block"
@@ -59,7 +59,7 @@ export default async function LoginPage({
           <img
             src="/saledock-logo-full.png"
             alt="SaleDock Cloud POS"
-            className="mx-auto mb-4 h-14 w-auto max-w-[200px] object-contain auth-logo-filter sm:h-16"
+            className="mx-auto mb-1.5 h-9 w-auto max-w-[150px] object-contain auth-logo-filter"
           />
         </Link>
       </div>
@@ -132,13 +132,13 @@ export default async function LoginPage({
       ) : (
         /* Login form for signed-out users */
         <>
-          <div className="mb-6 text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700 sm:tracking-[0.28em]">
+          <div className="mb-3.5 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-700 sm:tracking-[0.2em]">
               {t("brand", "SaleDock Cloud POS")}
             </p>
-            <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">{t("signInTitle", "Sign in to your shop")}</h1>
+            <h1 className="mt-1 text-lg font-black text-slate-950 dark:text-white sm:text-xl">{t("signInTitle", "Sign in to your shop")}</h1>
             {maintenanceMode && (
-              <p className="mt-3 text-sm leading-6 text-slate-500">
+              <p className="mt-1.5 text-xs leading-5 text-slate-500">
                 {t("maintenanceDesc", "The system is undergoing scheduled maintenance. Please check back later.")}
               </p>
             )}
@@ -163,7 +163,7 @@ export default async function LoginPage({
       )}
 
       {/* Legal footer */}
-      <div className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">
+      <div className="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
         <Link href="/privacy" className="hover:text-blue-700">Privacy Policy</Link>
         <span className="mx-2">·</span>
         <Link href="/terms" className="hover:text-blue-700">Terms of Service</Link>
@@ -184,11 +184,8 @@ export default async function LoginPage({
 
           {/* Banner content */}
           <div className="relative z-10 flex flex-col h-full justify-between">
-            {/* Top brand accent */}
-            <div className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold text-white shadow-md shadow-blue-500/20">SD</span>
-              <span className="text-sm font-bold uppercase tracking-wider text-slate-200">SaleDock Platform</span>
-            </div>
+            {/* Top brand space (badge removed) */}
+            <div className="h-4" />
 
             {/* SVG Abstract Art Illustration */}
             <div className="my-auto py-6 flex items-center justify-center">
@@ -251,10 +248,10 @@ export default async function LoginPage({
         </div>
 
         {/* Right Column - Login Form */}
-        <div className="flex flex-1 flex-col justify-between p-6 sm:p-8 lg:p-10 overflow-y-auto lg:h-full">
+        <div className="flex flex-1 flex-col justify-between p-4 sm:p-6 lg:p-7 overflow-y-auto lg:h-full">
           {/* Header controls at the top of the form */}
           <div className="w-full">
-            <PublicPageHeader showLanguage={true} />
+            <PublicPageHeader showLanguage={true} compact={true} />
           </div>
 
           {/* Form in center */}

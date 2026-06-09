@@ -5,7 +5,13 @@ import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
 
-export function PublicPageHeader({ showLanguage = false }: { showLanguage?: boolean }) {
+export function PublicPageHeader({
+  showLanguage = false,
+  compact = false,
+}: {
+  showLanguage?: boolean;
+  compact?: boolean;
+}) {
   const handleBack = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       e.preventDefault();
@@ -14,7 +20,11 @@ export function PublicPageHeader({ showLanguage = false }: { showLanguage?: bool
   };
 
   return (
-    <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6 dark:border-slate-700">
+    <div
+      className={`flex items-center justify-between border-b border-slate-100 dark:border-slate-700 ${
+        compact ? "pb-2 mb-3" : "pb-4 mb-6"
+      }`}
+    >
       <Link
         href="/"
         onClick={handleBack}
