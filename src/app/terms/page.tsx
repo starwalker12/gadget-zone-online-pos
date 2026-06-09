@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PublicPageHeader } from "@/components/layout/public-page-header";
 
 export const metadata: Metadata = {
   title: "Terms of Service — SaleDock Cloud POS",
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10 dark:bg-slate-900">
-      <article className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-10 dark:border-slate-700 dark:bg-slate-800">
+      <article className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-[#fff] p-6 shadow-xl sm:p-10 dark:border-slate-700 dark:bg-slate-800">
+        <PublicPageHeader />
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/">
@@ -16,7 +18,7 @@ export default function TermsPage() {
             <img
               src="/saledock-logo-full.png"
               alt="SaleDock Cloud POS"
-              className="mx-auto mb-2 h-10 w-auto max-w-[180px] object-contain"
+              className="mx-auto mb-2 h-10 w-auto max-w-[180px] object-contain dark:brightness-0 dark:invert"
             />
           </Link>
         </div>
