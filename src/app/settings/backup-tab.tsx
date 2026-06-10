@@ -721,6 +721,15 @@ export function BackupTab({
             });
           }
         }
+        // If we have SupplierPurchases in SQLite, we also have SupplierPurchaseItems (simulated from the same rows).
+        if (tableCountsRecord["SupplierPurchases"] > 0) {
+          tableCountsRecord["SupplierPurchaseItems"] = tableCountsRecord["SupplierPurchases"];
+          const itemProgress = counts.find(c => c.name === "SupplierPurchaseItems");
+          if (itemProgress) {
+            itemProgress.count = tableCountsRecord["SupplierPurchases"];
+            itemProgress.status = "pending";
+          }
+        }
 
         setTableProgress(counts);
 
@@ -1445,21 +1454,27 @@ export function BackupTab({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const groups = new Map<string, any[]>();
             rawPurchases.forEach(row => {
-              const pdfName = row.PdfPath ? row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : "";
-              const groupKey = pdfName || `id-${row.Id}`;
+              const rowId = row.Id || 0;
+              const groupKey = rowId > 0
+                ? rowId.toString()
+                : (row.PdfPath ? row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : `missing-id-${row.Id}`);
               if (!groups.has(groupKey)) {
                 groups.set(groupKey, []);
               }
               groups.get(groupKey)!.push(row);
             });
 
-            allRows = Array.from(groups.entries()).map(([groupKey, rows]) => {
+            allRows = Array.from(groups.entries()).map(([, rows]) => {
               const first = rows[0];
-              const isPdf = !groupKey.startsWith("id-");
-              const purchaseNo = isPdf ? groupKey : `PUR-SQLite-${first.Id}`;
+              const pdfName = first.PdfPath ? first.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : "";
+              const purchaseNo = pdfName || `PUR-SQLite-${first.Id}`;
               const total = rows.reduce((sum, r) => sum + Number(r.TotalPurchaseValue || 0), 0);
+              const headerId = first.Id && first.Id > 0
+                ? first.Id
+                : (first.PdfPath ? first.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : `fallback-header-${first.Id}`);
+
               return {
-                Id: first.Id,
+                Id: headerId,
                 SupplierId: first.SupplierId,
                 PurchaseNo: purchaseNo,
                 Status: "paid",
@@ -1479,8 +1494,10 @@ export function BackupTab({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const groups = new Map<string, any[]>();
             rawPurchases.forEach(row => {
-              const pdfName = row.PdfPath ? row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : "";
-              const groupKey = pdfName || `id-${row.Id}`;
+              const rowId = row.Id || 0;
+              const groupKey = rowId > 0
+                ? rowId.toString()
+                : (row.PdfPath ? row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : `missing-id-${row.Id}`);
               if (!groups.has(groupKey)) {
                 groups.set(groupKey, []);
               }
@@ -1488,14 +1505,22 @@ export function BackupTab({
             });
 
             allRows = [];
-            rawPurchases.forEach(row => {
-              const pdfName = row.PdfPath ? row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : "";
-              const groupKey = pdfName || `id-${row.Id}`;
+            rawPurchases.forEach((row, index) => {
+              const rowId = row.Id || 0;
+              const groupKey = rowId > 0
+                ? rowId.toString()
+                : (row.PdfPath ? row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : `missing-id-${row.Id}`);
               const parentGroup = groups.get(groupKey)!;
-              const parentHeaderId = parentGroup[0].Id;
+              const firstParent = parentGroup[0];
+              const parentHeaderId = firstParent.Id && firstParent.Id > 0
+                ? firstParent.Id
+                : (firstParent.PdfPath ? firstParent.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") : `fallback-header-${firstParent.Id}`);
+              const itemId = row.Id && row.Id > 0
+                ? row.Id
+                : (row.PdfPath ? `${row.PdfPath.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "")}-item-${index}` : `fallback-item-${row.Id}-${index}`);
 
               allRows.push({
-                Id: row.Id,
+                Id: itemId,
                 PurchaseId: parentHeaderId,
                 ProductId: row.ProductId,
                 ProductName: row.ProductName || "Unknown Product",
