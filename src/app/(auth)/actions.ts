@@ -399,13 +399,18 @@ export async function setPasswordAction(
     return { error: "No email address on your account. Contact support." };
   }
 
+  const currentProviders = user.app_metadata?.providers || [];
+  const providersArray = Array.isArray(currentProviders) ? currentProviders : [currentProviders];
+  const newProviders = Array.from(new Set([...providersArray, "email"]));
+
   const admin = createAdminClient();
   const { error: adminError } = await admin.auth.admin.updateUserById(user.id, {
     email: user.email,
     password,
     email_confirm: true,
     app_metadata: {
-      providers: ["google", "email"]
+      ...user.app_metadata,
+      providers: newProviders
     }
   });
 

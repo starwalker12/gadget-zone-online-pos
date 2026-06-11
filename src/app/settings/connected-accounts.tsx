@@ -313,7 +313,6 @@ function EmailPasswordRow({
   };
   const allPasswordChecksPass = Object.values(passwordChecks).every(Boolean);
   const passwordsMatch = confirmPasswordVal.length > 0 && passwordVal === confirmPasswordVal;
-  const passwordsMismatch = confirmPasswordVal.length > 0 && passwordVal !== confirmPasswordVal;
 
   return (
     <div className="rounded-xl border border-slate-200 px-4 py-3 dark:border-slate-700">
@@ -476,7 +475,7 @@ function EmailPasswordRow({
             <div className="flex gap-2">
               <button
                 type="submit"
-                disabled={!allPasswordChecksPass || passwordsMismatch}
+                disabled={!allPasswordChecksPass || !passwordsMatch}
                 className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
               >
                 {hasPassword ? "Update Password" : "Set Password"}
