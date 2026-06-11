@@ -11,6 +11,7 @@ import { verifyRecaptchaToken } from "@/lib/security/recaptcha";
 import { logAudit } from "@/lib/audit";
 import { checkRateLimit, recordAttempt, clearAttempts, extractClientIp } from "@/lib/auth/rate-limit";
 import { setCaptchaPass, readCaptchaPass, decrementCaptchaPass, clearCaptchaPass } from "@/lib/auth/captcha-pass";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters.")
@@ -590,4 +591,21 @@ export async function restartSetupAction(): Promise<{ error: string | null }> {
     .eq("id", user.id);
 
   redirect("/onboarding");
+}
+
+export async function verifyOtpAction(
+  tokenHash: string,
+  type: EmailOtpType,
+): Promise<{ success: boolean; error: string | null }> {
+  if (!env.isSupabaseConfigured) return { success: false, error: "Supabase not configured" };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    token_hash: tokenHash,
+    type,
+  });
+  if (error) {
+    console.error("[security] verifyOtpAction failed:", error.message);
+    return { success: false, error: error.message };
+  }
+  return { success: true, error: null };
 }
