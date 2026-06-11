@@ -125,7 +125,10 @@ export default async function SettingsPage({
         )}
 
         {currentTab === "security" && (
-          <SettingsSecurity />
+          <SettingsSecurity
+            linkedProviders={linkedProviders}
+            userEmail={freshUser?.email ?? null}
+          />
         )}
 
         {currentTab === "help" && (

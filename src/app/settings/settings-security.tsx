@@ -1,42 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { getLinkedProviders } from "@/lib/auth/identities";
-import { signOutAction } from "@/app/(auth)/actions";
+import { getLinkedProviders, type LinkedProviders } from "@/lib/auth/identities";
 import {
-  Shield, KeyRound, Smartphone, Monitor, LogOut, Link as LinkIcon,
-  CheckCircle, ArrowRight, Mail, ShieldCheck,
+  signOutAction,
+  getActiveSessionsAction,
+  signOutOtherSessionsAction,
+  type SessionInfo,
+} from "@/app/(auth)/actions";
+import {
+  Shield, KeyRound, Monitor, LogOut, Link as LinkIcon,
+  CheckCircle, ArrowRight, Mail, ShieldCheck, Loader2
 } from "lucide-react";
 
-export function SettingsSecurity() {
+interface SettingsSecurityProps {
+  linkedProviders: LinkedProviders;
+  userEmail: string | null;
+}
+
+function parseUserAgent(ua: string): string {
+  const lower = ua.toLowerCase();
+  
+  let os = "Unknown OS";
+  if (lower.includes("windows")) os = "Windows";
+  else if (lower.includes("macintosh") || lower.includes("mac os x")) os = "macOS";
+  else if (lower.includes("iphone") || lower.includes("ipad")) os = "iOS";
+  else if (lower.includes("android")) os = "Android";
+  else if (lower.includes("linux")) os = "Linux";
+  else if (lower.includes("node")) os = "Node.js";
+
+  let browser = "Unknown Browser";
+  if (lower.includes("firefox")) browser = "Firefox";
+  else if (lower.includes("chrome") || lower.includes("chromium")) browser = "Chrome";
+  else if (lower.includes("safari")) browser = "Safari";
+  else if (lower.includes("edge")) browser = "Edge";
+  else if (lower.includes("opera") || lower.includes("opr")) browser = "Opera";
+  else if (lower.includes("postman")) browser = "Postman";
+  else if (lower === "node") browser = "Node.js Env";
+
+  if (os === "Node.js" && browser === "Node.js Env") {
+    return "Node.js environment";
+  }
+
+  if (os !== "Unknown OS" && browser !== "Unknown Browser") {
+    return `${browser} on ${os}`;
+  }
+  if (browser !== "Unknown Browser") return browser;
+  if (os !== "Unknown OS") return os;
+  return ua || "Unknown device";
+}
+
+function getSessionIdFromToken(token: string): string | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payloadBase64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payloadJson = atob(payloadBase64);
+    const payload = JSON.parse(payloadJson);
+    return payload.session_id || null;
+  } catch (err) {
+    console.error("Failed to decode session token:", err);
+    return null;
+  }
+}
+
+export function SettingsSecurity({
+  linkedProviders,
+  userEmail,
+}: SettingsSecurityProps) {
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState<string | null>(null);
-  const [hasPassword, setHasPassword] = useState(false);
-  const [hasGoogle, setHasGoogle] = useState(false);
+  const [email, setEmail] = useState<string | null>(userEmail);
+  const [hasPassword, setHasPassword] = useState(linkedProviders.hasPassword);
+  const [hasGoogle, setHasGoogle] = useState(linkedProviders.hasGoogle);
+  const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [signOutOthersPending, setSignOutOthersPending] = useState(false);
+  const [signOutOthersState, setSignOutOthersState] = useState<{ error: string | null; success: string | null }>({ error: null, success: null });
+
+  const loadSessions = useCallback(async () => {
+    const res = await getActiveSessionsAction();
+    if (res.error) {
+      setSessionsError(res.error);
+    } else if (res.sessions) {
+      setSessions(res.sessions);
+    }
+
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const sid = getSessionIdFromToken(session.access_token);
+      setCurrentSessionId(sid);
+    }
+  }, []);
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const providers = getLinkedProviders(user);
-        setEmail(user.email ?? null);
-        setHasPassword(providers.hasPassword);
-        setHasGoogle(providers.hasGoogle);
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const providers = getLinkedProviders(user);
+          if (user.identities && user.identities.length > 0) {
+            setEmail(user.email ?? null);
+            setHasPassword(providers.hasPassword);
+            setHasGoogle(providers.hasGoogle);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading user in Security tab:", err);
       }
+
+      await loadSessions();
       setLoading(false);
     }
     load();
-  }, []);
+  }, [loadSessions]);
+
+  const handleSignOutOthers = async () => {
+    setSignOutOthersPending(true);
+    setSignOutOthersState({ error: null, success: null });
+    const res = await signOutOtherSessionsAction();
+    if (res.error) {
+      setSignOutOthersState({ error: res.error, success: null });
+    } else {
+      setSignOutOthersState({ error: null, success: res.success ?? "Signed out of all other sessions." });
+      await loadSessions();
+    }
+    setSignOutOthersPending(false);
+  };
 
   if (loading) return null;
 
   return (
     <div className="space-y-5">
       {/* Sign-in security */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="rounded-2xl border border-slate-200 bg-[#fff] p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
             <KeyRound className="size-4" />
@@ -121,55 +222,103 @@ export function SettingsSecurity() {
         </div>
       </section>
 
-      {/* Multi-factor authentication */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-            <Smartphone className="size-4" />
+      {/* Active sessions */}
+      <section className="rounded-2xl border border-slate-200 bg-[#fff] p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+              <Monitor className="size-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-950 dark:text-slate-50">Active Sessions</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Manage your active logins across devices</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-black text-slate-950 dark:text-slate-50">Multi-factor authentication</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Add an extra verification step when signing in</p>
-          </div>
+          {sessions.length > 1 && (
+            <button
+              onClick={handleSignOutOthers}
+              disabled={signOutOthersPending}
+              className="flex h-8 items-center gap-1.5 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50 cursor-pointer disabled:opacity-50"
+            >
+              {signOutOthersPending ? (
+                <>
+                  <Loader2 className="size-3 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Sign out of all other sessions"
+              )}
+            </button>
+          )}
         </div>
-        <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-700 dark:bg-slate-800/20">
-          <ShieldCheck className="mx-auto size-8 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">Coming soon</p>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-            Two-factor authentication will be available in a future update.
-          </p>
-        </div>
-      </section>
 
-      {/* Active session */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-            <Monitor className="size-4" />
+        {signOutOthersState.success && (
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+            {signOutOthersState.success}
           </div>
-          <div>
-            <h3 className="text-sm font-black text-slate-950 dark:text-slate-50">Active session</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Your current session is secured</p>
+        )}
+
+        {signOutOthersState.error && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-medium text-red-800 dark:border-red-800 dark:bg-red-950/50 dark:text-red-300">
+            {signOutOthersState.error}
           </div>
+        )}
+
+        {sessionsError && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-medium text-red-800 dark:border-red-800 dark:bg-red-950/50 dark:text-red-300">
+            {sessionsError}
+          </div>
+        )}
+
+        <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+          {sessions.length === 0 ? (
+            <p className="text-xs text-slate-500 py-2">No active sessions found.</p>
+          ) : (
+            sessions.map((session) => {
+              const isCurrent = session.id === currentSessionId;
+              return (
+                <div key={session.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      <Monitor className="size-4.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                          {parseUserAgent(session.userAgent)}
+                        </span>
+                        {isCurrent && (
+                          <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            This device
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400/80">
+                        IP: {session.ip} &bull; Logged in {new Date(session.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
           <form action={signOutAction}>
             <button
               type="submit"
-              className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
             >
               <LogOut className="size-3.5" />
-              Sign out
+              Sign out of this device
             </button>
           </form>
-          <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-            Manage all sessions — coming soon
-          </span>
         </div>
       </section>
 
       {/* Login protection */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="rounded-2xl border border-slate-200 bg-[#fff] p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
             <Shield className="size-4" />
@@ -196,7 +345,7 @@ export function SettingsSecurity() {
       </section>
 
       {/* Data and privacy */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="rounded-2xl border border-slate-200 bg-[#fff] p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <Shield className="size-4" />
@@ -225,7 +374,7 @@ export function SettingsSecurity() {
       </section>
 
       {/* Security recommendations */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="rounded-2xl border border-slate-200 bg-[#fff] p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
             <ShieldCheck className="size-4" />

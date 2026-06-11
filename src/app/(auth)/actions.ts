@@ -12,6 +12,7 @@ import { logAudit } from "@/lib/audit";
 import { checkRateLimit, recordAttempt, clearAttempts, extractClientIp } from "@/lib/auth/rate-limit";
 import { setCaptchaPass, readCaptchaPass, decrementCaptchaPass, clearCaptchaPass } from "@/lib/auth/captcha-pass";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { getLinkedProviders } from "@/lib/auth/identities";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters.")
@@ -400,51 +401,106 @@ export async function setPasswordAction(
     return { error: "No email address on your account. Contact support." };
   }
 
-  const currentProviders = user.app_metadata?.providers || [];
-  const providersArray = Array.isArray(currentProviders) ? currentProviders : [currentProviders];
-  const newProviders = Array.from(new Set([...providersArray, "email"]));
+  const providers = getLinkedProviders(user);
+  const hasExistingPassword = providers.hasPassword;
 
-  const admin = createAdminClient();
-  const { error: adminError } = await admin.auth.admin.updateUserById(user.id, {
-    email: user.email,
-    password,
-    email_confirm: true,
-    app_metadata: {
-      ...user.app_metadata,
-      providers: newProviders
+  if (hasExistingPassword) {
+    const currentPassword = formData.get("currentPassword") as string | null;
+    if (!currentPassword) {
+      return { error: "Current password is required." };
     }
-  });
-
-  if (adminError) {
-    const msg = adminError.message.toLowerCase();
-    if (msg.includes("same password") || msg.includes("different") || adminError.code === "same_password") {
-      return { error: "Your new password must be different from your current password." };
+    // Verify current password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (signInError) {
+      return { error: "Your current password is incorrect." };
     }
-    console.error("[security] setPassword failed via admin client:", adminError.message);
-    return { error: adminError.message || "Could not update password. Please try again." };
+
+    // Now update password using standard updateUser
+    const { error: updateError } = await supabase.auth.updateUser({
+      password,
+    });
+
+    if (updateError) {
+      const msg = updateError.message.toLowerCase();
+      if (msg.includes("same password") || msg.includes("different") || updateError.code === "same_password") {
+        return { error: "Your new password must be different from your current password." };
+      }
+      console.error("[security] changePassword failed:", updateError.message);
+      return { error: updateError.message || "Could not update password. Please try again." };
+    }
+
+    // GoTrue invalidates active sessions on password change. Re-establish session:
+    const { error: reAuthError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password,
+    });
+
+    if (reAuthError) {
+      console.error("[security] re-authentication after password change failed:", reAuthError.message);
+      return { error: "Password was updated, but we could not re-authenticate you automatically. Please sign in manually." };
+    }
+
+    logAudit({
+      module: "auth",
+      action: "auth.password_change",
+      details: `Password updated for user ${user.email}`,
+    });
+
+    return {
+      error: null,
+      success: "Password updated successfully.",
+    };
+  } else {
+    // First-time password set
+    const currentProviders = user.app_metadata?.providers || [];
+    const providersArray = Array.isArray(currentProviders) ? currentProviders : [currentProviders];
+    const newProviders = Array.from(new Set([...providersArray, "email"]));
+
+    const admin = createAdminClient();
+    const { error: adminError } = await admin.auth.admin.updateUserById(user.id, {
+      email: user.email,
+      password,
+      email_confirm: true,
+      app_metadata: {
+        ...user.app_metadata,
+        providers: newProviders
+      }
+    });
+
+    if (adminError) {
+      const msg = adminError.message.toLowerCase();
+      if (msg.includes("same password") || msg.includes("different") || adminError.code === "same_password") {
+        return { error: "Your new password must be different from your current password." };
+      }
+      console.error("[security] setPassword failed via admin client:", adminError.message);
+      return { error: adminError.message || "Could not update password. Please try again." };
+    }
+
+    // GoTrue invalidates active sessions on password change. Re-establish session:
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password,
+    });
+
+    if (signInError) {
+      console.error("[security] re-authentication after setPassword failed:", signInError.message);
+      return { error: "Password was set, but we could not re-authenticate you automatically. Please sign in manually." };
+    }
+
+    logAudit({
+      module: "auth",
+      action: "auth.password_set",
+      details: `Password set/updated for user ${user.email}`,
+    });
+
+    return {
+      error: null,
+      success: `Password added. You can now sign in with: ${user.email}`,
+    };
   }
-
-  // GoTrue invalidates active sessions on password change. Re-establish session:
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: user.email,
-    password,
-  });
-
-  if (signInError) {
-    console.error("[security] re-authentication after setPassword failed:", signInError.message);
-    return { error: "Password was set, but we could not re-authenticate you automatically. Please sign in manually." };
-  }
-
-  logAudit({
-    module: "auth",
-    action: "auth.password_set",
-    details: `Password set/updated for user ${user.email}`,
-  });
-
-  return {
-    error: null,
-    success: `Password added. You can now sign in with: ${user.email}`,
-  };
 }
 
 // ── Change Email (authenticated) ─────────────────────────────────────────────
@@ -649,4 +705,63 @@ export async function resetPasswordConfirmAction(
     error: null,
     success: "Password reset successful.",
   };
+}
+
+export type SessionInfo = {
+  id: string;
+  userAgent: string;
+  ip: string;
+  createdAt: string;
+};
+
+export async function getActiveSessionsAction(): Promise<{ error: string | null; sessions: SessionInfo[] | null }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in.", sessions: null };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .schema("auth")
+    .from("sessions")
+    .select("id, user_agent, ip, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[security] getActiveSessionsAction failed:", error.message);
+    return { error: "Could not fetch active sessions.", sessions: null };
+  }
+
+  const sessions: SessionInfo[] = (data || []).map((row: { id: string; user_agent: string | null; ip: string | null; created_at: string }) => ({
+    id: row.id,
+    userAgent: row.user_agent || "Unknown device",
+    ip: row.ip || "Unknown IP",
+    createdAt: row.created_at,
+  }));
+
+  return { error: null, sessions };
+}
+
+export async function signOutOtherSessionsAction(): Promise<AuthState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in." };
+  }
+
+  const { error } = await supabase.auth.signOut({ scope: "others" });
+  if (error) {
+    console.error("[security] signOutOthers failed:", error.message);
+    return { error: error.message || "Could not sign out other sessions. Please try again." };
+  }
+
+  logAudit({
+    module: "auth",
+    action: "auth.sessions_revoke_others",
+    details: `Signed out of all other sessions for user ${user.email}`,
+  });
+
+  return { error: null, success: "Signed out of all other sessions successfully." };
 }
