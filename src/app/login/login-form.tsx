@@ -10,7 +10,7 @@ import {
 } from "@/app/(auth)/actions";
 import { Recaptcha, type RecaptchaStatus } from "@/components/auth/recaptcha";
 import { useLanguage } from "@/lib/i18n/language-provider";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const initialState: AuthState = { error: null };
 
@@ -336,13 +336,18 @@ export function LoginForm({ callbackError, publicSignupEnabled = true, initialMo
         <button
           type="submit"
           disabled={pending || (mode === "sign-up" && (!allPasswordChecksPass || passwordsMismatch))}
-          className="h-[42px] w-full rounded-xl bg-blue-700 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
+          className="inline-flex h-[42px] w-full items-center justify-center gap-1.5 rounded-xl bg-blue-700 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
         >
-          {pending
-            ? t("pleaseWait", "Please wait\u2026")
-            : mode === "sign-in"
-              ? t("signIn", "Sign in")
-              : t("createAccount", "Create account")}
+          {pending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              {t("pleaseWait", "Please wait\u2026")}
+            </>
+          ) : mode === "sign-in" ? (
+            t("signIn", "Sign in")
+          ) : (
+            t("createAccount", "Create account")
+          )}
         </button>
       </form>
 

@@ -13,7 +13,7 @@ import {
   resendEmailChangeAction,
   type AuthState,
 } from "@/app/(auth)/actions";
-import { Link, Unlink, AlertTriangle, CheckCircle, X, Mail, Shield, Eye, EyeOff } from "lucide-react";
+import { Link, Unlink, AlertTriangle, CheckCircle, X, Mail, Shield, Eye, EyeOff, Loader2 } from "lucide-react";
 import { getLinkedProviders, type LinkedProviders } from "@/lib/auth/identities";
 import { GoogleIcon } from "@/components/icons/provider-icons";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,9 +59,9 @@ export function ConnectedAccounts({
   const [serverProviders, setServerProviders] = useState<LinkedProviders>(initialLinkedProviders);
   const [linkGoogleState, linkGoogleAction] = useActionState(linkGoogleAccountAction, linkGoogleInitialState);
   const [unlinkState, unlinkAction] = useActionState(unlinkIdentityAction, linkGoogleInitialState);
-  const [passwordState, passwordAction] = useActionState(setPasswordAction, passwordInitialState);
-  const [emailState, emailAction] = useActionState(changeEmailAction, emailInitialState);
-  const [resendState, resendAction] = useActionState(resendEmailChangeAction, { error: null });
+  const [passwordState, passwordAction, passwordPending] = useActionState(setPasswordAction, passwordInitialState);
+  const [emailState, emailAction, emailPending] = useActionState(changeEmailAction, emailInitialState);
+  const [resendState, resendAction, resendPending] = useActionState(resendEmailChangeAction, { error: null });
   const [conflictDismissed, setConflictDismissed] = useState(false);
   const [dismissedSuccessHash, setDismissedSuccessHash] = useState<string | null>(null);
   const showSuccessDialog = !!passwordState.success && dismissedSuccessHash !== passwordState.success;
@@ -237,6 +237,9 @@ export function ConnectedAccounts({
               emailState={emailState}
               hasGoogle={hasGoogle}
               googleEmail={googleIdentity?.identity_data?.email as string ?? undefined}
+              passwordPending={passwordPending}
+              emailPending={emailPending}
+              resendPending={resendPending}
             />
 
             <ProviderRow
@@ -318,6 +321,9 @@ function EmailPasswordRow({
   emailState,
   hasGoogle,
   googleEmail,
+  passwordPending,
+  emailPending,
+  resendPending,
 }: {
   hasPassword: boolean;
   userEmail: string | null;
@@ -329,6 +335,9 @@ function EmailPasswordRow({
   emailState: AuthState;
   hasGoogle: boolean;
   googleEmail?: string;
+  passwordPending: boolean;
+  emailPending: boolean;
+  resendPending: boolean;
 }) {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -526,10 +535,17 @@ function EmailPasswordRow({
             <div className="flex gap-2">
               <button
                 type="submit"
-                disabled={!allPasswordChecksPass || !passwordsMatch}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                disabled={passwordPending || !allPasswordChecksPass || !passwordsMatch}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
               >
-                {hasPassword ? "Update Password" : "Set Password"}
+                {passwordPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Working...
+                  </>
+                ) : (
+                  hasPassword ? "Update Password" : "Set Password"
+                )}
               </button>
               <button
                 type="button"
@@ -597,20 +613,36 @@ function EmailPasswordRow({
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 cursor-pointer"
+                disabled={emailPending}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60 cursor-pointer"
               >
-                Change Email
+                {emailPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Working...
+                  </>
+                ) : (
+                  "Change Email"
+                )}
               </button>
               {userNewEmail && (
                 <button
                   type="button"
+                  disabled={resendPending}
                   onClick={() => {
                     const fd = new FormData();
                     resendAction(fd);
                   }}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 disabled:opacity-60 cursor-pointer"
                 >
-                  Resend Confirmation
+                  {resendPending ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      Working...
+                    </>
+                  ) : (
+                    "Resend Confirmation"
+                  )}
                 </button>
               )}
               <button
