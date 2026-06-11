@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Menu, X, LayoutDashboard, ShoppingCart, Boxes, Users, ReceiptText,
-  RotateCcw, Wrench, Wallet, CalendarCheck, BarChart3,
+  RotateCcw, Wrench, Wallet, Banknote, BarChart3,
   Truck, ScrollText, UserCog, Settings, MonitorCog, PackageCheck, ListChecks,
   UserCircle, Shield, ShieldCheck,
 } from "lucide-react";
@@ -28,7 +28,7 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   returns: RotateCcw,
   repairs: Wrench,
   expenses: Wallet,
-  dailyClosing: CalendarCheck,
+  dailyClosing: Banknote,
   reports: BarChart3,
   purchases: Truck,
   dues: ListChecks,

@@ -469,7 +469,14 @@ export function BackupTab({
       const url = window.URL.createObjectURL(content);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `gadgetzone_backup_${new Date().toISOString().split("T")[0]}.zip`;
+      const sanitizedShop = (shopName || "")
+        .trim()
+        .replace(/[^a-zA-Z0-9]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const finalShopName = sanitizedShop || "Shop";
+      const dateStr = new Date().toISOString().split("T")[0];
+      a.download = `SaleDock-${finalShopName}-${dateStr}-Backup.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

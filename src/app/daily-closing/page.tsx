@@ -76,7 +76,7 @@ export default async function DailyClosingPage({
   if (!profile?.organization_id) redirect("/setup");
   if (!profile.branch_id) {
     return (
-      <AppShell pageTitle="Daily Closing">
+      <AppShell pageTitle="Cash Drawer">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
           Your profile is not assigned to a branch yet. Ask the owner to assign you to a branch.
         </div>
@@ -147,7 +147,7 @@ export default async function DailyClosingPage({
       };
 
   return (
-    <AppShell pageTitle="Daily Closing">
+    <AppShell pageTitle="Cash Drawer">
       <form
         action="/daily-closing"
         className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
@@ -547,7 +547,7 @@ export default async function DailyClosingPage({
             {organization?.name ?? "Gadget Zone"}
           </p>
           {branch?.name && <p className="text-[10px]">{branch.name}</p>}
-          <p className="mt-1 text-[10px] font-bold uppercase">Daily Closing</p>
+          <p className="mt-1 text-[10px] font-bold uppercase">Cash Drawer</p>
         </header>
         <div className="my-2 border-y border-dashed border-black py-1 text-[10px]">
           <div className="flex justify-between gap-2"><span>Date</span><span className="text-right">{fmtDay(date)}</span></div>
