@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DailyClosingLoading() {
   return (
-    <AppShell pageTitle="Daily Closing">
+    <AppShell pageTitle="Cash Drawer">
       {/* Header action bar */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">

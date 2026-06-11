@@ -7,7 +7,7 @@ import type { ComponentType, PointerEvent as ReactPointerEvent } from "react";
 import { useReorderAnim } from "@/lib/use-reorder-animation";
 import {
   LayoutDashboard, ShoppingCart, Boxes, Users, ReceiptText,
-  RotateCcw, Wrench, Wallet, CalendarCheck, BarChart3,
+  RotateCcw, Wrench, Wallet, Banknote, BarChart3,
   Truck, ScrollText, UserCog, Settings, MonitorCog, PackageCheck, ListChecks,
   GripVertical, PanelLeftClose, PanelLeftOpen, Archive, ArchiveRestore,
   Check, RefreshCcw, ArrowUpDown,
@@ -23,7 +23,7 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   returns: RotateCcw,
   repairs: Wrench,
   expenses: Wallet,
-  dailyClosing: CalendarCheck,
+  dailyClosing: Banknote,
   reports: BarChart3,
   purchases: Truck,
   dues: ListChecks,
