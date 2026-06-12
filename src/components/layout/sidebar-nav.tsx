@@ -13,6 +13,7 @@ import {
   Check, RefreshCcw, ArrowUpDown,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import { saveSidebarPreferences, useUIPreferencesSync } from "@/lib/use-ui-preferences";
 
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard,
@@ -110,15 +111,14 @@ function subscribeToPreferences(onStoreChange: () => void): () => void {
 }
 
 function writeStoredPreferences(next: SidebarPreferences) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  window.dispatchEvent(new Event(STORAGE_EVENT));
+  saveSidebarPreferences(next);
 }
 
 function clearStoredPreferences() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(STORAGE_KEY);
   window.dispatchEvent(new Event(STORAGE_EVENT));
+  saveSidebarPreferences(null);
 }
 
 function normalizeOrder(items: NavItem[], storedOrder: string[]): string[] {
@@ -129,6 +129,7 @@ function normalizeOrder(items: NavItem[], storedOrder: string[]): string[] {
 }
 
 export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl: string | null }) {
+  useUIPreferencesSync();
   const pathname = usePathname();
   const { dict } = useLanguage();
   const [rearrangeMode, setRearrangeMode] = useState(false);
