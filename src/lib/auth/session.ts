@@ -93,6 +93,13 @@ export async function getCurrentContext() {
   return { user, profile, organization, branch };
 }
 
+type CacheEntry = {
+  url: string;
+  expiresAt: number;
+};
+
+const profilePictureCache = new Map<string, CacheEntry>();
+
 export async function signProfilePictureUrl(
   storedUrl: string | null | undefined,
 ): Promise<string | null> {
@@ -110,6 +117,12 @@ export async function signProfilePictureUrl(
       return storedUrl;
     }
 
+    const now = Date.now();
+    const cached = profilePictureCache.get(path);
+    if (cached && cached.expiresAt > now) {
+      return cached.url;
+    }
+
     const supabase = await createClient();
     const { data, error } = await supabase.storage
       .from("profile-pictures")
@@ -120,10 +133,17 @@ export async function signProfilePictureUrl(
       return storedUrl;
     }
 
+    // Cache the URL for 12 hours (43,200,000 ms), which is safely less than the 24h signing expiry.
+    profilePictureCache.set(path, {
+      url: data.signedUrl,
+      expiresAt: now + 12 * 60 * 60 * 1000,
+    });
+
     return data.signedUrl;
   } catch (err) {
     console.error("[signProfilePictureUrl] Catch block error:", err);
     return storedUrl;
   }
 }
+
 
