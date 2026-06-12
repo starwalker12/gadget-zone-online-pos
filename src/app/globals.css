@@ -344,6 +344,36 @@ body {
   animation: logo-glow-pulse 4s ease-in-out infinite;
 }
 
+.dashboard-widget-card {
+  --widget-chart-color: #334155;
+}
+
+.dark .dashboard-widget-card {
+  --widget-chart-color: #e2e8f0;
+}
+
+.dashboard-widget-card .widget-card-content,
+.dashboard-widget-card .widget-card-content > *,
+.dashboard-widget-card .widget-card-content p,
+.dashboard-widget-card .widget-card-content span,
+.dashboard-widget-card .widget-card-content strong,
+.dashboard-widget-card .widget-card-content td,
+.dashboard-widget-card .widget-card-content th,
+.dashboard-widget-card .widget-card-content a,
+.dashboard-widget-card .widget-card-content div {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.dashboard-widget-card .widget-card-content .justify-between {
+  gap: 0.5rem;
+}
+
+.dashboard-widget-card .widget-card-content .justify-between > :last-child {
+  min-width: 0;
+  text-align: right;
+}
+
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-title,
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content,
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content p,
@@ -352,13 +382,24 @@ body {
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content td,
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content th,
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content a {
-  color: var(--widget-solid-text) !important;
+  color: var(--widget-text) !important;
 }
 
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-title,
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content .text-slate-500,
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content .text-slate-400 {
-  color: var(--widget-solid-muted) !important;
+  color: var(--widget-muted) !important;
+}
+
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-title,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content p,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content span,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content strong,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content td,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content th,
+.dashboard-widget-card:not([data-widget-text="auto"]) .widget-card-content a {
+  color: var(--widget-text) !important;
 }
 
 .dashboard-widget-card[data-widget-fill="solid"] .widget-card-content table,

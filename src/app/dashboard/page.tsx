@@ -224,6 +224,9 @@ export default async function DashboardPage() {
     solid: t.solid || "Solid",
     gradient: t.gradient || "Gradient",
     auto: t.auto || "Auto",
+    textColor: t.textColor || "Text",
+    white: t.white || "White",
+    black: t.black || "Black",
   };
 
   return (

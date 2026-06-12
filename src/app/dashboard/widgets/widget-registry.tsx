@@ -22,6 +22,7 @@ import { formatCurrency, formatNumber } from "@/lib/formatters";
 export type WidgetColor = "neutral" | "info" | "success" | "warning" | "danger";
 export type BoardFillStyle = "solid" | "gradient";
 export type WidgetFillStyle = "inherit" | BoardFillStyle;
+export type WidgetTextColor = "auto" | "white" | "black";
 
 export const WIDGET_COLORS: {
   value: WidgetColor;
@@ -129,20 +130,18 @@ export const WIDGET_CATALOG: WidgetDef[] = [
   { id: "potential-profit-in-stock", type: "potential-profit-in-stock", category: "inventory", title: "Potential Profit", description: "Unearned profit potential in current active stock", defaultSize: "M", defaultColor: "warning", icon: Percent },
 ];
 
-const subtitleClass = "text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300";
-const tinyMutedClass = "text-[11px] leading-snug text-slate-500 dark:text-slate-400";
+const subtitleClass = "truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300";
+const tinyMutedClass = "truncate text-[11px] leading-tight text-slate-500 dark:text-slate-400";
 
 function TrendBarChart({
   bars,
   maxValue,
   heightClass,
-  barClassName,
   label,
 }: {
   bars: { key: string | number; label: string; value: number; title: string }[];
   maxValue: number;
   heightClass: string;
-  barClassName: string;
   label: string;
 }) {
   const safeMax = Math.max(maxValue, 1);
@@ -158,12 +157,12 @@ function TrendBarChart({
           <div key={bar.key} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
             <div className="flex h-full w-full items-end">
               <div
-                className={`w-full rounded-t-sm transition-colors ${barClassName}`}
-                style={{ height: `${height}%` }}
+                className="w-full rounded-t-sm bg-[var(--widget-chart-color)] transition-colors"
+                style={{ height: `${height}%`, opacity: value > 0 ? 0.88 : 0.28 }}
                 title={bar.title}
               />
             </div>
-            <span className="text-xs font-bold leading-none text-slate-500 dark:text-slate-400">
+            <span className="truncate text-[11px] font-bold leading-none text-slate-500 dark:text-slate-400">
               {bar.label}
             </span>
           </div>
@@ -198,14 +197,14 @@ export function renderWidgetContent(
     case "today-profit": {
       const isPositive = state.dashSummary.todayProfit >= 0;
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.dashSummary.todayProfit, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               {isPositive ? "Sales net profit" : "Negative net profit"}
             </p>
           )}
@@ -242,19 +241,19 @@ export function renderWidgetContent(
 
     case "gross-sales": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.dashSummary.grossSales, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Today&apos;s sales volume
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Rung up on {formatNumber(state.dashSummary.returnsCount + 1)} invoices today.
             </p>
           )}
@@ -283,19 +282,19 @@ export function renderWidgetContent(
 
     case "returns": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.dashSummary.returnsTotal, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Returned products
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               From {formatNumber(state.dashSummary.returnsCount)} returned transactions.
             </p>
           )}
@@ -322,19 +321,19 @@ export function renderWidgetContent(
 
     case "expenses": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.dashSummary.expensesTotal, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Operating expenditures
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Total of {formatNumber(state.expenses.todayCount)} expenses logged today.
             </p>
           )}
@@ -363,19 +362,19 @@ export function renderWidgetContent(
 
     case "low-stock": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {state.dashSummary.lowStockCount} items
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Below reorder thresholds
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Stock replenishment is recommended.
             </p>
           )}
@@ -402,19 +401,19 @@ export function renderWidgetContent(
 
     case "pending-repairs": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {state.dashSummary.pendingRepairsCount} jobs
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Awaiting parts / In Progress
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Assigned technician queues.
             </p>
           )}
@@ -440,19 +439,19 @@ export function renderWidgetContent(
 
     case "supplier-dues": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.dashSummary.supplierDuesTotal, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Outstanding bills payable
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Credit owed to suppliers.
             </p>
           )}
@@ -478,19 +477,19 @@ export function renderWidgetContent(
 
     case "customer-dues": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.dashSummary.customerDuesTotal, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Ledger credit receivable
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Outstanding credit balance.
             </p>
           )}
@@ -525,7 +524,7 @@ export function renderWidgetContent(
         title: `${bar.date}: ${formatCurrency(bar.total, currency)}`,
       }));
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
               Last 7 Days Sales
@@ -533,7 +532,7 @@ export function renderWidgetContent(
           </div>
           {size === "S" && (
             <div>
-              <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+              <p className="truncate text-lg font-bold leading-tight text-slate-900 dark:text-white">
                 {formatCurrency(weeklyTotal, currency)}
               </p>
               <p className={subtitleClass}>7-day total</p>
@@ -544,7 +543,6 @@ export function renderWidgetContent(
               bars={chartBars}
               maxValue={maxVal}
               heightClass={size === "M" ? "h-12 my-2" : size === "L" ? "h-20 my-2" : "h-28 my-2"}
-              barClassName="bg-blue-600/60 hover:bg-blue-700 dark:bg-blue-400/70 dark:hover:bg-blue-300"
               label="Weekly sales bar chart"
             />
           )}
@@ -575,7 +573,7 @@ export function renderWidgetContent(
         title: `Day ${bar.day}: ${formatCurrency(bar.total, currency)}`,
       }));
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
               Monthly Sales Trend
@@ -583,7 +581,7 @@ export function renderWidgetContent(
           </div>
           {size === "S" && (
             <div>
-              <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+              <p className="truncate text-lg font-bold leading-tight text-slate-900 dark:text-white">
                 {formatCurrency(totalMonth, currency)}
               </p>
               <p className={subtitleClass}>Month to date</p>
@@ -594,7 +592,6 @@ export function renderWidgetContent(
               bars={chartBars}
               maxValue={maxVal}
               heightClass={size === "M" ? "h-12 my-2" : size === "L" ? "h-20 my-2" : "h-28 my-2"}
-              barClassName="bg-cyan-600/55 hover:bg-cyan-700 dark:bg-cyan-400/70 dark:hover:bg-cyan-300"
               label="Monthly sales bar chart"
             />
           )}
@@ -615,7 +612,7 @@ export function renderWidgetContent(
     case "top-selling-products": {
       const products = state.dashSummary.topSellingProducts || [];
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               Top Selling Products
@@ -673,7 +670,7 @@ export function renderWidgetContent(
     case "recent-activity": {
       const logs = state.activity || [];
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               Recent Activity Logs
@@ -720,19 +717,19 @@ export function renderWidgetContent(
     case "credit-collected-today": {
       const collections = (state.todayActivity?.creditCollectionCash ?? 0) + (state.todayActivity?.creditCollectionDigital ?? 0);
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(collections, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Customer ledger collections
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Settlements received from active ledger accounts.
             </p>
           )}
@@ -760,19 +757,19 @@ export function renderWidgetContent(
     case "today-net": {
       const net = state.invoices.todaySalesTotal - state.expenses.todayTotal;
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(net, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Operational net cash flow
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Calculated as today&apos;s invoices minus expenses.
             </p>
           )}
@@ -800,19 +797,19 @@ export function renderWidgetContent(
     case "today-closing": {
       const isClosed = Boolean(state.todayClosing?.finalized_by);
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {isClosed ? "Closed" : "Open"}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Drawer status today
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               {isClosed ? "Finalized by manager." : "Expected drawer cash accumulating."}
             </p>
           )}
@@ -843,19 +840,19 @@ export function renderWidgetContent(
 
     case "today-expenses": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {state.expenses.todayCount} entries
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Expense vouchers today
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Totaling {formatCurrency(state.expenses.todayTotal, currency)}.
             </p>
           )}
@@ -882,19 +879,19 @@ export function renderWidgetContent(
 
     case "stock-valuation": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-2xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.stockValue, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Cost value of stock lots
             </p>
           )}
           {size === "M" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300 mt-2">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Calculated using FIFO batch pricing logs.
             </p>
           )}
@@ -916,26 +913,26 @@ export function renderWidgetContent(
 
     case "potential-profit-in-stock": {
       return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between gap-1 overflow-hidden">
           <div>
-            <p className="text-xl font-black text-slate-900 dark:text-white mt-1">
+            <p className="truncate text-xl font-black leading-tight text-slate-900 dark:text-white">
               {formatCurrency(state.potentialProfit.potentialProfitInStock, currency)}
             </p>
           </div>
           {size === "S" && (
-            <p className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-300">
+            <p className="truncate text-[13px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
               Unearned profit estimate
             </p>
           )}
           {size === "M" && (
-            <div className="text-xs space-y-0.5 mt-2">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Retail Value:</span>
-                <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(state.potentialProfit.totalInventorySaleValue, currency)}</span>
+            <div className="mt-1 grid gap-0.5 text-[11px] leading-tight">
+              <div className="flex min-w-0 justify-between gap-2">
+                <span className="shrink-0 text-slate-500">Retail:</span>
+                <span className="truncate text-right font-bold text-slate-800 dark:text-white">{formatCurrency(state.potentialProfit.totalInventorySaleValue, currency)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">FIFO Cost:</span>
-                <span className="font-semibold text-slate-800 dark:text-white">{formatCurrency(state.potentialProfit.totalInventoryCostValue, currency)}</span>
+              <div className="flex min-w-0 justify-between gap-2">
+                <span className="shrink-0 text-slate-500">FIFO:</span>
+                <span className="truncate text-right font-semibold text-slate-800 dark:text-white">{formatCurrency(state.potentialProfit.totalInventoryCostValue, currency)}</span>
               </div>
             </div>
           )}
