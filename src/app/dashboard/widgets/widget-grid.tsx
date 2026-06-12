@@ -10,6 +10,7 @@ import {
   WidgetColor,
   WidgetFillStyle,
   WidgetSize,
+  WidgetTextColor,
   getWidgetColorMeta,
   renderWidgetContent,
 } from "./widget-registry";
@@ -48,6 +49,7 @@ type WidgetInstance = {
   size: WidgetSize;
   color: WidgetColor;
   fillStyle?: WidgetFillStyle;
+  textColor?: WidgetTextColor;
   x: number;
   y: number;
   w: number;
@@ -246,6 +248,17 @@ export function WidgetGrid({
     );
   };
 
+  const handleUpdateWidgetTextColor = (id: string, textColor: WidgetTextColor) => {
+    onChangeWidgets(
+      widgets.map((w) => {
+        if (w.id === id) {
+          return { ...w, textColor };
+        }
+        return w;
+      })
+    );
+  };
+
   return (
     <div className={`dashboard-widget-grid relative ${editing ? "edit-mode-active" : ""}`}>
       {editing && (
@@ -300,34 +313,42 @@ export function WidgetGrid({
           const isSolidFill = effectiveFillStyle === "solid";
           const fillClass = isSolidFill ? colorMeta.solidBg : colorMeta.gradientBg;
           const borderClass = isSolidFill ? colorMeta.solidBorder : "border-slate-200 dark:border-slate-800/80";
-          const cardStyle = isSolidFill
+          const textColor = widget.textColor ?? "auto";
+          const forcedText = textColor === "white" ? "#ffffff" : textColor === "black" ? "#111827" : null;
+          const forcedMuted = textColor === "white" ? "rgba(255,255,255,0.78)" : textColor === "black" ? "rgba(17,24,39,0.74)" : null;
+          const resolvedText = forcedText ?? (isSolidFill ? colorMeta.solidText : null);
+          const resolvedMuted = forcedMuted ?? (isSolidFill ? colorMeta.solidMuted : null);
+          const cardStyle = resolvedText
             ? ({
-                "--widget-solid-text": colorMeta.solidText,
-                "--widget-solid-muted": colorMeta.solidMuted,
+                "--widget-text": resolvedText,
+                "--widget-muted": resolvedMuted ?? resolvedText,
+                "--widget-chart-color": resolvedText,
               } as React.CSSProperties)
             : undefined;
           const isHighlighted = highlightWidgetId === widget.id;
           const isSettingsOpen = openSettingsId === widget.id;
           const hasLink = widget.type === "low-stock" || widget.type === "pending-repairs";
           const href = widget.type === "low-stock" ? "/purchases/replenishment" : "/repairs";
+          const title = WIDGET_CATALOG.find((cat) => cat.type === widget.type)?.title || widget.type;
 
           return (
             <div
               key={widget.id}
               data-widget-id={widget.id}
               data-widget-fill={effectiveFillStyle}
+              data-widget-text={textColor}
               style={cardStyle}
-              className={`dashboard-widget-card rounded-2xl border p-4 shadow-sm flex flex-col justify-between transition-all duration-200 group/widget relative min-w-0 ${borderClass} ${fillClass} ${isHighlighted ? "animate-dashboard-widget-highlight" : ""}`}
+              className={`dashboard-widget-card relative flex h-full min-w-0 flex-col overflow-visible rounded-2xl border p-3 shadow-sm transition-all duration-200 group/widget ${borderClass} ${fillClass} ${isHighlighted ? "animate-dashboard-widget-highlight" : ""}`}
             >
               {/* Header Title (Clean, same in Edit and View modes) */}
-              <div className="flex items-center justify-between gap-2 border-b border-slate-200/40 dark:border-slate-800/40 pb-1.5 mb-1.5 shrink-0">
-                <span className="widget-card-title text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate max-w-[180px] pr-14">
-                  {WIDGET_CATALOG.find((cat) => cat.type === widget.type)?.title || widget.type}
+              <div className="mb-1.5 flex min-h-5 shrink-0 items-center justify-center border-b border-slate-200/40 pb-1.5 dark:border-slate-800/40">
+                <span className={`widget-card-title min-w-0 flex-1 truncate text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:text-[10px] ${editing ? "px-8 text-center" : ""}`}>
+                  {title}
                 </span>
               </div>
 
               {/* Main Content Area */}
-              <div className="widget-card-content flex-1 min-h-0 relative">
+              <div className="widget-card-content relative min-h-0 flex-1 overflow-hidden">
                 {hasLink && !editing ? (
                   <Link href={href} className="block h-full hover:opacity-85 transition">
                     {renderWidgetContent(widget.type, renderSize, state)}
@@ -366,11 +387,11 @@ export function WidgetGrid({
                   </button>
 
                   {isSettingsOpen && (
-                    <div className="dashboard-widget-menu-open animate-dashboard-popover absolute right-2 top-10 z-[90] w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-[#fff] p-3 text-slate-900 shadow-2xl shadow-slate-900/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
-                      <div className="space-y-3">
+                    <div className="dashboard-widget-menu-open animate-dashboard-popover absolute right-2 top-10 z-[90] w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-[#fff] p-2.5 text-slate-900 shadow-2xl shadow-slate-900/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                      <div className="space-y-2">
                         <div>
-                          <p className="mb-1.5 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Size
+                          <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {state.labels?.cardSize ?? "Size"}
                           </p>
                           <div className="grid grid-cols-4 gap-1">
                             {(["S", "M", "L", "XL"] as WidgetSize[]).map((sz) => (
@@ -383,7 +404,7 @@ export function WidgetGrid({
                                 }}
                                 aria-pressed={renderSize === sz}
                                 aria-label={`Set widget size to ${sz}`}
-                                className={`h-8 rounded-lg text-xs font-black transition active:scale-95 ${
+                                className={`h-7 rounded-lg text-xs font-black transition active:scale-95 ${
                                   renderSize === sz
                                     ? "bg-[var(--primary-accent-bg)] text-[var(--primary-accent-text)] shadow-sm"
                                     : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -396,10 +417,10 @@ export function WidgetGrid({
                         </div>
 
                         <div>
-                          <p className="mb-1.5 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             Color
                           </p>
-                          <div className="grid grid-cols-5 gap-1.5">
+                          <div className="grid grid-cols-5 gap-1">
                             {WIDGET_COLORS.map((c) => {
                               const isSelected = widget.color === c.value;
                               return (
@@ -410,7 +431,7 @@ export function WidgetGrid({
                                     e.stopPropagation();
                                     handleUpdateWidgetColor(widget.id, c.value);
                                   }}
-                                  className={`flex h-8 items-center justify-center rounded-lg border transition active:scale-95 ${
+                                  className={`flex h-7 items-center justify-center rounded-lg border transition active:scale-95 ${
                                     isSelected
                                       ? "border-slate-900 bg-slate-900/10 dark:border-white dark:bg-white/10"
                                       : "border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800"
@@ -429,8 +450,8 @@ export function WidgetGrid({
                         </div>
 
                         <div>
-                          <p className="mb-1.5 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Fill
+                          <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {state.labels?.fillStyle ?? "Fill"}
                           </p>
                           <div className="grid grid-cols-3 gap-1">
                             {(["inherit", "solid", "gradient"] as WidgetFillStyle[]).map((fill) => {
@@ -444,7 +465,7 @@ export function WidgetGrid({
                                     e.stopPropagation();
                                     handleUpdateWidgetFillStyle(widget.id, fill);
                                   }}
-                                  className={`h-8 rounded-lg px-2 text-[11px] font-black transition active:scale-95 ${
+                                  className={`h-7 rounded-lg px-2 text-[11px] font-black transition active:scale-95 ${
                                     isSelected
                                       ? "bg-[var(--primary-accent-bg)] text-[var(--primary-accent-text)] shadow-sm ring-2 ring-[var(--primary-accent-soft)]"
                                       : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -452,6 +473,46 @@ export function WidgetGrid({
                                   title={`${label} fill`}
                                   aria-pressed={isSelected}
                                   aria-label={`${label} fill`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {state.labels?.textColor ?? "Text"}
+                          </p>
+                          <div className="grid grid-cols-3 gap-1">
+                            {(["auto", "white", "black"] as WidgetTextColor[]).map((option) => {
+                              const isSelected = textColor === option;
+                              const label = option === "auto"
+                                ? (state.labels?.auto ?? "Auto")
+                                : option === "white"
+                                  ? (state.labels?.white ?? "White")
+                                  : (state.labels?.black ?? "Black");
+
+                              return (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateWidgetTextColor(widget.id, option);
+                                  }}
+                                  className={`h-7 rounded-lg px-2 text-[11px] font-black transition active:scale-95 ${
+                                    isSelected
+                                      ? "bg-[var(--primary-accent-bg)] text-[var(--primary-accent-text)] shadow-sm ring-2 ring-[var(--primary-accent-soft)]"
+                                      : option === "white"
+                                        ? "bg-slate-800 text-white hover:bg-slate-700 dark:bg-[#fff] dark:text-slate-950 dark:hover:bg-slate-200"
+                                        : option === "black"
+                                          ? "bg-slate-100 text-slate-950 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                                          : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                  }`}
+                                  aria-pressed={isSelected}
+                                  aria-label={`Set widget text color to ${label}`}
                                 >
                                   {label}
                                 </button>

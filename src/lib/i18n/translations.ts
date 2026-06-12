@@ -264,6 +264,9 @@ const en: Dict = {
     auto: "Auto",
     solid: "Solid",
     gradient: "Gradient",
+    textColor: "Text",
+    white: "White",
+    black: "Black",
   },
   footer: {
     privacyPolicy: "Privacy Policy",
@@ -534,6 +537,9 @@ const ur: Dict = {
     auto: "\u0622\u0679\u0648",
     solid: "\u0633\u0627\u062F\u06C1",
     gradient: "\u06AF\u0631\u06CC\u0688\u06CC\u0646\u0679",
+    textColor: "\u0645\u062A\u0646",
+    white: "\u0633\u0641\u06CC\u062F",
+    black: "\u0633\u06CC\u0627\u06C1",
   },
   footer: {
     privacyPolicy: "\u0631\u0627\u0632\u062F\u0627\u0631\u06CC \u06A9\u06CC \u067E\u0627\u0644\u06CC\u0633\u06CC",
@@ -804,6 +810,9 @@ const urRoman: Dict = {
     auto: "Auto",
     solid: "Solid",
     gradient: "Gradient",
+    textColor: "Text",
+    white: "White",
+    black: "Black",
   },
   footer: {
     privacyPolicy: "Privacy Policy",

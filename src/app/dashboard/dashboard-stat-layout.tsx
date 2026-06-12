@@ -6,7 +6,7 @@ import Link from "next/link";
 import { LayoutGrid, Check, RotateCcw, Plus, ShoppingCart } from "lucide-react";
 import { WidgetGrid, getWidgetDimsFromSize, getWidgetSizeFromDims } from "./widgets/widget-grid";
 import { WidgetGallery } from "./widgets/widget-gallery";
-import { BoardFillStyle, WIDGET_CATALOG, WidgetColor, WidgetFillStyle, WidgetSize } from "./widgets/widget-registry";
+import { BoardFillStyle, WIDGET_CATALOG, WidgetColor, WidgetFillStyle, WidgetSize, WidgetTextColor } from "./widgets/widget-registry";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DASHBOARD_KEY,
@@ -31,6 +31,9 @@ export type DashboardLayoutLabels = {
   solid: string;
   gradient: string;
   auto: string;
+  textColor: string;
+  white: string;
+  black: string;
 };
 
 type WidgetInstance = {
@@ -39,6 +42,7 @@ type WidgetInstance = {
   size: WidgetSize;
   color: WidgetColor;
   fillStyle?: WidgetFillStyle;
+  textColor?: WidgetTextColor;
   x: number;
   y: number;
   w: number;
@@ -77,6 +81,7 @@ const DEFAULT_WIDGETS: WidgetInstance[] = [
 const widgetSizes = new Set<WidgetSize>(["S", "M", "L", "XL"]);
 const widgetColors = new Set<WidgetColor>(["neutral", "info", "success", "warning", "danger"]);
 const widgetFillStyles = new Set<WidgetFillStyle>(["inherit", "solid", "gradient"]);
+const widgetTextColors = new Set<WidgetTextColor>(["auto", "white", "black"]);
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
@@ -103,6 +108,9 @@ function normalizeWidgets(value: unknown): WidgetInstance[] {
       const fillStyle = widgetFillStyles.has(item.fillStyle as WidgetFillStyle)
         ? (item.fillStyle as WidgetFillStyle)
         : undefined;
+      const textColor = widgetTextColors.has(item.textColor as WidgetTextColor)
+        ? (item.textColor as WidgetTextColor)
+        : undefined;
 
       const id = seenIds.has(item.id) ? `${item.id}-${index}` : item.id;
       seenIds.add(id);
@@ -120,6 +128,9 @@ function normalizeWidgets(value: unknown): WidgetInstance[] {
 
       if (fillStyle) {
         normalizedWidget.fillStyle = fillStyle;
+      }
+      if (textColor) {
+        normalizedWidget.textColor = textColor;
       }
 
       return normalizedWidget;
@@ -253,6 +264,7 @@ export function DashboardStatLayout({
       size: catalogItem.defaultSize,
       color: catalogItem.defaultColor,
       fillStyle: "inherit",
+      textColor: "auto",
       x: 0,
       y: 0,
       w: dims.w,
@@ -321,71 +333,85 @@ export function DashboardStatLayout({
             {organizationName}
           </p>
         </div>
-        <div className={`flex flex-wrap items-center gap-2 transition ${
-          editing
-            ? "sticky top-2 z-40 rounded-2xl border border-slate-200 bg-[#fff]/95 p-2 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-white/[0.10] dark:bg-[#0f172a]/95 dark:shadow-black/30"
-            : ""
-        }`}>
-          {editing && (
-            <>
-              <div className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-[#f8fafc] px-1.5 text-xs font-bold text-slate-600 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-300">
-                <span className="hidden px-1 sm:inline">{labels.fillStyle}</span>
-                {(["solid", "gradient"] as BoardFillStyle[]).map((style) => (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() => handleFillStyleChange(style)}
-                    aria-pressed={fillStyle === style}
-                    className={`h-6 rounded-lg px-2 text-[11px] font-black transition ${
-                      fillStyle === style
-                        ? "bg-[var(--primary-accent-bg)] text-[var(--primary-accent-text)]"
-                        : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
-                    }`}
-                  >
-                    {style === "solid" ? labels.solid : labels.gradient}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setGalleryOpen(true)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[var(--primary-accent-bg)] px-3 text-xs font-bold text-[var(--primary-accent-text)] shadow-sm transition hover:bg-[var(--primary-accent-hover)] focus:outline-none"
-              >
-                <Plus className="size-3.5" aria-hidden="true" />
-                Add Widget
-              </button>
-              <button
-                type="button"
-                onClick={handleResetLayout}
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-[#f8fafc] px-3 text-xs font-bold text-slate-600 transition hover:bg-[#eef2f7] focus:outline-none dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.08]"
-              >
-                <RotateCcw className="size-3.5" aria-hidden="true" />
-                {labels.resetLayout}
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={() => setEditing((current) => !current)}
-            aria-pressed={editing}
-            className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold shadow-sm transition focus:outline-none ${
-              editing
-                ? "bg-[#15803d] text-white hover:bg-[#166534] dark:bg-[#16a34a] dark:hover:bg-[#15803d]"
-                : "border border-slate-200 bg-[#f8fafc] text-slate-700 hover:bg-[#eef2f7] dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
-            }`}
-          >
-            {editing ? <Check className="size-3.5" aria-hidden="true" /> : <LayoutGrid className="size-3.5" aria-hidden="true" />}
-            {editing ? labels.done : labels.editLayout}
-          </button>
-          <Link
-            href="/pos"
-            className="hidden h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#0b2f6f] to-[#0891b2] px-4 text-xs font-bold text-white shadow-sm transition hover:opacity-90 sm:inline-flex"
-          >
-            <ShoppingCart className="size-3.5" aria-hidden="true" />
-            New sale
-          </Link>
-        </div>
+        {!editing && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              aria-pressed={false}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-[#f8fafc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-[#eef2f7] focus:outline-none dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
+            >
+              <LayoutGrid className="size-3.5" aria-hidden="true" />
+              {labels.editLayout}
+            </button>
+            <Link
+              href="/pos"
+              className="hidden h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#0b2f6f] to-[#0891b2] px-4 text-xs font-bold text-white shadow-sm transition hover:opacity-90 active:scale-95 sm:inline-flex"
+            >
+              <ShoppingCart className="size-3.5" aria-hidden="true" />
+              New sale
+            </Link>
+          </div>
+        )}
       </div>
+
+      {editing && (
+        <div className="sticky top-0 z-50 mb-4 rounded-2xl border border-slate-200 bg-[#fff]/95 p-2 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-white/[0.10] dark:bg-[#0f172a]/95 dark:shadow-black/30">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-[#f8fafc] px-1.5 text-xs font-bold text-slate-600 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-300">
+              <span className="hidden px-1 sm:inline">{labels.fillStyle}</span>
+              {(["solid", "gradient"] as BoardFillStyle[]).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => handleFillStyleChange(style)}
+                  aria-pressed={fillStyle === style}
+                  className={`h-6 rounded-lg px-2 text-[11px] font-black transition active:scale-95 ${
+                    fillStyle === style
+                      ? "bg-[var(--primary-accent-bg)] text-[var(--primary-accent-text)]"
+                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {style === "solid" ? labels.solid : labels.gradient}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setGalleryOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[var(--primary-accent-bg)] px-3 text-xs font-bold text-[var(--primary-accent-text)] shadow-sm transition hover:bg-[var(--primary-accent-hover)] active:scale-95 focus:outline-none"
+            >
+              <Plus className="size-3.5" aria-hidden="true" />
+              Add Widget
+            </button>
+            <button
+              type="button"
+              onClick={handleResetLayout}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-[#f8fafc] px-3 text-xs font-bold text-slate-600 transition hover:bg-[#eef2f7] active:scale-95 focus:outline-none dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.08]"
+            >
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              {labels.resetLayout}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              aria-pressed={true}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#15803d] px-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#166534] active:scale-95 focus:outline-none dark:bg-[#16a34a] dark:hover:bg-[#15803d]"
+            >
+              <Check className="size-3.5" aria-hidden="true" />
+              {labels.done}
+            </button>
+            <span
+              aria-disabled="true"
+              className="hidden h-9 cursor-not-allowed items-center gap-1.5 rounded-xl bg-slate-300 px-4 text-xs font-bold text-slate-500 opacity-70 shadow-sm sm:inline-flex dark:bg-slate-800 dark:text-slate-500"
+              title="Finish editing before starting a new sale"
+            >
+              <ShoppingCart className="size-3.5" aria-hidden="true" />
+              New sale
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Responsive Widget Grid */}
       <div className={editing ? "rounded-2xl border border-dashed border-blue-200 bg-[#eff6ff]/40 p-2 dark:border-blue-400/20 dark:bg-blue-950/10" : ""}>
