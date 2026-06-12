@@ -1,11 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import {
-  Wrench, BarChart3,
-  TrendingUp, Users, Wallet, CalendarCheck,
-  Bell, PackageSearch, CreditCard,
-  Boxes, Clock,
-} from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentContext } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -15,9 +8,9 @@ import { expenseCounts } from "@/lib/data/expenses";
 import { getClosing, getDayActivity, todayLocalDate } from "@/lib/data/daily-closing";
 import { getDashboardSummary } from "@/lib/data/dashboard";
 import { getPotentialProfitInStock } from "@/lib/data/reports";
-import { formatCurrency, formatNumber } from "@/lib/formatters";
+import { formatNumber } from "@/lib/formatters";
 import { getServerDict } from "@/lib/i18n/server";
-import { DashboardStatLayout, type DashboardLayoutLabels, type DashboardStatCard } from "./dashboard-stat-layout";
+import { DashboardStatLayout, type DashboardLayoutLabels } from "./dashboard-stat-layout";
 
 async function stockValueStats(organizationId: string) {
   const supabase = await createClient();
@@ -123,7 +116,7 @@ async function recentActivity(organizationId: string) {
     .select("id, action, details, module, metadata, created_at")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(10);
 
   if (!data || data.length === 0) return [];
 
@@ -213,83 +206,7 @@ export default async function DashboardPage() {
   const { dict } = await getServerDict();
   const t = dict.dashboard as Record<string, string>;
 
-  const todayNet = invoices.todaySalesTotal - expenses.todayTotal;
-  const expectedCashToday = todayActivity?.expectedCash ?? 0;
-  const closingDifference = todayClosing?.cash_difference ?? null;
-  const isTodayClosed = Boolean(todayClosing?.finalized_by);
-  const creditCollectedToday = (todayActivity?.creditCollectionCash ?? 0) + (todayActivity?.creditCollectionDigital ?? 0);
-
   const isPrivileged = profile?.role === "owner" || profile?.role === "admin" || profile?.role === "manager";
-
-  const isProfitPositive = dashSummary.todayProfit >= 0;
-
-  const statCards: DashboardStatCard[] = [
-    {
-      id: "today-profit",
-      label: t.todayProfit,
-      value: formatCurrency(dashSummary.todayProfit, currency),
-      change: isProfitPositive ? `${t.fromSales} ${t.today}` : `${t.estimatedProfit}`,
-      tone: isProfitPositive ? "success" : "danger",
-      icon: "trendingUp",
-    },
-    {
-      id: "gross-sales",
-      label: t.grossSales,
-      value: formatCurrency(dashSummary.grossSales, currency),
-      change: dashSummary.grossSales > 0 ? `${formatNumber(dashSummary.returnsCount + 1)} ${t.invoices}` : t.noSalesYet,
-      tone: "success",
-      icon: "shoppingCart",
-    },
-    {
-      id: "returns",
-      label: t.returns,
-      value: formatCurrency(dashSummary.returnsTotal, currency),
-      change: dashSummary.returnsCount > 0 ? `${formatNumber(dashSummary.returnsCount)} return${dashSummary.returnsCount === 1 ? "" : "s"}` : "0 returns",
-      tone: "danger",
-      icon: "rotateCcw",
-    },
-    {
-      id: "expenses",
-      label: t.expenses,
-      value: formatCurrency(dashSummary.expensesTotal, currency),
-      change: dashSummary.expensesTotal > 0 ? `${t.today}` : "0 expenses",
-      tone: "danger",
-      icon: "wallet",
-    },
-    {
-      id: "low-stock",
-      label: t.lowStock,
-      value: dashSummary.lowStockCount > 0 ? `${formatNumber(dashSummary.lowStockCount)} item${dashSummary.lowStockCount === 1 ? "" : "s"}` : "0 items",
-      change: dashSummary.lowStockCount > 0 ? "Below minimum stock" : "All stocked",
-      tone: "warning",
-      icon: "packageSearch",
-      href: "/purchases/replenishment",
-    },
-    {
-      id: "pending-repairs",
-      label: t.pendingRepairs,
-      value: `${formatNumber(dashSummary.pendingRepairsCount)} job${dashSummary.pendingRepairsCount === 1 ? "" : "s"}`,
-      change: dashSummary.pendingRepairsCount > 0 ? "In progress" : "No pending jobs",
-      tone: "warning",
-      icon: "wrench",
-    },
-    {
-      id: "supplier-dues",
-      label: t.supplierDues,
-      value: formatCurrency(dashSummary.supplierDuesTotal, currency),
-      change: dashSummary.supplierDuesTotal > 0 ? t.suppliersPayable : "All settled",
-      tone: "warning",
-      icon: "briefcase",
-    },
-    {
-      id: "customer-dues",
-      label: t.customerDues,
-      value: formatCurrency(dashSummary.customerDuesTotal, currency),
-      change: dashSummary.customerDuesTotal > 0 ? t.customersOwe : "All settled",
-      tone: "warning",
-      icon: "users",
-    },
-  ];
 
   const dashboardLayoutLabels: DashboardLayoutLabels = {
     editLayout: t.editLayout || "Edit layout",
@@ -303,27 +220,6 @@ export default async function DashboardPage() {
     small: t.small || "Small",
     medium: t.medium || "Medium",
     large: t.large || "Large",
-  };
-
-  const maxBar = Math.max(...weekSales.map((w) => w.total), 1);
-  const maxMonthlyBar = Math.max(...monthSales.map((m) => m.total), 1);
-
-  const ACTIVITY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-    sale: TrendingUp,
-    stock: PackageSearch,
-    repair: Wrench,
-    payment: CreditCard,
-    expense: Wallet,
-    privacy: Bell,
-  };
-
-  const activityBg: Record<string, string> = {
-    sale: "rgba(59,130,246,0.12)",
-    stock: "rgba(245,158,11,0.12)",
-    repair: "rgba(139,92,246,0.12)",
-    payment: "rgba(16,185,129,0.12)",
-    expense: "rgba(239,68,68,0.12)",
-    privacy: "rgba(99,102,241,0.12)",
   };
 
   return (
@@ -340,307 +236,29 @@ export default async function DashboardPage() {
           </span>
         </div>
 
-          {/* Main content area */}
-          <div className="p-3.5 sm:p-5">
-            <DashboardStatLayout
-              cards={statCards}
-              firstName={profile.full_name?.split(" ")[0] ?? "User"}
-              role={profile.role}
-              organizationName={organization?.name ?? "No shop"}
-              labels={dashboardLayoutLabels}
-            />
-
-            {/* Top-selling products */}
-            {dashSummary.topSellingProducts.length > 0 && (
-              <div className="mt-3 sm:mt-4">
-                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {t.topSelling}
-                    </p>
-                    <Link href="/products" className="text-[10px] font-semibold text-blue-700 hover:underline dark:text-blue-400">
-                      {t.viewReport}
-                    </Link>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-[11px]">
-                      <thead>
-                        <tr className="border-b border-slate-200 dark:border-white/[0.06]">
-                          <th className="pb-1.5 font-semibold text-slate-500 dark:text-slate-400">#</th>
-                          <th className="pb-1.5 font-semibold text-slate-500 dark:text-slate-400">Product</th>
-                          <th className="pb-1.5 text-right font-semibold text-slate-500 dark:text-slate-400">{t.itemsSold}</th>
-                          <th className="pb-1.5 text-right font-semibold text-slate-500 dark:text-slate-400">Revenue</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dashSummary.topSellingProducts.map((p, i) => (
-                          <tr key={p.productName} className="border-b border-slate-100 last:border-0 dark:border-white/[0.04]">
-                            <td className="py-1.5 text-slate-400">{i + 1}</td>
-                            <td className="py-1.5 font-medium text-slate-950 dark:text-white">{p.productName}</td>
-                            <td className="py-1.5 text-right text-slate-700 dark:text-slate-300">{formatNumber(p.quantity)}</td>
-                            <td className="py-1.5 text-right font-semibold text-slate-950 dark:text-white">{formatCurrency(p.revenue, currency)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Activity + weekly chart */}
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-4 lg:grid-cols-[1fr_180px]">
-              {/* Activity feed */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Recent activity
-                  </h2>
-                  <Link href="/audit-log" className="text-[10px] font-semibold text-blue-700 hover:underline dark:text-blue-400">
-                    View all
-                  </Link>
-                </div>
-
-                {activity.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center dark:border-white/[0.06] dark:bg-white/[0.02]">
-                    <Clock className="mb-1 size-5 text-slate-300 dark:text-slate-600" />
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500">No activity yet</p>
-                    <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                      Start ringing up sales — activity will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  activity.map((row) => {
-                    const ActIcon = ACTIVITY_ICONS[row.icon] ?? Bell;
-                    const bgColor = activityBg[row.icon] ?? "rgba(100,116,139,0.12)";
-                    return (
-                      <div
-                        key={row.id}
-                        className="flex items-center gap-2.5 rounded-lg border border-slate-100 bg-slate-50/30 p-2.5 transition hover:bg-slate-100/50 dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.05]"
-                      >
-                        <span
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
-                          style={{ background: bgColor, color: row.color }}
-                        >
-                          <ActIcon className="h-3 w-3" />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                          {row.left}
-                        </span>
-                        {row.right && (
-                          <span className="shrink-0 text-[11px] font-bold" style={{ color: row.color }}>
-                            {row.right}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Weekly sales bar chart */}
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Weekly sales
-                </p>
-                {weekSales.length === 0 ? (
-                  <div className="flex h-[52px] items-center justify-center">
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">No data</p>
-                  </div>
-                ) : (
-                  <div className="flex items-end gap-0.5" style={{ height: "52px" }}>
-                    {weekSales.map((bar) => {
-                      const pct = (bar.total / maxBar) * 100;
-                      const isPeak = bar.total === maxBar;
-                      return (
-                        <div key={bar.date} className="flex flex-1 flex-col items-center gap-1">
-                          <div className="flex h-[44px] w-full items-end">
-                            <div
-                              className="w-full rounded-t-sm"
-                              style={{
-                                height: `${Math.max(pct, 3)}%`,
-                                background: isPeak
-                                  ? "linear-gradient(to top,#0b2f6f,#00b8b0)"
-                                  : "rgba(11,47,111,0.2)",
-                                transition: "height 0.3s ease",
-                              }}
-                            />
-                          </div>
-                          <span className="text-[7px] font-medium text-slate-400 dark:text-slate-500">{bar.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Monthly sales histogram */}
-            <div className="mt-3 sm:mt-4">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Monthly sales
-                </p>
-                {monthSales.length === 0 ? (
-                  <div className="flex h-[52px] items-center justify-center">
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">No monthly sales yet</p>
-                  </div>
-                ) : (
-                  <div className="flex items-end gap-px" style={{ height: "52px" }}>
-                    {monthSales.map((bar) => {
-                      const pct = (bar.total / maxMonthlyBar) * 100;
-                      const isPeak = bar.total === maxMonthlyBar;
-                      return (
-                        <div key={bar.day} className="flex flex-1 flex-col items-center gap-1">
-                          <div className="flex h-[44px] w-full items-end">
-                            <div
-                              className="w-full rounded-t-sm"
-                              style={{
-                                height: `${Math.max(pct, 3)}%`,
-                                background: isPeak
-                                  ? "linear-gradient(to top,#0b2f6f,#00b8b0)"
-                                  : "rgba(11,47,111,0.2)",
-                                transition: "height 0.3s ease",
-                              }}
-                            />
-                          </div>
-                          <span className="text-[6px] font-medium text-slate-400 dark:text-slate-500">{bar.day}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Sales summary + quick links for mobile */}
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Credit collected today
-                </p>
-                <p className="mt-1 text-base font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatCurrency(creditCollectedToday, currency)}
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                  Cash + digital settlements
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Today net
-                </p>
-                <p className={`mt-1 text-base font-bold ${todayNet >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
-                  {formatCurrency(todayNet, currency)}
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                  Sales minus expenses
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isTodayClosed ? "Today closed" : "Today closing"}
-                </p>
-                <p className="mt-1 text-base font-bold text-slate-950 dark:text-white">
-                  {isTodayClosed ? "Closed" : "Open"}
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                  {isTodayClosed && closingDifference !== null
-                    ? `Cash diff: ${formatCurrency(closingDifference, currency)}`
-                    : branchId
-                      ? `Expected cash: ${formatCurrency(expectedCashToday, currency)}`
-                      : "No branch assigned"}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Today expenses
-                </p>
-                <p className="mt-1 text-base font-bold text-rose-700 dark:text-rose-400">
-                  {formatCurrency(expenses.todayTotal, currency)}
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                  {expenses.todayCount === 0 ? "No expenses" : `${formatNumber(expenses.todayCount)} entr${expenses.todayCount === 1 ? "y" : "ies"}`}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Stock valuation
-                </p>
-                <p className="mt-1 text-base font-bold text-slate-950 dark:text-white">
-                  {formatCurrency(stockValue, currency)}
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-                  At purchase cost
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-amber-100 bg-amber-50/40 p-3 dark:border-amber-800/30 dark:bg-amber-900/10">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Potential profit in stock
-                </p>
-                <p className="mt-1 text-base font-bold text-amber-800 dark:text-amber-300">
-                  {formatCurrency(potentialProfit.potentialProfitInStock, currency)}
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                  <span>Sale value: {formatCurrency(potentialProfit.totalInventorySaleValue, currency)}</span>
-                  <span>Cost: {formatCurrency(potentialProfit.totalInventoryCostValue, currency)}</span>
-                  {potentialProfit.marginPercent !== null && (
-                    <span>Margin: {potentialProfit.marginPercent}%</span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-[10px] italic text-amber-600 dark:text-amber-400">
-                  If all current stock sold at current prices (not yet earned).
-                </p>
-              </div>
-            </div>
-
-            {/* Bottom links row */}
-            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 dark:border-white/[0.06]">
-              <Link
-                href="/reports"
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-400 dark:hover:bg-white/[0.05]"
-              >
-                <BarChart3 className="size-3" />
-                Reports
-              </Link>
-              {branchId && (
-                <Link
-                  href="/daily-closing"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-400 dark:hover:bg-white/[0.05]"
-                >
-                  <CalendarCheck className="size-3" />
-                  {isTodayClosed ? "Review closing" : "Open closing"}
-                </Link>
-              )}
-              <Link
-                href="/products"
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-400 dark:hover:bg-white/[0.05]"
-              >
-                <Boxes className="size-3" />
-                Inventory
-              </Link>
-              {isPrivileged && (
-                <Link
-                  href="/audit-log"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-400 dark:hover:bg-white/[0.05]"
-                >
-                  <Clock className="size-3" />
-                  Audit log
-                </Link>
-              )}
-              <Link
-                href="/customers"
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-400 dark:hover:bg-white/[0.05]"
-              >
-                <Users className="size-3" />
-                Customers
-              </Link>
-            </div>
-          </div>
+        {/* Main content area */}
+        <div className="p-3.5 sm:p-5">
+          <DashboardStatLayout
+            firstName={profile.full_name?.split(" ")[0] ?? "User"}
+            role={profile.role}
+            organizationName={organization?.name ?? "No shop"}
+            labels={dashboardLayoutLabels}
+            widgetData={{
+              invoices,
+              stockValue,
+              expenses,
+              todayActivity,
+              todayClosing,
+              weekSales,
+              activity,
+              monthSales,
+              dashSummary,
+              potentialProfit,
+              currency,
+              isPrivileged,
+            }}
+          />
+        </div>
       </div>
     </AppShell>
   );

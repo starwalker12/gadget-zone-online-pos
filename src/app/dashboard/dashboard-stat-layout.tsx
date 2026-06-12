@@ -1,51 +1,18 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import type { ComponentType, PointerEvent as ReactPointerEvent } from "react";
-import { useReorderAnim } from "@/lib/use-reorder-animation";
+import { LayoutGrid, Check, RotateCcw, Plus, ShoppingCart } from "lucide-react";
+import { WidgetGrid, getWidgetDimsFromSize } from "./widgets/widget-grid";
+import { WidgetGallery } from "./widgets/widget-gallery";
+import { WIDGET_CATALOG, WidgetColor, WidgetSize } from "./widgets/widget-registry";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Briefcase,
-  Check,
-  GripVertical,
-  LayoutGrid,
-  PackageSearch,
-  RotateCcw,
-  ShoppingCart,
-  TrendingUp,
-  Users,
-  Wallet,
-  Wrench,
-} from "lucide-react";
-import { STAT_CARD_TONE_STYLES, type StatCardTone } from "@/components/ui/stat-card";
-
-const STORAGE_KEY = "saledock-dashboard-layout-v1";
-const STORAGE_EVENT = "saledock-dashboard-layout-changed";
-const DEFAULT_CARD_SIZE = "S";
-const CARD_SIZE_VALUES = ["S", "M", "L"] as const;
-
-const iconMap: Record<string, ComponentType<{ className?: string }>> = {
-  briefcase: Briefcase,
-  packageSearch: PackageSearch,
-  rotateCcw: RotateCcw,
-  shoppingCart: ShoppingCart,
-  trendingUp: TrendingUp,
-  users: Users,
-  wallet: Wallet,
-  wrench: Wrench,
-};
-
-export type DashboardStatCard = {
-  id: string;
-  label: string;
-  value: string;
-  change: string;
-  tone: StatCardTone;
-  icon: keyof typeof iconMap;
-  href?: string;
-};
+  DASHBOARD_KEY,
+  DASHBOARD_EVENT,
+  saveDashboardLayout,
+  useUIPreferencesSync,
+} from "@/lib/use-ui-preferences";
 
 export type DashboardLayoutLabels = {
   editLayout: string;
@@ -61,69 +28,43 @@ export type DashboardLayoutLabels = {
   large: string;
 };
 
-type DashboardCardSize = (typeof CARD_SIZE_VALUES)[number];
-
-type DashboardLayoutPreferences = {
-  version: 1;
-  order: string[];
-  sizes: Record<string, DashboardCardSize>;
-  updatedAt: string;
+type WidgetInstance = {
+  id: string;
+  type: string;
+  size: WidgetSize;
+  color: WidgetColor;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 };
 
-type DashboardLayoutInput = {
-  order: string[];
-  sizes?: Record<string, DashboardCardSize>;
-};
-
-const CARD_SIZE_CLASSES: Record<DashboardCardSize, string> = {
-  S: "col-span-1",
-  M: "col-span-2",
-  L: "col-span-2 lg:col-span-4",
-};
-
-function uniqueStrings(values: unknown): string[] {
-  if (!Array.isArray(values)) return [];
-  return [...new Set(values.filter((value): value is string => typeof value === "string"))];
-}
-
-function isCardSize(value: unknown): value is DashboardCardSize {
-  return CARD_SIZE_VALUES.includes(value as DashboardCardSize);
-}
-
-function parseStoredSizes(values: unknown): Record<string, DashboardCardSize> {
-  if (!values || typeof values !== "object" || Array.isArray(values)) return {};
-
-  return Object.fromEntries(
-    Object.entries(values).filter((entry): entry is [string, DashboardCardSize] => {
-      const [id, size] = entry;
-      return typeof id === "string" && isCardSize(size);
-    }),
-  );
-}
-
-function parseStoredLayout(raw: string | null): DashboardLayoutPreferences {
-  try {
-    if (!raw) return { version: 1, order: [], sizes: {}, updatedAt: "" };
-    const parsed = JSON.parse(raw) as Partial<DashboardLayoutPreferences>;
-    if (Array.isArray(parsed)) {
-      return { version: 1, order: uniqueStrings(parsed), sizes: {}, updatedAt: "" };
-    }
-
-    return {
-      version: 1,
-      order: uniqueStrings(parsed.order),
-      sizes: parseStoredSizes(parsed.sizes),
-      updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : "",
-    };
-  } catch {
-    return { version: 1, order: [], sizes: {}, updatedAt: "" };
-  }
-}
+// Default layout matching the current dashboard cards and sections
+const DEFAULT_WIDGETS: WidgetInstance[] = [
+  { id: "widget-today-profit", type: "today-profit", size: "S", color: "success", x: 0, y: 0, w: 1, h: 1 },
+  { id: "widget-gross-sales", type: "gross-sales", size: "S", color: "success", x: 1, y: 0, w: 1, h: 1 },
+  { id: "widget-returns", type: "returns", size: "S", color: "danger", x: 2, y: 0, w: 1, h: 1 },
+  { id: "widget-expenses", type: "expenses", size: "S", color: "danger", x: 3, y: 0, w: 1, h: 1 },
+  { id: "widget-low-stock", type: "low-stock", size: "S", color: "warning", x: 0, y: 1, w: 1, h: 1 },
+  { id: "widget-pending-repairs", type: "pending-repairs", size: "S", color: "warning", x: 1, y: 1, w: 1, h: 1 },
+  { id: "widget-supplier-dues", type: "supplier-dues", size: "S", color: "warning", x: 2, y: 1, w: 1, h: 1 },
+  { id: "widget-customer-dues", type: "customer-dues", size: "S", color: "warning", x: 3, y: 1, w: 1, h: 1 },
+  { id: "widget-weekly-sales", type: "weekly-sales", size: "M", color: "info", x: 0, y: 2, w: 2, h: 1 },
+  { id: "widget-monthly-sales", type: "monthly-sales", size: "M", color: "info", x: 2, y: 2, w: 2, h: 1 },
+  { id: "widget-top-selling-products", type: "top-selling-products", size: "L", color: "neutral", x: 0, y: 3, w: 4, h: 2 },
+  { id: "widget-recent-activity", type: "recent-activity", size: "L", color: "neutral", x: 0, y: 5, w: 4, h: 2 },
+  { id: "widget-credit-collected-today", type: "credit-collected-today", size: "S", color: "success", x: 0, y: 7, w: 1, h: 1 },
+  { id: "widget-today-net", type: "today-net", size: "S", color: "success", x: 1, y: 7, w: 1, h: 1 },
+  { id: "widget-today-closing", type: "today-closing", size: "S", color: "neutral", x: 2, y: 7, w: 1, h: 1 },
+  { id: "widget-today-expenses", type: "today-expenses", size: "S", color: "danger", x: 3, y: 7, w: 1, h: 1 },
+  { id: "widget-stock-valuation", type: "stock-valuation", size: "S", color: "neutral", x: 0, y: 8, w: 1, h: 1 },
+  { id: "widget-potential-profit-in-stock", type: "potential-profit-in-stock", size: "M", color: "warning", x: 1, y: 8, w: 3, h: 1 },
+];
 
 function getLayoutSnapshot(): string {
   if (typeof window === "undefined") return "";
   try {
-    return window.localStorage.getItem(STORAGE_KEY) ?? "";
+    return window.localStorage.getItem(DASHBOARD_KEY) ?? "";
   } catch {
     return "";
   }
@@ -137,292 +78,145 @@ function subscribeToLayout(onStoreChange: () => void): () => void {
   if (typeof window === "undefined") return () => {};
 
   const handleStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY) onStoreChange();
+    if (event.key === DASHBOARD_KEY) onStoreChange();
   };
   const handleLocalChange = () => onStoreChange();
 
   window.addEventListener("storage", handleStorage);
-  window.addEventListener(STORAGE_EVENT, handleLocalChange);
+  window.addEventListener(DASHBOARD_EVENT, handleLocalChange);
   return () => {
     window.removeEventListener("storage", handleStorage);
-    window.removeEventListener(STORAGE_EVENT, handleLocalChange);
+    window.removeEventListener(DASHBOARD_EVENT, handleLocalChange);
   };
-}
-
-function writeStoredLayout(input: DashboardLayoutInput) {
-  if (typeof window === "undefined") return;
-  const next: DashboardLayoutPreferences = {
-    version: 1,
-    order: input.order,
-    sizes: input.sizes ?? {},
-    updatedAt: new Date().toISOString(),
-  };
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.dispatchEvent(new Event(STORAGE_EVENT));
-  } catch {}
-}
-
-function clearStoredLayout() {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new Event(STORAGE_EVENT));
-  } catch {}
-}
-
-function normalizeOrder(cards: DashboardStatCard[], storedOrder: string[]): string[] {
-  const knownIds = new Set(cards.map((card) => card.id));
-  const saved = storedOrder.filter((id) => knownIds.has(id));
-  const missing = cards.map((card) => card.id).filter((id) => !saved.includes(id));
-  return [...saved, ...missing];
-}
-
-function normalizeSizes(
-  cards: DashboardStatCard[],
-  storedSizes: Record<string, DashboardCardSize>,
-): Record<string, DashboardCardSize> {
-  const knownIds = new Set(cards.map((card) => card.id));
-  return Object.fromEntries(
-    Object.entries(storedSizes).filter(([id, size]) => {
-      return knownIds.has(id) && size !== DEFAULT_CARD_SIZE;
-    }),
-  );
-}
-
-function getReducedMotionPreference() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export function DashboardStatLayout({
-  cards,
   firstName,
   role,
   organizationName,
   labels,
+  widgetData,
 }: {
-  cards: DashboardStatCard[];
+  cards?: any[]; // kept for compatibility if needed
   firstName: string;
   role: string;
   organizationName: string;
   labels: DashboardLayoutLabels;
+  widgetData: any;
 }) {
+  // Sync preferences with database on mount (fail-open)
+  useUIPreferencesSync();
+
   const layoutSnapshot = useSyncExternalStore(
     subscribeToLayout,
     getLayoutSnapshot,
-    getServerLayoutSnapshot,
+    getServerLayoutSnapshot
   );
-  const prefs = useMemo(() => parseStoredLayout(layoutSnapshot), [layoutSnapshot]);
-  const [editing, setEditing] = useState(false);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const draggingIdRef = useRef<string | null>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const justDraggedRef = useRef<string | null>(null);
-  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
-  const getDraggedElement = (id: string) => {
-    return gridRef.current?.querySelector<HTMLElement>(`[data-dashboard-card-id="${id}"]`) ?? null;
-  };
-
-  const cleanupStyles = useCallback(() => {
-    if (!gridRef.current) return;
-    const items = gridRef.current.querySelectorAll<HTMLElement>("[data-dashboard-card-id]");
-    items.forEach((item) => {
-      item.style.transform = "";
-      item.style.transition = "";
-      item.style.boxShadow = "";
-      item.style.opacity = "";
-      item.style.zIndex = "";
-      item.style.pointerEvents = "";
-      item.style.willChange = "";
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!draggingId) {
-      cleanupStyles();
-    }
-  }, [cleanupStyles, draggingId]);
-
-  useEffect(() => {
-    return () => cleanupStyles();
-  }, [cleanupStyles]);
-
-  const cardMap = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
-  const orderedIds = useMemo(() => normalizeOrder(cards, prefs.order), [cards, prefs.order]);
-  const layoutSizes = useMemo(() => normalizeSizes(cards, prefs.sizes), [cards, prefs.sizes]);
-  const orderedCards = orderedIds
-    .map((id) => cardMap.get(id))
-    .filter((card): card is DashboardStatCard => Boolean(card));
-
-  useReorderAnim(gridRef, "dashboard-card-id", [orderedCards], justDraggedRef);
-
-  const resetDragState = useCallback(() => {
-    draggingIdRef.current = null;
-    dragStartPosRef.current = null;
-    setDraggingId(null);
-    cleanupStyles();
-  }, [cleanupStyles]);
-
-  useEffect(() => {
-    if (!draggingId) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") resetDragState();
-    };
-    const handleWindowBlur = () => resetDragState();
-
-    document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("blur", handleWindowBlur);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [draggingId, resetDragState]);
-
-  const moveCard = (sourceId: string, targetId: string, placement: "before" | "after") => {
-    if (sourceId === targetId) return;
-
-    const current = parseStoredLayout(getLayoutSnapshot());
-    const nextOrder = normalizeOrder(cards, current.order).filter((id) => id !== sourceId);
-    const targetIndex = nextOrder.indexOf(targetId);
-    if (targetIndex === -1) return;
-
-    nextOrder.splice(placement === "after" ? targetIndex + 1 : targetIndex, 0, sourceId);
-    writeStoredLayout({ order: nextOrder, sizes: normalizeSizes(cards, current.sizes) });
-  };
-
-  const moveCardByStep = (cardId: string, direction: -1 | 1) => {
-    const current = parseStoredLayout(getLayoutSnapshot());
-    const currentOrder = normalizeOrder(cards, current.order);
-    const sourceIndex = currentOrder.indexOf(cardId);
-    const targetIndex = sourceIndex + direction;
-    if (sourceIndex === -1 || targetIndex < 0 || targetIndex >= currentOrder.length) return;
-
-    const nextOrder = [...currentOrder];
-    const [source] = nextOrder.splice(sourceIndex, 1);
-    nextOrder.splice(targetIndex, 0, source);
-    writeStoredLayout({ order: nextOrder, sizes: normalizeSizes(cards, current.sizes) });
-  };
-
-  const updateCardSize = (cardId: string, size: DashboardCardSize) => {
-    const current = parseStoredLayout(getLayoutSnapshot());
-    const nextSizes = normalizeSizes(cards, current.sizes);
-
-    if (size === DEFAULT_CARD_SIZE) {
-      delete nextSizes[cardId];
-    } else {
-      nextSizes[cardId] = size;
-    }
-
-    writeStoredLayout({
-      order: normalizeOrder(cards, current.order),
-      sizes: nextSizes,
-    });
-  };
-
-  const beginDrag = (event: ReactPointerEvent<HTMLButtonElement>, cardId: string) => {
-    if (!editing || (event.pointerType === "mouse" && event.button !== 0)) return;
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    draggingIdRef.current = cardId;
-    setDraggingId(cardId);
-
-    const el = getDraggedElement(cardId);
-    if (!el) return;
-
-    el.style.pointerEvents = "none";
-
-    const prefersReduced = getReducedMotionPreference();
-    if (prefersReduced) return;
-
-    dragStartPosRef.current = { x: event.clientX, y: event.clientY };
-    el.style.transform = "translate(0px, 0px) scale(1.03)";
-    el.style.boxShadow = "0 8px 25px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)";
-    el.style.opacity = "0.92";
-    el.style.zIndex = "1000";
-    el.style.willChange = "transform";
-  };
-
-  const updateDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const sourceId = draggingIdRef.current;
-    if (!editing || !sourceId) return;
-
-    event.preventDefault();
-
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!prefersReduced && dragStartPosRef.current) {
-      const el = getDraggedElement(sourceId);
-      if (el) {
-        const dx = event.clientX - dragStartPosRef.current.x;
-        const dy = event.clientY - dragStartPosRef.current.y;
-        el.style.transform = `translate(${dx}px, ${dy}px) scale(1.03)`;
+  const widgets = useMemo(() => {
+    try {
+      if (!layoutSnapshot) return DEFAULT_WIDGETS;
+      const parsed = JSON.parse(layoutSnapshot);
+      if (Array.isArray(parsed)) return parsed as WidgetInstance[];
+      if (parsed && typeof parsed === "object" && Array.isArray(parsed.order)) {
+        // Fallback for legacy layout object structure if found
+        return DEFAULT_WIDGETS;
       }
+      return DEFAULT_WIDGETS;
+    } catch {
+      return DEFAULT_WIDGETS;
     }
+  }, [layoutSnapshot]);
+
+  const [editing, setEditing] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+
+  const handleUpdateWidgets = (updated: WidgetInstance[]) => {
+    saveDashboardLayout(updated);
   };
 
-  const endDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const sourceId = draggingIdRef.current;
-    if (!sourceId) return;
+  const handleAddWidget = (type: string) => {
+    const catalogItem = WIDGET_CATALOG.find((w) => w.type === type);
+    if (!catalogItem) return;
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+    // Find next available coordinate (append to bottom)
+    const maxY = widgets.reduce((max, w) => Math.max(max, w.y + w.h), 0);
+    const dims = getWidgetDimsFromSize(catalogItem.defaultSize);
 
-    const targetElement = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLElement>("[data-dashboard-card-id]");
-    const targetId = targetElement?.dataset.dashboardCardId ?? null;
-    const sourceIndex = orderedCards.findIndex((card) => card.id === sourceId);
-    const targetIndex = targetId ? orderedCards.findIndex((card) => card.id === targetId) : -1;
+    const newWidget: WidgetInstance = {
+      id: `widget-${type}-${Date.now()}`,
+      type,
+      size: catalogItem.defaultSize,
+      color: catalogItem.defaultColor,
+      x: 0,
+      y: maxY,
+      w: dims.w,
+      h: dims.h,
+    };
 
-    if (targetId && targetId !== sourceId && targetIndex !== sourceIndex && targetIndex >= 0) {
-      justDraggedRef.current = sourceId;
-      moveCard(sourceId, targetId, targetIndex > sourceIndex ? "after" : "before");
-    }
-
-    resetDragState();
+    handleUpdateWidgets([...widgets, newWidget]);
   };
 
-  const resetLayout = () => {
-    clearStoredLayout();
-    resetDragState();
+  const handleResetLayout = () => {
+    saveDashboardLayout(DEFAULT_WIDGETS);
+    setResetModalOpen(false);
+  };
+
+  const addedWidgetTypes = useMemo(() => {
+    return new Set(widgets.map((w) => w.type));
+  }, [widgets]);
+
+  const stateForWidgets = {
+    ...widgetData,
+    labels,
   };
 
   return (
     <>
+      {/* Dashboard Welcome Header */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-lg font-black text-slate-950 dark:text-white">
             Welcome, {firstName}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase dark:bg-[rgba(255,255,255,0.08)] dark:text-slate-300">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase dark:bg-white/[0.08] dark:text-slate-300">
               {role}
             </span>
-            {" · "}{organizationName}
+            {" · "}
+            {organizationName}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {editing && (
-            <button
-              type="button"
-              onClick={resetLayout}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-[#f8fafc] px-3 text-xs font-bold text-slate-600 transition hover:bg-[#eef2f7] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/[0.10] dark:bg-[rgba(255,255,255,0.04)] dark:text-slate-300 dark:hover:bg-[rgba(255,255,255,0.08)]"
-            >
-              <RotateCcw className="size-3.5" aria-hidden="true" />
-              {labels.resetLayout}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setGalleryOpen(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3 text-xs font-bold transition shadow-sm focus:outline-none"
+              >
+                <Plus className="size-3.5" aria-hidden="true" />
+                Add Widget
+              </button>
+              <button
+                type="button"
+                onClick={() => setResetModalOpen(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-[#f8fafc] px-3 text-xs font-bold text-slate-600 transition hover:bg-[#eef2f7] focus:outline-none dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.08]"
+              >
+                <RotateCcw className="size-3.5" aria-hidden="true" />
+                {labels.resetLayout}
+              </button>
+            </>
           )}
           <button
             type="button"
             onClick={() => setEditing((current) => !current)}
             aria-pressed={editing}
-            className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+            className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold shadow-sm transition focus:outline-none ${
               editing
-                ? "bg-[#15803d] text-white hover:bg-[#166534] dark:bg-[#16a34a] dark:text-white dark:hover:bg-[#15803d]"
-                : "border border-slate-200 bg-[#f8fafc] text-slate-700 hover:bg-[#eef2f7] dark:border-white/[0.10] dark:bg-[rgba(255,255,255,0.04)] dark:text-slate-200 dark:hover:bg-[rgba(255,255,255,0.08)]"
+                ? "bg-[#15803d] text-white hover:bg-[#166534] dark:bg-[#16a34a] dark:hover:bg-[#15803d]"
+                : "border border-slate-200 bg-[#f8fafc] text-slate-700 hover:bg-[#eef2f7] dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
             }`}
           >
             {editing ? <Check className="size-3.5" aria-hidden="true" /> : <LayoutGrid className="size-3.5" aria-hidden="true" />}
@@ -438,183 +232,54 @@ export function DashboardStatLayout({
         </div>
       </div>
 
-      <div
-        ref={gridRef}
-        className={`grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4 ${
-          editing ? "rounded-2xl border border-dashed border-blue-200 bg-[#eff6ff]/60 p-2 dark:border-blue-400/30 dark:bg-blue-950/20" : ""
-        }`}
-      >
-        {orderedCards.map((card, index) => (
-          <DashboardCard
-            key={card.id}
-            card={card}
-            editing={editing}
-            dragging={draggingId === card.id}
-            labels={labels}
-            size={layoutSizes[card.id] ?? DEFAULT_CARD_SIZE}
-            canMoveEarlier={index > 0}
-            canMoveLater={index < orderedCards.length - 1}
-            onBeginDrag={beginDrag}
-            onUpdateDrag={updateDrag}
-            onEndDrag={endDrag}
-            onMoveEarlier={() => moveCardByStep(card.id, -1)}
-            onMoveLater={() => moveCardByStep(card.id, 1)}
-            onSizeChange={(size) => updateCardSize(card.id, size)}
-          />
-        ))}
+      {/* Responsive Widget Grid */}
+      <div className={editing ? "rounded-2xl border border-dashed border-blue-200 bg-[#eff6ff]/40 p-2 dark:border-blue-400/20 dark:bg-blue-950/10" : ""}>
+        <WidgetGrid
+          widgets={widgets}
+          onChangeWidgets={handleUpdateWidgets}
+          editing={editing}
+          state={stateForWidgets}
+        />
       </div>
-    </>
-  );
-}
 
-function DashboardCard({
-  card,
-  editing,
-  dragging,
-  labels,
-  size,
-  canMoveEarlier,
-  canMoveLater,
-  onBeginDrag,
-  onUpdateDrag,
-  onEndDrag,
-  onMoveEarlier,
-  onMoveLater,
-  onSizeChange,
-}: {
-  card: DashboardStatCard;
-  editing: boolean;
-  dragging: boolean;
-  labels: DashboardLayoutLabels;
-  size: DashboardCardSize;
-  canMoveEarlier: boolean;
-  canMoveLater: boolean;
-  onBeginDrag: (event: ReactPointerEvent<HTMLButtonElement>, cardId: string) => void;
-  onUpdateDrag: (event: ReactPointerEvent<HTMLButtonElement>) => void;
-  onEndDrag: (event: ReactPointerEvent<HTMLButtonElement>) => void;
-  onMoveEarlier: () => void;
-  onMoveLater: () => void;
-  onSizeChange: (size: DashboardCardSize) => void;
-}) {
-  const Icon = iconMap[card.icon];
-  const toneStyles = STAT_CARD_TONE_STYLES[card.tone];
-  const sizeLabels: Record<DashboardCardSize, string> = {
-    S: labels.small,
-    M: labels.medium,
-    L: labels.large,
-  };
+      {/* Widget Gallery Side Drawer */}
+      <WidgetGallery
+        isOpen={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        onAddWidget={(type) => {
+          handleAddWidget(type);
+          setGalleryOpen(false);
+        }}
+        addedWidgetTypes={addedWidgetTypes}
+      />
 
-  const cardClassName = `group/dashboard-card relative rounded-xl border p-3 ${CARD_SIZE_CLASSES[size]} ${toneStyles.card} ${
-    editing ? "min-h-[112px] ring-1 ring-blue-200/70 dark:ring-blue-400/25" : ""
-  } ${dragging ? "opacity-70 ring-2 ring-blue-500" : ""}`;
-
-  const body = (
-    <>
-      {editing && (
-        <>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onPointerDown={(event) => onBeginDrag(event, card.id)}
-              onPointerMove={onUpdateDrag}
-              onPointerUp={onEndDrag}
-              onPointerCancel={onEndDrag}
-              className="flex h-7 min-w-0 flex-1 touch-none items-center gap-1.5 rounded-lg border border-blue-200 bg-[#dbeafe] px-2 text-[10px] font-bold text-blue-700 transition hover:bg-[#bfdbfe] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-200 dark:hover:bg-blue-400/20"
-              aria-label={`${labels.dragToReorder}: ${card.label}`}
-              title={`${labels.dragToReorder}: ${card.label}`}
-            >
-              <GripVertical className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{labels.dragToReorder}</span>
-            </button>
-            <div className="flex shrink-0 items-center gap-1">
+      {/* Themed Reset Confirm Modal */}
+      {resetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-[#0b1220] p-5 shadow-xl text-center animate-fade-in mx-4">
+            <h3 className="text-base font-black text-slate-950 dark:text-white">Restore Default Layout?</h3>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Are you sure you want to reset your dashboard layout? This will revert all widgets, sizes, and colors back to defaults.
+            </p>
+            <div className="mt-5 flex gap-2">
               <button
                 type="button"
-                onClick={onMoveEarlier}
-                disabled={!canMoveEarlier}
-                className="flex size-7 items-center justify-center rounded-lg border border-blue-200 bg-[#eff6ff] text-blue-700 transition hover:bg-[#dbeafe] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-200 dark:hover:bg-blue-400/20"
-                aria-label={`${labels.moveEarlier}: ${card.label}`}
-                title={`${labels.moveEarlier}: ${card.label}`}
+                onClick={() => setResetModalOpen(false)}
+                className="flex-1 h-9 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition"
               >
-                <ArrowLeft className="size-3.5" aria-hidden="true" />
+                Cancel
               </button>
               <button
                 type="button"
-                onClick={onMoveLater}
-                disabled={!canMoveLater}
-                className="flex size-7 items-center justify-center rounded-lg border border-blue-200 bg-[#eff6ff] text-blue-700 transition hover:bg-[#dbeafe] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-200 dark:hover:bg-blue-400/20"
-                aria-label={`${labels.moveLater}: ${card.label}`}
-                title={`${labels.moveLater}: ${card.label}`}
+                onClick={handleResetLayout}
+                className="flex-1 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm"
               >
-                <ArrowRight className="size-3.5" aria-hidden="true" />
+                Confirm Reset
               </button>
             </div>
           </div>
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-[#eff6ff] px-2 py-1.5 dark:border-blue-400/30 dark:bg-blue-400/10">
-            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-200">
-              {labels.cardSize}
-            </span>
-            <div
-              className="flex shrink-0 rounded-md border border-blue-200 bg-[#dbeafe] p-0.5 dark:border-blue-400/30 dark:bg-blue-400/10"
-              role="group"
-              aria-label={`${labels.cardSize}: ${card.label}`}
-            >
-              {CARD_SIZE_VALUES.map((option) => {
-                const selected = option === size;
-                const label = sizeLabels[option];
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => onSizeChange(option)}
-                    aria-pressed={selected}
-                    aria-label={`${labels.setCardSize}: ${card.label} - ${label}`}
-                    title={`${labels.setCardSize}: ${card.label} - ${label}`}
-                    className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-[10px] font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                      selected
-                        ? "bg-[#1d4ed8] text-white shadow-sm dark:bg-blue-300 dark:text-blue-950"
-                        : "text-blue-700 hover:bg-[#bfdbfe] dark:text-blue-200 dark:hover:bg-blue-400/20"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </>
+        </div>
       )}
-      <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-semibold tracking-wider ${toneStyles.label}`}>
-          {card.label}
-        </span>
-        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md ${toneStyles.icon}`}>
-          {Icon && <Icon className="size-3.5" aria-hidden="true" />}
-        </span>
-      </div>
-      <p className={`mt-1.5 text-sm font-bold sm:text-base ${toneStyles.value}`}>
-        {card.value}
-      </p>
-      <p className={`mt-0.5 text-[10px] font-medium ${toneStyles.detail}`}>
-        {card.change}
-      </p>
     </>
-  );
-
-  if (editing || !card.href) {
-    return (
-      <div data-dashboard-card-id={card.id} className={cardClassName}>
-        {body}
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      href={card.href}
-      data-dashboard-card-id={card.id}
-      className={`${cardClassName} block transition hover:opacity-80`}
-    >
-      {body}
-    </Link>
   );
 }
