@@ -57,6 +57,8 @@ export default async function SettingsPage({
   const backupImportEnabled = (await getPublicPlatformSetting("backup_import_enabled")) !== false;
   const factoryResetEnabled = (await getPublicPlatformSetting("factory_reset_enabled")) !== false;
 
+  const SHOW_DEMO_TAB = false; // Set to true to re-enable the Demo Data tab
+
   // Tab configurations (serializable — icon is a string key)
   const tabs: TabDef[] = [
     { id: "general", label: "Shop Profile", icon: "general" },
@@ -65,7 +67,7 @@ export default async function SettingsPage({
     { id: "security", label: "Security", icon: "security" },
     { id: "help", label: "Help Center", icon: "help" },
     ...(isPrivileged ? [
-      { id: "demo-data", label: "Demo Data", icon: "demo-data" },
+      ...(SHOW_DEMO_TAB ? [{ id: "demo-data", label: "Demo Data", icon: "demo-data" }] : []),
       { id: "backup", label: "Backup & Restore", icon: "backup" },
     ] : [])
   ];
@@ -90,7 +92,7 @@ export default async function SettingsPage({
         )}
 
         {currentTab === "demo-data" && (
-          isPrivileged ? (
+          (isPrivileged && SHOW_DEMO_TAB) ? (
             <DemoTab demoDataEnabled={demoDataEnabled} />
           ) : (
             <AccessDeniedView />
