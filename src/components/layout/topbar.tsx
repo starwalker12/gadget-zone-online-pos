@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Bell, AlertTriangle } from "lucide-react";
-import { getCurrentContext } from "@/lib/auth/session";
+import { getCurrentContext, signProfilePictureUrl } from "@/lib/auth/session";
 import { GlobalSearch } from "@/components/search/global-search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -17,7 +17,7 @@ export async function Topbar({ pageTitle }: { pageTitle?: string }) {
     getServerDict(),
   ]);
   const maintenanceMode = (maintenanceRaw === true || maintenanceRaw === "true") && !platformAdmin;
-  const profilePictureUrl = profile?.profile_picture_url ?? profile?.avatar_url ?? null;
+  const profilePictureUrl = await signProfilePictureUrl(profile?.profile_picture_url ?? profile?.avatar_url ?? null);
   const shellDict = dict.shell as Record<string, string> | undefined;
 
   return (

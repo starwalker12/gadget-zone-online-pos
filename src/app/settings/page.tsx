@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { getCurrentContext } from "@/lib/auth/session";
+import { getCurrentContext, signProfilePictureUrl } from "@/lib/auth/session";
 import { getBrandingSettings } from "@/lib/data/settings";
 import { env } from "@/lib/env";
 import { canManageSettings } from "@/lib/permissions";
@@ -49,7 +49,7 @@ export default async function SettingsPage({
   const linkedProviders = getLinkedProviders(freshUser);
 
   const settings = await getBrandingSettings(profile.organization_id, profile.branch_id);
-  const profilePictureUrl = profile?.profile_picture_url ?? profile?.avatar_url ?? null;
+  const profilePictureUrl = await signProfilePictureUrl(profile?.profile_picture_url ?? profile?.avatar_url ?? null);
   const canEdit = canManageSettings(profile.role);
   const isPrivileged = profile.role === "owner" || profile.role === "admin";
 

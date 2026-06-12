@@ -81,5 +81,49 @@ export async function getCurrentContext() {
     branch = br ?? null;
   }
 
+  if (profile) {
+    if (profile.profile_picture_url) {
+      profile.profile_picture_url = await signProfilePictureUrl(profile.profile_picture_url);
+    }
+    if (profile.avatar_url) {
+      profile.avatar_url = await signProfilePictureUrl(profile.avatar_url);
+    }
+  }
+
   return { user, profile, organization, branch };
 }
+
+export async function signProfilePictureUrl(
+  storedUrl: string | null | undefined,
+): Promise<string | null> {
+  if (!storedUrl) return null;
+
+  try {
+    const marker = "/storage/v1/object/public/profile-pictures/";
+    const index = storedUrl.indexOf(marker);
+    if (index === -1) {
+      return storedUrl;
+    }
+
+    const path = storedUrl.substring(index + marker.length);
+    if (!path) {
+      return storedUrl;
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.storage
+      .from("profile-pictures")
+      .createSignedUrl(path, 86400);
+
+    if (error || !data?.signedUrl) {
+      console.error("[signProfilePictureUrl] Error generating signed URL:", error);
+      return storedUrl;
+    }
+
+    return data.signedUrl;
+  } catch (err) {
+    console.error("[signProfilePictureUrl] Catch block error:", err);
+    return storedUrl;
+  }
+}
+
