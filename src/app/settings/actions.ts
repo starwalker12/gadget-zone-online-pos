@@ -8,6 +8,7 @@ import { canChangeSettingsNew } from "@/lib/staff-permissions";
 import { logAudit } from "@/lib/audit";
 import { sanitizePlainText, sanitizeNullableText, normalizePhone, validateImageUrl } from "@/lib/security/sanitize";
 import { z } from "zod";
+import { isValidPhoneNumber } from "@/lib/phone-validation";
 
 export type SettingsActionState = {
   error: string | null;
@@ -52,7 +53,9 @@ const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color like
 const businessProfileSchema = z.object({
   shopName: z.string().trim().min(2, "Shop name is required.").max(120),
   ownerName: optionalText(120),
-  phone: optionalText(50),
+  phone: optionalText(50).refine((val) => !val || isValidPhoneNumber(val), {
+    message: "Please enter a valid phone number (e.g. +92 300 1234567).",
+  }),
   whatsappSupport: optionalText(50).transform((v) => v ? v.replace(/[^\d+]/g, "") : undefined),
   email: optionalEmail,
   address: optionalText(300),
@@ -64,7 +67,9 @@ const appLogoSchema = z.object({
 
 const branchProfileSchema = z.object({
   branchName: z.string().trim().min(2, "Branch name is required.").max(120),
-  branchPhone: optionalText(50),
+  branchPhone: optionalText(50).refine((val) => !val || isValidPhoneNumber(val), {
+    message: "Please enter a valid phone number (e.g. +92 300 1234567).",
+  }),
   branchAddress: optionalText(300),
 });
 

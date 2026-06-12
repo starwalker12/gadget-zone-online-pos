@@ -5,17 +5,22 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentContext } from "@/lib/auth/session";
 import { sanitizePlainText, sanitizeNullableText, normalizePhone, validateImageUrl } from "@/lib/security/sanitize";
+import { isValidPhoneNumber } from "@/lib/phone-validation";
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color like #0b2f6f");
 
 const onboardingSchema = z.object({
   fullName: z.string().min(2, "Full name is required."),
   username: z.string().optional().default(""),
-  phone: z.string().optional().default(""),
+  phone: z.string().optional().default("").refine((val) => isValidPhoneNumber(val), {
+    message: "Please enter a valid phone number (e.g. +92 300 1234567).",
+  }),
   profilePictureUrl: z.string().optional().default(""),
   organizationName: z.string().min(2, "Shop name is required."),
   ownerName: z.string().optional().default(""),
-  orgPhone: z.string().min(1, "Please enter your shop phone number."),
+  orgPhone: z.string().min(1, "Please enter your shop phone number.").refine((val) => isValidPhoneNumber(val), {
+    message: "Please enter a valid shop phone number (e.g. +92 300 1234567).",
+  }),
   orgWhatsapp: z.string().optional().default(""),
   orgEmail: z.string().email("Please enter a valid shop email address."),
   orgAddress: z.string().optional().default(""),
@@ -27,7 +32,9 @@ const onboardingSchema = z.object({
   showMap: z.string().optional().default("false"),
   socialLinks: z.string().optional().default("[]"),
   branchName: z.string().optional().default("Main Branch"),
-  branchPhone: z.string().optional().default(""),
+  branchPhone: z.string().optional().default("").refine((val) => isValidPhoneNumber(val), {
+    message: "Please enter a valid branch phone number (e.g. +92 300 1234567).",
+  }),
   branchAddress: z.string().optional().default(""),
   branchGoogleMapsUrl: z.string().optional().default(""),
   branchLatitude: z.string().optional().default(""),

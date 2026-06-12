@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { X, Search } from "lucide-react";
+import { X, Search, Loader2 } from "lucide-react";
 import { saveRepairAction } from "./actions";
 import type { CustomerRow } from "@/lib/data/customers";
 import type { RepairRow } from "@/lib/data/repairs";
@@ -400,9 +400,18 @@ export function RepairForm({
             <button
               type="submit"
               disabled={isPending}
-              className="h-11 rounded-xl bg-blue-700 px-5 text-sm font-bold text-white hover:bg-blue-800 transition disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-blue-700 px-5 text-sm font-bold text-white hover:bg-blue-800 transition disabled:opacity-60 cursor-pointer"
             >
-              {isPending ? "Saving..." : repair ? "Update Details" : "Record Intake"}
+              {isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : repair ? (
+                "Update Details"
+              ) : (
+                "Record Intake"
+              )}
             </button>
           </div>
         </form>

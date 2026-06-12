@@ -7,6 +7,7 @@ import { updateSettingsAction, updateProfilePictureAction, type SettingsActionSt
 import { ImageUpload } from "@/components/shared/image-upload";
 import { Check, ImageIcon, RotateCcw, Loader2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import { isValidPhoneNumber } from "@/lib/phone-validation";
 import {
   COLOR_THEME_OPTIONS,
   COLOR_THEME_STORAGE_KEY,
@@ -512,6 +513,51 @@ export function SettingsForm({
   const [regState, regAction, regPending] = useActionState(updateSettingsAction, initialState);
   const [ppState, ppAction] = useActionState(updateProfilePictureAction, initialState);
 
+  const { dict } = useLanguage();
+  const shellDict = (dict as Record<string, Record<string, string>>).shell;
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [branchPhoneError, setBranchPhoneError] = useState<string | null>(null);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const isDirty = val !== (settings.phone || "");
+    if (phoneError) {
+      if (!isDirty || isValidPhoneNumber(val)) {
+        setPhoneError(null);
+      }
+    }
+  };
+
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const isDirty = val !== (settings.phone || "");
+    if (isDirty && !isValidPhoneNumber(val)) {
+      setPhoneError(shellDict?.invalidPhone || "Please enter a valid phone number (e.g. +92 300 1234567).");
+    } else {
+      setPhoneError(null);
+    }
+  };
+
+  const handleBranchPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const isDirty = val !== (settings.branchPhone || "");
+    if (branchPhoneError) {
+      if (!isDirty || isValidPhoneNumber(val)) {
+        setBranchPhoneError(null);
+      }
+    }
+  };
+
+  const handleBranchPhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const isDirty = val !== (settings.branchPhone || "");
+    if (isDirty && !isValidPhoneNumber(val)) {
+      setBranchPhoneError(shellDict?.invalidPhone || "Please enter a valid phone number (e.g. +92 300 1234567).");
+    } else {
+      setBranchPhoneError(null);
+    }
+  };
+
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
   const [logoUrlInput, setLogoUrlInput] = useState(settings.logoUrl ?? "");
@@ -548,6 +594,26 @@ export function SettingsForm({
   function makeAction(intent: SettingsIntent) {
     return (formData: FormData) => {
       formData.set("intent", intent);
+      if (intent === "business_profile") {
+        const phone = formData.get("phone") as string;
+        const isDirty = phone !== (settings.phone || "");
+        if (isDirty && !isValidPhoneNumber(phone)) {
+          setPhoneError(shellDict?.invalidPhone || "Please enter a valid phone number (e.g. +92 300 1234567).");
+          return;
+        } else {
+          setPhoneError(null);
+        }
+      }
+      if (intent === "branch_profile") {
+        const branchPhone = formData.get("branchPhone") as string;
+        const isDirty = branchPhone !== (settings.branchPhone || "");
+        if (isDirty && !isValidPhoneNumber(branchPhone)) {
+          setBranchPhoneError(shellDict?.invalidPhone || "Please enter a valid phone number (e.g. +92 300 1234567).");
+          return;
+        } else {
+          setBranchPhoneError(null);
+        }
+      }
       const actions: Record<SettingsIntent, typeof bpAction> = {
         business_profile: bpAction,
         app_logo: logoAction,
@@ -579,7 +645,17 @@ export function SettingsForm({
             </label>
             <label className={labelClass}>
               <span className={labelTextClass}>Phone</span>
-              <input name="phone" defaultValue={settings.phone} disabled={!canEdit || bpPending} className={inputClass} />
+              <input
+                name="phone"
+                defaultValue={settings.phone}
+                onChange={handlePhoneChange}
+                onBlur={handlePhoneBlur}
+                disabled={!canEdit || bpPending}
+                className={`${inputClass} ${phoneError ? "border-red-500 focus:border-red-500" : ""}`}
+              />
+              {phoneError && (
+                <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+              )}
             </label>
             <label className={labelClass}>
               <span className={labelTextClass}>WhatsApp support</span>
@@ -636,7 +712,17 @@ export function SettingsForm({
             </label>
             <label className={labelClass}>
               <span className={labelTextClass}>Branch phone</span>
-              <input name="branchPhone" defaultValue={settings.branchPhone} disabled={!canEdit || brPending} className={inputClass} />
+              <input
+                name="branchPhone"
+                defaultValue={settings.branchPhone}
+                onChange={handleBranchPhoneChange}
+                onBlur={handleBranchPhoneBlur}
+                disabled={!canEdit || brPending}
+                className={`${inputClass} ${branchPhoneError ? "border-red-500 focus:border-red-500" : ""}`}
+              />
+              {branchPhoneError && (
+                <p className="mt-1 text-xs text-red-600">{branchPhoneError}</p>
+              )}
             </label>
             <label className="block min-w-0 md:col-span-2">
               <span className={labelTextClass}>Branch address</span>

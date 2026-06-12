@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { saveCustomerAction, type ActionState } from "./actions";
 import type { CustomerRow } from "@/lib/data/customers";
+import { Loader2 } from "lucide-react";
 
 const initial: ActionState = { error: null, success: null };
 
@@ -131,9 +132,18 @@ export function CustomerForm({
         <button
           type="submit"
           disabled={pending || !canWrite}
-          className="h-10 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 cursor-pointer"
         >
-          {pending ? "Saving…" : initialValues?.id ? "Update customer" : "Add customer"}
+          {pending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Saving…
+            </>
+          ) : initialValues?.id ? (
+            "Update customer"
+          ) : (
+            "Add customer"
+          )}
         </button>
       </div>
     </form>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { recordCreditPaymentAction, type ActionState } from "../actions";
 import { CREDIT_PAYMENT_METHODS } from "@/lib/validation/customers";
+import { Loader2 } from "lucide-react";
 
 const initial: ActionState = { error: null, success: null };
 
@@ -99,9 +100,16 @@ export function SettlementForm({
         <button
           type="submit"
           disabled={pending}
-          className="h-10 w-full rounded-lg bg-blue-700 text-xs font-black text-white hover:bg-blue-800 transition disabled:opacity-60"
+          className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-700 text-xs font-black text-white hover:bg-blue-800 transition disabled:opacity-60 cursor-pointer"
         >
-          {pending ? "Processing..." : "Confirm & Save Settlement"}
+          {pending ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Confirm & Save Settlement"
+          )}
         </button>
       </form>
     </details>

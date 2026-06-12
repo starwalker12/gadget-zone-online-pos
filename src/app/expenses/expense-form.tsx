@@ -7,6 +7,7 @@ import {
   SUGGESTED_CATEGORIES,
 } from "@/lib/validation/expenses";
 import type { ExpenseRow } from "@/lib/data/expenses";
+import { Loader2 } from "lucide-react";
 
 const initial: ActionState = { error: null, success: null };
 
@@ -146,9 +147,18 @@ export function ExpenseForm({
         <button
           type="submit"
           disabled={pending || !canWrite}
-          className="h-10 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 cursor-pointer"
         >
-          {pending ? "Saving…" : initialValues?.id ? "Update expense" : "Add expense"}
+          {pending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Saving…
+            </>
+          ) : initialValues?.id ? (
+            "Update expense"
+          ) : (
+            "Add expense"
+          )}
         </button>
       </div>
     </form>

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { completeOnboardingAction, type OnboardingState } from "./actions";
 import { ImageUpload } from "@/components/shared/image-upload";
+import { isValidPhoneNumber } from "@/lib/phone-validation";
 
 const initialState: OnboardingState = { error: null };
 
@@ -145,6 +146,9 @@ export function OnboardingWizard({
         if (!formData.fullName || formData.fullName.trim().length < 2) {
           errs.fullName = "Please enter your full name.";
         }
+        if (formData.phone && !isValidPhoneNumber(formData.phone)) {
+          errs.phone = "Please enter a valid phone number (e.g. +92 300 1234567).";
+        }
         break;
       case "shop":
         if (!formData.organizationName || formData.organizationName.trim().length < 2) {
@@ -152,9 +156,21 @@ export function OnboardingWizard({
         }
         if (!formData.orgPhone || formData.orgPhone.trim().length < 1) {
           errs.orgPhone = "Please enter your shop phone number.";
+        } else if (!isValidPhoneNumber(formData.orgPhone)) {
+          errs.orgPhone = "Please enter a valid phone number (e.g. +92 300 1234567).";
         }
         if (!formData.orgEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.orgEmail.trim())) {
           errs.orgEmail = "Please enter a valid shop email address.";
+        }
+        break;
+      case "branch":
+        if (formData.branchUseShopDetails !== "true") {
+          if (!formData.branchName || formData.branchName.trim().length < 2) {
+            errs.branchName = "Please enter your branch name.";
+          }
+          if (formData.branchPhone && !isValidPhoneNumber(formData.branchPhone)) {
+            errs.branchPhone = "Please enter a valid phone number (e.g. +92 300 1234567).";
+          }
         }
         break;
     }
@@ -248,7 +264,7 @@ export function OnboardingWizard({
       case "shop":
         return <ShopStep data={formData} onChange={updateField} errors={errors} />;
       case "branch":
-        return <BranchStep data={formData} onChange={updateField} />;
+        return <BranchStep data={formData} onChange={updateField} errors={errors} />;
       case "branding":
         return <BrandingStep data={formData} onChange={updateField} userId={userId} />;
       case "confirm":
@@ -463,10 +479,14 @@ function ProfileStep({
               type="tel"
               value={data.phone}
               onChange={(e) => onChange("phone", e.target.value)}
-              className={inputClass}
+              className={`${inputClass} ${errors.phone ? "border-red-400 focus:border-red-600 dark:border-red-500 dark:focus:border-red-400" : ""}`}
               placeholder="e.g. +92 300 1234567"
             />
-            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">Include country code, e.g. +923001234567.</p>
+            {errors.phone ? (
+              <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{errors.phone}</p>
+            ) : (
+              <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">Include country code, e.g. +923001234567.</p>
+            )}
           </label>
         </div>
 
@@ -733,9 +753,11 @@ function ShopStep({
 function BranchStep({
   data,
   onChange,
+  errors,
 }: {
   data: Record<string, string>;
   onChange: (key: string, value: string) => void;
+  errors?: Record<string, string>;
 }) {
   const [gettingLocation, setGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
@@ -827,9 +849,12 @@ function BranchStep({
                 type="tel"
                 value={data.branchPhone}
                 onChange={(e) => onChange("branchPhone", e.target.value)}
-                className={inputClass}
+                className={`${inputClass} ${errors?.branchPhone ? "border-red-400 focus:border-red-600 dark:border-red-500 dark:focus:border-red-400" : ""}`}
                 placeholder="e.g. +92 300 1234567"
               />
+              {errors?.branchPhone && (
+                <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{errors.branchPhone}</p>
+              )}
             </label>
             <label className="block">
               <span className={labelTextClass}>Branch address</span>

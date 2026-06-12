@@ -5,6 +5,7 @@ import { createInvoiceReturnAction, type ReturnActionState } from "./actions";
 import type { ReturnableInvoiceItem } from "@/lib/data/returns";
 import { formatCurrency } from "@/lib/formatters";
 import { REFUND_METHODS } from "@/lib/validation/returns";
+import { Loader2 } from "lucide-react";
 
 const initial: ReturnActionState = { error: null, success: null };
 
@@ -226,9 +227,16 @@ export function ReturnForm({
           <button
             type="submit"
             disabled={pending || refundTotal <= 0}
-            className="h-11 w-full rounded-lg bg-blue-700 text-sm font-black text-white transition hover:bg-blue-800 disabled:opacity-60 sm:w-auto sm:px-6"
+            className="inline-flex h-11 items-center justify-center gap-1.5 w-full rounded-lg bg-blue-700 text-sm font-black text-white transition hover:bg-blue-800 disabled:opacity-60 sm:w-auto sm:px-6 cursor-pointer"
           >
-            {pending ? "Processing return..." : "Process return"}
+            {pending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Processing return...
+              </>
+            ) : (
+              "Process return"
+            )}
           </button>
         </form>
       )}

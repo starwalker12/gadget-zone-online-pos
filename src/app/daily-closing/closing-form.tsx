@@ -3,6 +3,7 @@
 import { useActionState, useState, useRef, type FormEvent } from "react";
 import { closeDayAction, reopenDayAction, type ActionState } from "./actions";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Loader2 } from "lucide-react";
 
 const initial: ActionState = { error: null, success: null };
 
@@ -98,9 +99,18 @@ export function CloseDayForm({
       <button
         type="submit"
         disabled={!canWrite || pending}
-        className="h-11 w-full rounded-lg bg-blue-700 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-700 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 cursor-pointer"
       >
-        {pending ? "Saving…" : isClosed ? "Re-save closing" : "Close day"}
+        {pending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Saving…
+          </>
+        ) : isClosed ? (
+          "Re-save closing"
+        ) : (
+          "Close day"
+        )}
       </button>
     </form>
   );
@@ -162,9 +172,16 @@ export function ReopenDayForm({
       <button
         type="submit"
         disabled={pending || isConfirming}
-        className="rounded-lg border border-red-200 px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-60 cursor-pointer"
       >
-        {pending ? "Reopening…" : "Reopen this day"}
+        {pending ? (
+          <>
+            <Loader2 className="size-3 animate-spin" />
+            Reopening…
+          </>
+        ) : (
+          "Reopen this day"
+        )}
       </button>
     </form>
   );

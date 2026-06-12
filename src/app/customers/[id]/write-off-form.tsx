@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { recordWriteOffAction, type ActionState } from "../actions";
 
 const initial: ActionState = { error: null, success: null };
+import { Loader2 } from "lucide-react";
 
 export function WriteOffForm({
   customerId,
@@ -82,9 +83,16 @@ export function WriteOffForm({
         <button
           type="submit"
           disabled={pending}
-          className="h-10 w-full rounded-lg bg-red-700 text-xs font-black text-white hover:bg-red-800 transition disabled:opacity-60"
+          className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-red-700 text-xs font-black text-white hover:bg-red-800 transition disabled:opacity-60 cursor-pointer"
         >
-          {pending ? "Processing..." : "Confirm Write-Off"}
+          {pending ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Confirm Write-Off"
+          )}
         </button>
       </form>
     </details>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SUPPLIER_PAYMENT_METHODS, type SupplierPaymentMethod } from "@/lib/validation/supplier-purchases";
 import { recordSupplierPaymentAction } from "../actions";
+import { Loader2 } from "lucide-react";
 
 const PAYMENT_LABELS: Record<SupplierPaymentMethod, string> = {
   cash: "Cash",
@@ -127,9 +128,16 @@ export function RecordPaymentForm({
       <button
         type="submit"
         disabled={pending || amount <= 0}
-        className="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800 disabled:opacity-50"
+        className="inline-flex items-center justify-center gap-1.5 w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800 disabled:opacity-50 cursor-pointer"
       >
-        {pending ? "Recording…" : "Record payment"}
+        {pending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Recording…
+          </>
+        ) : (
+          "Record payment"
+        )}
       </button>
     </form>
   );
