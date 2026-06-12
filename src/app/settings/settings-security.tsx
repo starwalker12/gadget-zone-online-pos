@@ -21,8 +21,22 @@ interface SettingsSecurityProps {
 }
 
 function parseUserAgent(ua: string): string {
-  const lower = ua.toLowerCase();
-  
+  const trimmed = (ua || "").trim();
+  if (!trimmed) {
+    return "Web session";
+  }
+
+  const lower = trimmed.toLowerCase();
+
+  if (
+    lower === "node" ||
+    lower === "node.js" ||
+    lower.includes("node") ||
+    (!lower.includes("mozilla") && !lower.includes("applewebkit") && !lower.includes("gecko") && !lower.includes("postman"))
+  ) {
+    return "Web session";
+  }
+
   let os = "Unknown OS";
   if (lower.includes("windows")) os = "Windows";
   else if (lower.includes("macintosh") || lower.includes("mac os x")) os = "macOS";
@@ -41,7 +55,7 @@ function parseUserAgent(ua: string): string {
   else if (lower === "node") browser = "Node.js Env";
 
   if (os === "Node.js" && browser === "Node.js Env") {
-    return "Node.js environment";
+    return "Web session";
   }
 
   if (os !== "Unknown OS" && browser !== "Unknown Browser") {
@@ -49,7 +63,7 @@ function parseUserAgent(ua: string): string {
   }
   if (browser !== "Unknown Browser") return browser;
   if (os !== "Unknown OS") return os;
-  return ua || "Unknown device";
+  return trimmed || "Unknown device";
 }
 
 function getSessionIdFromToken(token: string): string | null {
