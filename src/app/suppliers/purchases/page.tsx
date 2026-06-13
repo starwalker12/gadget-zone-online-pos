@@ -78,7 +78,7 @@ export default async function SupplierPurchasesPage({
 
   return (
     <AppShell pageTitle="Supplier Purchases">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
         <StatCard
           label="Purchases this month"
           value={formatCurrency(counts.monthTotal, currency)}
@@ -141,7 +141,91 @@ export default async function SupplierPurchasesPage({
         </div>
 
         <div className="space-y-5 p-5 sm:p-6">
-          <form className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/suppliers/purchases">
+          {/* Mobile Filter form */}
+          <form className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden dark:border-slate-800 dark:bg-slate-950" action="/suppliers/purchases">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <label className="block min-w-0">
+                <span className="sr-only">Search purchases</span>
+                <input
+                  name="q"
+                  defaultValue={params.q ?? ""}
+                  placeholder="Purchase #, ref, notes"
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                />
+              </label>
+              <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900 cursor-pointer">
+                Apply
+              </button>
+            </div>
+
+            <details open={Boolean(params.supplier_id || (params.status && params.status !== "all") || params.from || params.to)} className="mt-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
+              <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400 select-none">
+                Filters
+              </summary>
+              <div className="mt-3 grid gap-3">
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Supplier</span>
+                  <select
+                    name="supplier_id"
+                    defaultValue={params.supplier_id ?? ""}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="">All</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                        {s.company ? ` · ${s.company}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</span>
+                  <select
+                    name="status"
+                    defaultValue={statusValue}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="all">All</option>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="partial">Partial</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">From</span>
+                    <input
+                      type="date"
+                      name="from"
+                      defaultValue={params.from ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                  <label className="block min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">To</span>
+                    <input
+                      type="date"
+                      name="to"
+                      defaultValue={params.to ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                </div>
+              </div>
+            </details>
+
+            {(params.q || params.supplier_id || (params.status && params.status !== "all") || params.from || params.to) && (
+              <Link href="/suppliers/purchases" className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-slate-600 underline dark:text-slate-400">
+                Reset filters
+              </Link>
+            )}
+          </form>
+
+          {/* Desktop Filter form */}
+          <form className="hidden md:grid md:gap-3 md:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/suppliers/purchases">
             <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</span>
               <input
@@ -382,6 +466,7 @@ export default async function SupplierPurchasesPage({
           </div>
         </div>
       )}
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

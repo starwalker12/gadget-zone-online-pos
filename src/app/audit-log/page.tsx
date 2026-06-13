@@ -170,13 +170,99 @@ export default async function AuditLogPage({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* Filter Toolbar */}
         <div className="border-b border-slate-100 bg-slate-50/50 p-4">
+          {/* Mobile Filter form */}
+          <form method="get" className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden dark:border-slate-800 dark:bg-slate-950" action="/audit-log">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <label className="block min-w-0">
+                <span className="sr-only">Search logs</span>
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={params.q ?? ""}
+                  placeholder="Search details, actions…"
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                />
+              </label>
+              <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900 cursor-pointer">
+                Apply
+              </button>
+            </div>
+
+            <details open={Boolean(params.module || params.actor || params.from || params.to)} className="mt-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
+              <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400 select-none">
+                Filters
+              </summary>
+              <div className="mt-3 grid gap-3">
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Module</span>
+                  <select
+                    name="module"
+                    defaultValue={params.module ?? ""}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="">All modules</option>
+                    {modules.map((m) => (
+                      <option key={m} value={m}>
+                        {fmtModule(m)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">User</span>
+                  <select
+                    name="actor"
+                    defaultValue={params.actor ?? ""}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="">All users</option>
+                    {actors.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">From</span>
+                    <input
+                      type="date"
+                      name="from"
+                      defaultValue={params.from ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                  <label className="block min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">To</span>
+                    <input
+                      type="date"
+                      name="to"
+                      defaultValue={params.to ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                </div>
+              </div>
+            </details>
+
+            {hasActiveFilters && (
+              <Link href="/audit-log" className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-slate-600 underline dark:text-slate-400">
+                Reset filters
+              </Link>
+            )}
+          </form>
+
+          {/* Desktop Filter form */}
           <form
             method="get"
-            className="grid gap-3 text-xs font-bold text-slate-700 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end"
+            className="hidden md:grid md:gap-3 md:grid-cols-2 lg:flex lg:flex-wrap lg:items-end"
           >
             {/* Search */}
             <div className="min-w-0 sm:col-span-2 lg:w-full lg:max-w-xs">
-              <label className="mb-1 block text-slate-500">Search</label>
+              <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">Search</label>
               <input
                 type="text"
                 name="q"
@@ -188,7 +274,7 @@ export default async function AuditLogPage({
 
             {/* Module Filter */}
             <div className="min-w-0">
-              <label className="mb-1 block text-slate-500">Module</label>
+              <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">Module</label>
               <select
                 name="module"
                 defaultValue={params.module ?? ""}
@@ -205,7 +291,7 @@ export default async function AuditLogPage({
 
             {/* Actor Filter */}
             <div className="min-w-0">
-              <label className="mb-1 block text-slate-500">User</label>
+              <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">User</label>
               <select
                 name="actor"
                 defaultValue={params.actor ?? ""}
@@ -223,7 +309,7 @@ export default async function AuditLogPage({
             {/* Date Range */}
             <div className="grid gap-2 min-[380px]:grid-cols-2 sm:col-span-2 lg:col-span-1">
               <div className="min-w-0">
-                <label className="mb-1 block text-slate-500">From</label>
+                <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">From</label>
                 <input
                   type="date"
                   name="from"
@@ -232,7 +318,7 @@ export default async function AuditLogPage({
                 />
               </div>
               <div className="min-w-0">
-                <label className="mb-1 block text-slate-500">To</label>
+                <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">To</label>
                 <input
                   type="date"
                   name="to"
@@ -336,11 +422,11 @@ export default async function AuditLogPage({
             </div>
 
             {/* Mobile Card List */}
-            <div className="block md:hidden divide-y divide-slate-100 p-4 space-y-4">
+            <div className="block md:hidden divide-y divide-slate-100 p-3 space-y-3 dark:divide-slate-800">
               {logs.map((log) => {
                 const severity = actionSeverity(log.action);
                 return (
-                  <div key={log.id} className="pt-4 first:pt-0 space-y-2.5">
+                  <div key={log.id} className="pt-3 first:pt-0 space-y-2">
                     {/* Header: date + severity */}
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-1 text-[11px] text-slate-500">
@@ -354,22 +440,22 @@ export default async function AuditLogPage({
 
                     {/* User + Module */}
                     <div className="flex items-center gap-2">
-                      <div className="flex size-6 items-center justify-center rounded-full bg-slate-100">
-                        <User className="size-3 text-slate-500" />
+                      <div className="flex size-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                        <User className="size-3 text-slate-500 dark:text-slate-400" />
                       </div>
-                      <span className="text-xs font-bold text-slate-800">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                         {log.actor_name ?? "System"}
                       </span>
-                      <span className="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                      <span className="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                         {fmtModule(log.module)}
                       </span>
                     </div>
 
                     {/* Action + Details */}
-                    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs space-y-1">
-                      <p className="font-bold text-slate-700">{fmtAction(log.action)}</p>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs space-y-1 dark:border-slate-800 dark:bg-slate-900/50">
+                      <p className="font-bold text-slate-700 dark:text-slate-300">{fmtAction(log.action)}</p>
                       {log.details && (
-                        <p className="text-slate-500">{log.details}</p>
+                        <p className="text-slate-500 dark:text-slate-400 break-words">{log.details}</p>
                       )}
                       <MetadataPreview metadata={log.metadata} />
                     </div>
@@ -393,6 +479,7 @@ export default async function AuditLogPage({
           </div>
         )}
       </div>
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

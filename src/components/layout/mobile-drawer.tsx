@@ -170,7 +170,7 @@ export function MobileDrawer({ items, user }: { items: NavItem[]; user: UserInfo
           </div>
 
           {/* Scrollable navigation area */}
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] overscroll-contain space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-[calc(6rem+env(safe-area-inset-bottom))] overscroll-contain space-y-4">
             <nav className="space-y-1">
               {items.filter(item => item.href !== "/settings").map((item) => {
                 const Icon = iconMap[item.icon];
@@ -250,7 +250,7 @@ export function MobileDrawer({ items, user }: { items: NavItem[]; user: UserInfo
                 Theme
               </p>
               <div className="px-4">
-                <ThemeToggle showLabelOnMobile={true} />
+                <ThemeToggle showLabelOnMobile={true} align="up" />
               </div>
             </div>
           </div>

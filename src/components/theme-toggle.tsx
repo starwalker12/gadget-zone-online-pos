@@ -10,7 +10,13 @@ const themeOptions = [
   { value: "system", label: "System", icon: Monitor },
 ] as const;
 
-export function ThemeToggle({ showLabelOnMobile }: { showLabelOnMobile?: boolean }) {
+export function ThemeToggle({
+  showLabelOnMobile,
+  align = "down",
+}: {
+  showLabelOnMobile?: boolean;
+  align?: "up" | "down";
+}) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
@@ -73,7 +79,11 @@ export function ThemeToggle({ showLabelOnMobile }: { showLabelOnMobile?: boolean
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-black/5 dark:border-slate-700 dark:bg-slate-900">
+        <div
+          className={`absolute right-0 z-50 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-black/5 dark:border-slate-700 dark:bg-slate-900 ${
+            align === "up" ? "bottom-full mb-2" : "top-full mt-2"
+          }`}
+        >
           <div className="p-1.5">
             {themeOptions.map((option) => {
               const Icon = option.icon;

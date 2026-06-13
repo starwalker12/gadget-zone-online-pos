@@ -201,30 +201,30 @@ export function UserManagementClient({
           </table>
         </div>
 
-        <div className="space-y-3 p-4 xl:hidden">
+        <div className="space-y-2 p-3 xl:hidden">
           {users.map((user) => (
-            <article key={user.id} className="rounded-xl border border-slate-200 dark:border-slate-805 bg-[#fff] dark:bg-slate-900 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <article key={user.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-3 shadow-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="break-words font-black text-slate-950 dark:text-slate-100">{user.full_name}</p>
-                  <p className="break-words text-sm text-slate-500 dark:text-slate-400">{user.email ?? "No email found"}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <p className="break-words font-black text-slate-950 dark:text-slate-100 text-sm sm:text-base">{user.full_name}</p>
+                  <p className="break-words text-xs text-slate-500 dark:text-slate-400">{user.email ?? "No email found"}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
                     <RoleBadge role={user.role} />
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${user.is_active ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${user.is_active ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
                       {user.is_active ? "Active" : "Inactive"}
                     </span>
                     {user.id === currentProfileId && (
-                      <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-800 dark:text-blue-400 font-bold">You</span>
+                      <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-blue-800 dark:text-blue-400">You</span>
                     )}
                   </div>
                 </div>
-                <div className="text-sm text-slate-600 dark:text-slate-300 sm:text-right">
-                  <p>{user.branch_name ?? "No branch"}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Last sign-in: {fmtDate(user.last_sign_in_at)}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Invite: {user.invite_status}</p>
+                <div className="text-xs text-slate-600 dark:text-slate-300 sm:text-right">
+                  <p className="font-semibold">{user.branch_name ?? "No branch"}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Sign-in: {fmtDate(user.last_sign_in_at)}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Invite: {user.invite_status}</p>
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-3">
                 <StaffActions user={user} branches={branches} currentProfileId={currentProfileId} />
               </div>
             </article>

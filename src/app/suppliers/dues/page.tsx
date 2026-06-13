@@ -33,7 +33,7 @@ export default async function SupplierDuesPage() {
 
   return (
     <AppShell pageTitle="Supplier Dues">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
         <StatCard
           label="Total supplier dues"
           value={formatCurrency(totalOwed, currency)}
@@ -156,6 +156,7 @@ export default async function SupplierDuesPage() {
           </>
         )}
       </div>
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

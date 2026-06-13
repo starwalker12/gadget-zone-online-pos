@@ -186,15 +186,15 @@ export default async function ReportsPage({
       <form
         action="/reports"
         method="GET"
-        className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden"
+        className="mb-4 md:mb-6 rounded-xl md:rounded-2xl border border-slate-200 bg-white p-3 md:p-5 shadow-sm print:hidden"
       >
-        <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="grid gap-3 md:gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
+          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
             {quickRanges.map((qr) => (
               <Link
                 key={qr.value}
                 href={`/reports?range=${qr.value}`}
-                className={`min-h-10 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                className={`h-9 min-h-[36px] flex items-center justify-center rounded-lg px-3 py-1 text-xs font-bold transition-all ${
                   range === qr.value
                     ? "bg-blue-600 text-white shadow-sm"
                     : "bg-slate-50 text-slate-700 hover:bg-slate-100"
@@ -205,7 +205,7 @@ export default async function ReportsPage({
             ))}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
             <input type="hidden" name="range" value="custom" />
             <label className="block min-w-0 text-left">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
@@ -231,7 +231,7 @@ export default async function ReportsPage({
             </label>
             <button
               type="submit"
-              className="h-10 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-slate-900"
+              className="col-span-2 sm:col-span-1 h-10 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-slate-900 cursor-pointer"
             >
               Apply Filter
             </button>
@@ -268,56 +268,66 @@ export default async function ReportsPage({
       </div>
 
       {/* Primary Financial Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          label="Gross sales"
-          value={formatCurrency(data.sales.grossSales, currency)}
-          detail={`${formatNumber(data.sales.invoiceCount)} active invoice${data.sales.invoiceCount === 1 ? "" : "s"}.`}
-          icon={<ReceiptText className="size-5" />}
-        />
-        <StatCard
-          label="Net Sales (Revenue)"
-          value={formatCurrency(data.profit.salesRevenue, currency)}
-          detail="Total sales after discounts, before cost deductions."
-          icon={<CircleDollarSign className="size-5" />}
-        />
+      <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-3">
+        <div className="col-span-1">
+          <StatCard
+            label="Gross sales"
+            value={formatCurrency(data.sales.grossSales, currency)}
+            detail={`${formatNumber(data.sales.invoiceCount)} active invoice${data.sales.invoiceCount === 1 ? "" : "s"}.`}
+            icon={<ReceiptText className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Net Sales (Revenue)"
+            value={formatCurrency(data.profit.salesRevenue, currency)}
+            detail="Total sales after discounts, before cost deductions."
+            icon={<CircleDollarSign className="size-5" />}
+          />
+        </div>
         {/* Highlighted Net Profit Card for wow factor */}
-        <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 p-5 shadow-md flex items-start justify-between gap-4">
+        <div className="col-span-2 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 p-4 md:p-5 shadow-sm flex items-start justify-between gap-3 dark:border-emerald-700/50 dark:bg-emerald-950/20 lg:col-span-1">
           <div>
-            <p className="text-sm font-bold text-emerald-800 uppercase tracking-wider">Estimated Net Profit</p>
-            <p className="mt-2 text-3xl font-black text-emerald-950">
+            <p className="text-xs md:text-sm font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Estimated Net Profit</p>
+            <p className="mt-1 md:mt-2 text-2xl md:text-3xl font-black text-emerald-950 dark:text-emerald-50">
               {formatCurrency(data.profit.estimatedNetProfit, currency)}
             </p>
-            <p className="mt-3 text-xs font-semibold text-emerald-700 leading-5">
+            <p className="mt-2 md:mt-3 text-[10px] md:text-xs font-semibold text-emerald-700 dark:text-emerald-400 leading-4 md:leading-5">
               Gross Profit ({formatCurrency(data.profit.grossProfit, currency)}) − Expenses ({formatCurrency(data.expenses.totalExpenses, currency)}) − Refunds ({formatCurrency(data.returns.refundTotal, currency)})
             </p>
           </div>
-          <div className="rounded-xl bg-emerald-500 p-3 text-white">
-            <TrendingUp className="size-6" />
+          <div className="rounded-xl bg-emerald-500 p-2 md:p-3 text-white shrink-0">
+            <TrendingUp className="size-5 md:size-6" />
           </div>
         </div>
       </div>
 
       {/* Secondary Performance Stat Cards */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Gross Profit Margin"
-          value={`${formatNumber(data.profit.grossMarginPercent)}%`}
-          detail={`Asset Cost of Sales: ${formatCurrency(data.profit.productCost, currency)}`}
-          icon={<Coins className="size-5" />}
-        />
-        <StatCard
-          label="Service Revenue / Profit"
-          value={formatCurrency(data.profit.serviceProfit, currency)}
-          detail="Service billing total (assumes zero inventory cost)."
-          icon={<Award className="size-5" />}
-        />
-        <StatCard
-          label="Total Operating Expenses"
-          value={formatCurrency(data.expenses.totalExpenses, currency)}
-          detail="From active business expenses registry."
-          icon={<Wallet className="size-5" />}
-        />
+      <div className="mt-3 md:mt-4 grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-3">
+        <div className="col-span-1">
+          <StatCard
+            label="Gross Profit Margin"
+            value={`${formatNumber(data.profit.grossMarginPercent)}%`}
+            detail={`Asset Cost of Sales: ${formatCurrency(data.profit.productCost, currency)}`}
+            icon={<Coins className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Service Revenue / Profit"
+            value={formatCurrency(data.profit.serviceProfit, currency)}
+            detail="Service billing total (assumes zero inventory cost)."
+            icon={<Award className="size-5" />}
+          />
+        </div>
+        <div className="col-span-2 lg:col-span-1">
+          <StatCard
+            label="Total Operating Expenses"
+            value={formatCurrency(data.expenses.totalExpenses, currency)}
+            detail="From active business expenses registry."
+            icon={<Wallet className="size-5" />}
+          />
+        </div>
       </div>
 
       {/* Main Breakdown Grids */}
@@ -1050,6 +1060,7 @@ export default async function ReportsPage({
           </div>
         )}
       </section>
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

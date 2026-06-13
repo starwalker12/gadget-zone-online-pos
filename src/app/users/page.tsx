@@ -41,16 +41,16 @@ export default async function UsersPage() {
   return (
     <AppShell pageTitle="Users">
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-4 shadow-sm sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-3 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-2 md:gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700 dark:text-blue-400">
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-blue-700 dark:text-blue-400">
                 Staff access
               </p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-slate-100">
+              <h2 className="mt-1 sm:mt-2 text-lg sm:text-2xl font-black text-slate-955 dark:text-slate-100">
                 User Management
               </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+              <p className="mt-1 sm:mt-2 max-w-3xl text-xs sm:text-sm leading-5 sm:leading-6 text-slate-500 dark:text-slate-400">
                 Invite staff, assign roles, choose branches, and safely deactivate
                 accounts without losing the last active owner/admin.
               </p>
@@ -64,7 +64,7 @@ export default async function UsersPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
           <StatCard
             label="Active users"
             value={formatNumber(data.stats.activeUsers)}
@@ -102,6 +102,7 @@ export default async function UsersPage() {
           currentProfileId={profile.id}
         />
       </div>
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

@@ -41,6 +41,7 @@ export default async function ReplenishmentPage() {
         </div>
 
         <ReplenishmentUI summary={summary} currency={currency} />
+        <div className="h-20 md:hidden" />
       </div>
     </AppShell>
   );

@@ -244,64 +244,82 @@ export default async function DailyClosingPage({
       </section>
 
       {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard
-          label="Gross sales"
-          value={formatCurrency(displayed.gross, currency)}
-          detail={`${formatNumber(displayed.bills)} invoice${displayed.bills === 1 ? "" : "s"}.`}
-          icon={<ReceiptText className="size-5" />}
-        />
-        <StatCard
-          label="Refunds"
-          value={formatCurrency(displayed.refunds, currency)}
-          detail={`${formatNumber(activity.refundsCount)} return${activity.refundsCount === 1 ? "" : "s"} today.`}
-          icon={<RotateCcw className="size-5" />}
-        />
-        <StatCard
-          label="Expenses"
-          value={formatCurrency(displayed.expenses, currency)}
-          detail="Active expenses only (voided excluded)."
-          icon={<Wallet className="size-5" />}
-        />
-        <StatCard
-          label="Cash payments"
-          value={formatCurrency(displayed.cash, currency)}
-          detail="Cash received on this day."
-          icon={<CircleDollarSign className="size-5" />}
-        />
-        <StatCard
-          label="Digital payments"
-          value={formatCurrency(displayed.digital, currency)}
-          detail="Card / EasyPaisa / JazzCash / Bank transfer."
-          icon={<CalendarDays className="size-5" />}
-        />
-        <StatCard
-          label="Credit pending"
-          value={formatCurrency(displayed.credit, currency)}
-          detail="Outstanding balance on today's invoices."
-          icon={<Scale className="size-5" />}
-        />
-        <StatCard
-          label="Credit collection cash"
-          value={formatCurrency(displayed.creditCollectionCash, currency)}
-          detail="Cash settlements received from customers."
-          icon={<HandCoins className="size-5" />}
-        />
-        <StatCard
-          label="Credit collection digital"
-          value={formatCurrency(displayed.creditCollectionDigital, currency)}
-          detail="Digital settlements received from customers."
-          icon={<CalendarDays className="size-5" />}
-        />
-        <StatCard
-          label="Credit write-offs"
-          value={formatCurrency(displayed.creditWriteOffs, currency)}
-          detail="Bad debt written off (P&L impact)."
-          icon={<BadgeMinus className="size-5" />}
-        />
+      <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-3">
+        <div className="col-span-1">
+          <StatCard
+            label="Gross sales"
+            value={formatCurrency(displayed.gross, currency)}
+            detail={`${formatNumber(displayed.bills)} invoice${displayed.bills === 1 ? "" : "s"}.`}
+            icon={<ReceiptText className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Refunds"
+            value={formatCurrency(displayed.refunds, currency)}
+            detail={`${formatNumber(activity.refundsCount)} return${activity.refundsCount === 1 ? "" : "s"} today.`}
+            icon={<RotateCcw className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Expenses"
+            value={formatCurrency(displayed.expenses, currency)}
+            detail="Active expenses only (voided excluded)."
+            icon={<Wallet className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Cash payments"
+            value={formatCurrency(displayed.cash, currency)}
+            detail="Cash received on this day."
+            icon={<CircleDollarSign className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Digital payments"
+            value={formatCurrency(displayed.digital, currency)}
+            detail="Card / EasyPaisa / JazzCash / Bank transfer."
+            icon={<CalendarDays className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Credit pending"
+            value={formatCurrency(displayed.credit, currency)}
+            detail="Outstanding balance on today's invoices."
+            icon={<Scale className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Credit collection cash"
+            value={formatCurrency(displayed.creditCollectionCash, currency)}
+            detail="Cash settlements received from customers."
+            icon={<HandCoins className="size-5" />}
+          />
+        </div>
+        <div className="col-span-1">
+          <StatCard
+            label="Credit collection digital"
+            value={formatCurrency(displayed.creditCollectionDigital, currency)}
+            detail="Digital settlements received from customers."
+            icon={<CalendarDays className="size-5" />}
+          />
+        </div>
+        <div className="col-span-2 lg:col-span-1">
+          <StatCard
+            label="Credit write-offs"
+            value={formatCurrency(displayed.creditWriteOffs, currency)}
+            detail="Bad debt written off (P&L impact)."
+            icon={<BadgeMinus className="size-5" />}
+          />
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6 grid gap-5 xl:grid-cols-[1.4fr_1fr] pb-[calc(4rem+env(safe-area-inset-bottom))]">
         {/* Breakdown */}
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-base font-black text-slate-950">Payment method breakdown</h2>
@@ -617,6 +635,7 @@ export default async function DailyClosingPage({
           currency={currency}
         />
       )}
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

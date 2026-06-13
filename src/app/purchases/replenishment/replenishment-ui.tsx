@@ -145,7 +145,7 @@ function SummaryCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-slate-100 bg-[#fff] p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
       <p className="text-[10px] font-semibold tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
       <p className="mt-1 text-sm font-bold text-slate-950 dark:text-white" style={{ color }}>
         {value}
@@ -167,32 +167,32 @@ function SupplierGroupCard({
   const highCount = group.suggestions.filter((s) => s.priority === "high").length;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.07] dark:bg-white/[0.03]">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-[#fff] shadow-sm dark:border-white/[0.07] dark:bg-white/[0.03]">
       {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 dark:border-white/[0.06] dark:hover:bg-white/[0.05]"
+        className="flex w-full flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 dark:border-white/[0.06] dark:hover:bg-white/[0.05] md:px-4 md:py-3"
       >
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 md:gap-3">
           <Truck className="size-4 shrink-0 text-slate-400" />
-          <span className="truncate text-sm font-bold text-slate-950 dark:text-white">
+          <span className="truncate text-xs font-bold text-slate-950 dark:text-white md:text-sm">
             {group.supplierName ?? "Unassigned"}
           </span>
           {criticalCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
-              <AlertTriangle className="size-3" />
-              {criticalCount} critical
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-300 md:px-2 md:text-[10px]">
+              <AlertTriangle className="size-2.5" />
+              {criticalCount} crit
             </span>
           )}
           {highCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 md:px-2 md:text-[10px]">
               {highCount} high
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex shrink-0 items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 md:gap-4 md:text-xs">
           <span>{group.productCount} items</span>
-          <span>{formatCurrency(group.estimatedCost, currency)}</span>
+          <span className="font-bold text-slate-700 dark:text-slate-300">{formatCurrency(group.estimatedCost, currency)}</span>
           <ArrowUpDown className={`size-3 transition ${expanded ? "rotate-180" : ""}`} />
         </div>
       </button>
@@ -247,7 +247,7 @@ function ProductRow({
   currency: string;
 }) {
   return (
-    <div className="px-4 py-3 text-xs sm:grid sm:grid-cols-12 sm:gap-2 sm:py-2.5 align-middle border-b border-slate-50 dark:border-slate-800 last:border-b-0">
+    <div className="px-3 py-2 text-xs sm:grid sm:grid-cols-12 sm:gap-2 sm:px-4 sm:py-2.5 align-middle border-b border-slate-50 dark:border-slate-800 last:border-b-0">
       {/* Product Name & SKU */}
       <div className="min-w-0 sm:col-span-4 mb-2 sm:mb-0">
         <p className="font-semibold text-slate-955 dark:text-white truncate">{suggestion.productName}</p>

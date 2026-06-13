@@ -98,7 +98,7 @@ export default async function ExpensesPage({
 
   return (
     <AppShell pageTitle="Expenses">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Today expenses"
           value={formatCurrency(counts.todayTotal, currency)}
@@ -179,7 +179,103 @@ export default async function ExpensesPage({
             </details>
           )}
 
-          <form className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/expenses">
+          {/* Mobile Filter form */}
+          <form className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden dark:border-slate-800 dark:bg-slate-950" action="/expenses">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <label className="block min-w-0">
+                <span className="sr-only">Search expenses</span>
+                <input
+                  name="q"
+                  defaultValue={params.q ?? ""}
+                  placeholder="Search category, vendor, notes"
+                  className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-900"
+                />
+              </label>
+              <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900 cursor-pointer">
+                Apply
+              </button>
+            </div>
+
+            <details open={Boolean(params.category || params.payment_method || params.from || params.to || params.archived === "1")} className="mt-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
+              <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400 select-none">
+                Filters
+              </summary>
+              <div className="mt-3 grid gap-3">
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Category</span>
+                  <select
+                    name="category"
+                    defaultValue={params.category ?? ""}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="">All</option>
+                    {knownCategories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Method</span>
+                  <select
+                    name="payment_method"
+                    defaultValue={params.payment_method ?? ""}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="">All</option>
+                    {EXPENSE_PAYMENT_METHODS.map((m) => (
+                      <option key={m} value={m}>
+                        {PAYMENT_LABELS[m] ?? m}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block min-w-0 font-bold">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">From</span>
+                    <input
+                      type="date"
+                      name="from"
+                      defaultValue={params.from ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                  <label className="block min-w-0 font-bold">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">To</span>
+                    <input
+                      type="date"
+                      name="to"
+                      defaultValue={params.to ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                </div>
+
+                <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3 dark:bg-slate-950">
+                  <input
+                    type="checkbox"
+                    name="archived"
+                    value="1"
+                    defaultChecked={params.archived === "1"}
+                    className="size-4"
+                  />
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Show voided</span>
+                </label>
+              </div>
+            </details>
+
+            {(params.q || params.category || params.payment_method || params.from || params.to || params.archived === "1") && (
+              <Link href="/expenses" className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-slate-600 underline dark:text-slate-400">
+                Reset filters
+              </Link>
+            )}
+          </form>
+
+          {/* Desktop Filter form */}
+          <form className="hidden md:grid md:gap-3 md:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/expenses">
             <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</span>
               <input
@@ -219,7 +315,7 @@ export default async function ExpensesPage({
                 ))}
               </select>
             </label>
-            <label className="block min-w-0">
+            <label className="block min-w-0 font-bold">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">From</span>
               <input
                 type="date"
@@ -228,7 +324,7 @@ export default async function ExpensesPage({
                 className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-auto"
               />
             </label>
-            <label className="block min-w-0">
+            <label className="block min-w-0 font-bold">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">To</span>
               <input
                 type="date"
@@ -247,7 +343,7 @@ export default async function ExpensesPage({
               />
               <span className="text-sm font-semibold text-slate-700">Show voided</span>
             </label>
-            <button type="submit" className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white">
+            <button type="submit" className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white cursor-pointer">
               Apply
             </button>
             {(params.q ||
@@ -316,7 +412,7 @@ export default async function ExpensesPage({
                   </tbody>
                 </table>
               </div>
-              <ul className="space-y-3 md:hidden">
+              <ul className="space-y-3 md:hidden pb-[calc(4rem+env(safe-area-inset-bottom))]">
                 {expenses.map((e) => (
                   <li key={e.id} className="rounded-xl border border-slate-200 bg-[#fff] p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-start justify-between gap-3">
@@ -343,6 +439,7 @@ export default async function ExpensesPage({
           )}
         </div>
       </div>
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }

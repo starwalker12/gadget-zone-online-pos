@@ -75,7 +75,7 @@ export default async function RepairsPage({
   return (
     <AppShell pageTitle="Repairs">
       {/* Dynamic Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
         <StatCard
           label="Open repair jobs"
           value={formatNumber(stats.openCount)}
@@ -123,9 +123,80 @@ export default async function RepairsPage({
 
         {/* Filter Toolbar */}
         <div className="border-b border-slate-100 bg-slate-50/50 p-4">
-          <form method="get" className="grid gap-3 text-xs font-bold text-slate-700 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end">
+          {/* Mobile Filter form */}
+          <form method="get" className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden dark:border-slate-800 dark:bg-slate-950" action="/repairs">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <label className="block min-w-0">
+                <span className="sr-only">Search repairs</span>
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={params.q ?? ""}
+                  placeholder="Search job no, model, serial..."
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                />
+              </label>
+              <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900 cursor-pointer">
+                Apply
+              </button>
+            </div>
+
+            <details open={Boolean(params.status || params.from || params.to)} className="mt-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
+              <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400 select-none">
+                Filters
+              </summary>
+              <div className="mt-3 grid gap-3">
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</span>
+                  <select
+                    name="status"
+                    defaultValue={params.status ?? ""}
+                    className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <option value="">All statuses</option>
+                    <option value="received">Received</option>
+                    <option value="waiting_for_parts">Waiting for parts</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Ready for delivery</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">From</span>
+                    <input
+                      type="date"
+                      name="from"
+                      defaultValue={params.from ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                  <label className="block min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">To</span>
+                    <input
+                      type="date"
+                      name="to"
+                      defaultValue={params.to ?? ""}
+                      className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-950"
+                    />
+                  </label>
+                </div>
+              </div>
+            </details>
+
+            {(params.q || params.status || params.from || params.to) && (
+              <Link href="/repairs" className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-slate-600 underline dark:text-slate-400">
+                Reset filters
+              </Link>
+            )}
+          </form>
+
+          {/* Desktop Filter form */}
+          <form method="get" className="hidden md:grid md:gap-3 md:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/repairs">
             <div className="min-w-0 sm:col-span-2 lg:w-full lg:max-w-xs">
-              <label className="mb-1 block text-slate-500">Search</label>
+              <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">Search</label>
               <input
                 type="text"
                 name="q"
@@ -136,7 +207,7 @@ export default async function RepairsPage({
             </div>
 
             <div className="min-w-0">
-              <label className="mb-1 block text-slate-500">Status</label>
+              <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">Status</label>
               <select
                 name="status"
                 defaultValue={params.status ?? ""}
@@ -154,7 +225,7 @@ export default async function RepairsPage({
 
             <div className="grid gap-2 min-[380px]:grid-cols-2 sm:col-span-2 lg:col-span-1">
               <div className="min-w-0">
-                <label className="mb-1 block text-slate-500">From</label>
+                <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">From</label>
                 <input
                   type="date"
                   name="from"
@@ -163,7 +234,7 @@ export default async function RepairsPage({
                 />
               </div>
               <div className="min-w-0">
-                <label className="mb-1 block text-slate-500">To</label>
+                <label className="mb-1 block text-slate-500 text-xs font-semibold uppercase tracking-wide">To</label>
                 <input
                   type="date"
                   name="to"
@@ -355,6 +426,7 @@ export default async function RepairsPage({
           }}
         />
       )}
+      <div className="h-20 md:hidden" />
     </AppShell>
   );
 }
