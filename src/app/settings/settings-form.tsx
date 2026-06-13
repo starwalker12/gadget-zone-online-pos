@@ -760,10 +760,19 @@ export function SettingsForm({
                   />
                 )}
               </div>
-              {isDefaultLogo && (
+              {isDefaultLogo ? (
                 <p className="mt-2 text-center text-[10px] text-slate-400">
                   Using default SaleDock logo
                 </p>
+              ) : (
+                <div className="mt-2 space-y-0.5">
+                  <p className="text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    Logo uploaded
+                  </p>
+                  <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
+                    Current logo is saved. Upload a new logo to replace it.
+                  </p>
+                </div>
               )}
               <div className="mt-3 space-y-2">
                 <ImageUpload
@@ -780,10 +789,7 @@ export function SettingsForm({
               </div>
             </div>
             <div className="grid gap-4">
-              <label className={labelClass}>
-                <span className={labelTextClass}>Logo URL or path</span>
-                <input name="logoUrl" value={logoUrlInput} onChange={(e) => setLogoUrlInput(e.target.value)} disabled={!canEdit || invPending} className={inputClass} />
-              </label>
+              <input type="hidden" name="logoUrl" value={logoUrlInput} />
               <label className={labelClass}>
                 <span className={labelTextClass}>Invoice footer / note</span>
                 <textarea name="invoiceFooter" defaultValue={settings.invoiceFooter} disabled={!canEdit || invPending} className={textareaClass} />

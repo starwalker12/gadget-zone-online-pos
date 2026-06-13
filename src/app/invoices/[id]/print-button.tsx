@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageCircle, Printer, Download, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MessageCircle, Printer, Download, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 type PrintButtonProps = {
   invoiceNo: string;
@@ -24,6 +25,9 @@ function printWithMode(mode: "a4" | "thermal", invoiceNo: string) {
 
 export function PrintButton({ invoiceNo }: PrintButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imgBlob, setImgBlob] = useState<Blob | null>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,13 +42,72 @@ export function PrintButton({ invoiceNo }: PrintButtonProps) {
     };
   }, [isOpen]);
 
+  const handleShare = async () => {
+    setIsLoading(true);
+    try {
+      const node = document.getElementById("invoice-print");
+      if (!node) {
+        throw new Error("Invoice element not found");
+      }
+
+      // Dynamically import to save client bundle size until click
+      const { toBlob } = await import("html-to-image");
+
+      const isDark = resolvedTheme === "dark";
+      const blob = await toBlob(node, {
+        cacheBust: true,
+        backgroundColor: isDark ? "#0f172a" : "#ffffff",
+        style: {
+          borderRadius: "0",
+          boxShadow: "none",
+        },
+      });
+
+      if (!blob) {
+        throw new Error("Failed to generate image blob");
+      }
+
+      setImgBlob(blob);
+      const file = new File([blob], `SaleDock-Invoice-${invoiceNo}.png`, { type: "image/png" });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `SaleDock Invoice ${invoiceNo}`,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Fallback if sharing not supported or blocked
+      setIsOpen(true);
+    } catch (err) {
+      console.error("Failed to share invoice:", err);
+      setIsOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const downloadImage = useCallback(() => {
+    if (!imgBlob) return;
+    const url = URL.createObjectURL(imgBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `SaleDock-Invoice-${invoiceNo}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [imgBlob, invoiceNo]);
+
   return (
     <>
       <div className="flex flex-wrap gap-2 print:hidden">
         <button
           type="button"
           onClick={() => printWithMode("a4", invoiceNo)}
-          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 cursor-pointer"
         >
           <Printer className="size-4" />
           Print A4 / Save PDF
@@ -52,18 +115,23 @@ export function PrintButton({ invoiceNo }: PrintButtonProps) {
         <button
           type="button"
           onClick={() => printWithMode("thermal", invoiceNo)}
-          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
         >
           <Printer className="size-4" />
           Print 80mm
         </button>
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
-          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+          disabled={isLoading}
+          onClick={handleShare}
+          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-75 cursor-pointer"
         >
-          <MessageCircle className="size-4" />
-          Share WhatsApp
+          {isLoading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <MessageCircle className="size-4" />
+          )}
+          {isLoading ? "Capturing..." : "Share WhatsApp"}
         </button>
       </div>
 
@@ -80,7 +148,7 @@ export function PrintButton({ invoiceNo }: PrintButtonProps) {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
             >
               <X className="size-5" />
             </button>
@@ -90,21 +158,32 @@ export function PrintButton({ invoiceNo }: PrintButtonProps) {
                 <MessageCircle className="size-6" />
               </div>
               <h3 className="mt-4 text-lg font-black text-slate-900 dark:text-white">
-                Share Invoice PDF
+                Share Invoice
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-650 dark:text-slate-400">
-                This browser cannot attach the PDF directly to WhatsApp. Download the invoice PDF, then attach it in WhatsApp.
+                Your browser cannot attach this invoice directly to WhatsApp. Download the invoice image/PDF, then attach it in WhatsApp.
               </p>
             </div>
 
             <div className="mt-6 flex flex-col gap-2">
+              {imgBlob && (
+                <button
+                  type="button"
+                  onClick={downloadImage}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 font-bold text-white hover:bg-emerald-700 cursor-pointer"
+                >
+                  <ImageIcon className="size-4" />
+                  Download Image
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => {
                   printWithMode("a4", invoiceNo);
                   setIsOpen(false);
                 }}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 font-bold text-white hover:bg-blue-800"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 font-bold text-white hover:bg-blue-800 cursor-pointer"
               >
                 <Download className="size-4" />
                 Download PDF
@@ -113,7 +192,7 @@ export function PrintButton({ invoiceNo }: PrintButtonProps) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex h-11 w-full items-center justify-center rounded-lg border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex h-11 w-full items-center justify-center rounded-lg border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Close
               </button>
