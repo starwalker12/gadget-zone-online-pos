@@ -111,7 +111,12 @@ export default async function InvoiceDetailPage({
         >
           &larr; Back to invoices
         </Link>
-        <PrintButton invoiceNo={invoice.invoice_no} customerPhone={invoice.customer?.phone} />
+        <PrintButton
+          invoiceNo={invoice.invoice_no}
+          customerPhone={invoice.customer?.phone}
+          invoice={invoice}
+          shopName={orgName}
+        />
       </div>
 
       {/* ── Invoice document card ── */}
