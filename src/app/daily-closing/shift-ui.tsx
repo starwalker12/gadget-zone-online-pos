@@ -116,7 +116,7 @@ export function OpenShiftForm({
 
   if (!canOpen) {
     return (
-      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+      <p className="rounded-lg bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-xs font-medium text-amber-900 dark:text-amber-400">
         Your role cannot open a shift. Ask the owner, admin, or manager.
       </p>
     );
@@ -125,7 +125,7 @@ export function OpenShiftForm({
   return (
     <form action={action} className="space-y-4">
       <label className="block">
-        <span className="text-sm font-semibold text-slate-700">Starting cash (PKR)</span>
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Starting cash (PKR)</span>
         <input
           required
           type="number"
@@ -135,31 +135,31 @@ export function OpenShiftForm({
           value={starting}
           onChange={(e) => setStarting(e.target.value)}
           disabled={pending}
-          className="mt-1 h-11 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+          className="mt-1 h-11 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3 outline-none focus:border-blue-600 dark:focus:border-blue-500"
         />
       </label>
 
-      <p className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800">
+      <p className="rounded-xl bg-blue-50 dark:bg-blue-950/20 p-3 text-xs text-blue-800 dark:text-blue-300">
         Enter the amount of cash in the drawer at the start of your shift. This
         becomes the baseline for expected cash at closing.
       </p>
 
       <label className="block">
-        <span className="text-sm font-semibold text-slate-700">Notes (optional)</span>
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Notes (optional)</span>
         <textarea
           name="notes"
           rows={2}
           defaultValue={notesDefault ?? ""}
           disabled={pending}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-blue-600"
+          className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3 py-2 outline-none focus:border-blue-600 dark:focus:border-blue-500"
         />
       </label>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{state.error}</p>
+        <p className="rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400">{state.error}</p>
       )}
       {state.success && (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">{state.success}</p>
+        <p className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">{state.success}</p>
       )}
 
       <button
@@ -206,7 +206,7 @@ export function CloseShiftForm({
   return (
     <div className="space-y-4">
       {/* Shift info header */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+      <div className="rounded-xl border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-950/20 p-3 text-xs text-blue-900 dark:text-blue-300">
         <div className="flex items-center gap-2 font-semibold">
           <Clock className="size-4" />
           <span>Shift #{fmtShortId(shift.id)} — Active</span>
@@ -219,7 +219,7 @@ export function CloseShiftForm({
       </div>
 
       {/* Live activity totals */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 min-[380px]:grid-cols-2 xl:grid-cols-3">
         <StatBox label="Invoices" value={String(activity.invoicesCount)} detail="Gross" icon={<ReceiptText className="size-4" />} />
         <StatBox label="Gross sales" value={fmt(activity.grossSales)} detail="All invoices" icon={<CircleDollarSign className="size-4" />} />
         <StatBox label="Cash payments" value={fmt(activity.paymentsByMethod.cash)} detail="Cash received" icon={<CircleDollarSign className="size-4" />} />
@@ -236,7 +236,7 @@ export function CloseShiftForm({
         <input type="hidden" name="shift_id" value={shift.id} />
 
         <label className="block">
-          <span className="text-sm font-semibold text-slate-700">Counted cash (PKR)</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Counted cash (PKR)</span>
           <input
             required
             type="number"
@@ -246,36 +246,36 @@ export function CloseShiftForm({
             value={counted}
             onChange={(e) => setCounted(e.target.value)}
             disabled={pending || !canClose}
-            className="mt-1 h-11 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+            className="mt-1 h-11 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3 outline-none focus:border-blue-600 dark:focus:border-blue-500"
           />
         </label>
 
-        <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+        <div className="grid gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-3 text-sm text-slate-950 dark:text-slate-100">
           <div className="flex justify-between">
-            <span>Starting cash</span>
+            <span className="text-slate-600 dark:text-slate-400">Starting cash</span>
             <span className="font-bold">{fmt(shift.starting_cash)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Net cash flow</span>
+            <span className="text-slate-600 dark:text-slate-400">Net cash flow</span>
             <span className="font-bold">{fmt(activity.expectedCash)}</span>
           </div>
-          <div className="flex justify-between border-t border-slate-200 pt-2">
-            <span>Expected cash (drawer)</span>
+          <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-2">
+            <span className="text-slate-600 dark:text-slate-400">Expected cash (drawer)</span>
             <span className="font-bold">{fmt(expected)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Counted cash</span>
+            <span className="text-slate-600 dark:text-slate-400">Counted cash</span>
             <span className="font-bold">{fmt(countedNum)}</span>
           </div>
-          <div className="flex justify-between border-t border-slate-200 pt-2">
-            <span>Difference</span>
+          <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-2">
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Difference</span>
             <span
               className={`font-black ${
                 liveDiff === 0
-                  ? "text-slate-900"
+                  ? "text-slate-900 dark:text-slate-100"
                   : liveDiff > 0
-                    ? "text-emerald-700"
-                    : "text-red-700"
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-red-700 dark:text-red-400"
               }`}
             >
               {fmt(liveDiff)}
@@ -284,27 +284,27 @@ export function CloseShiftForm({
         </div>
 
         <label className="block">
-          <span className="text-sm font-semibold text-slate-700">Notes (optional)</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Notes (optional)</span>
           <textarea
             name="notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={pending || !canClose}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-blue-600"
+            className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3 py-2 outline-none focus:border-blue-600 dark:focus:border-blue-500"
           />
         </label>
 
         {!canClose && (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+          <p className="rounded-lg bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-xs font-medium text-amber-900 dark:text-amber-400">
             Your role cannot close shifts. Ask the owner, admin, or manager.
           </p>
         )}
         {state.error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{state.error}</p>
+          <p className="rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400">{state.error}</p>
         )}
         {state.success && (
-          <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">{state.success}</p>
+          <p className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">{state.success}</p>
         )}
 
         <button
@@ -333,77 +333,143 @@ export function ShiftHistoryTable({
 
   if (shifts.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-8 text-center text-sm text-slate-500 dark:text-slate-400 shadow-sm">
         No shifts recorded yet.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
-          <tr>
-            <th className="px-4 py-3">ID</th>
-            <th className="px-4 py-3">Opened</th>
-            <th className="px-4 py-3">By</th>
-            <th className="px-4 py-3 text-right">Start</th>
-            <th className="px-4 py-3 text-right">Expected</th>
-            <th className="px-4 py-3 text-right">Counted</th>
-            <th className="px-4 py-3 text-right">Diff</th>
-            <th className="px-4 py-3">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {shifts.map((s) => (
-            <tr key={s.id} className="border-b border-slate-100">
-              <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                {fmtShortId(s.id)}
-              </td>
-              <td className="px-4 py-3 text-xs text-slate-700">
-                {fmtTime(s.opened_at)}
-              </td>
-              <td className="px-4 py-3 text-slate-700">{s.opened_by_name ?? "—"}</td>
-              <td className="px-4 py-3 text-right">{fmt(s.starting_cash)}</td>
-              <td className="px-4 py-3 text-right">
-                {s.status === "closed" ? fmt(s.expected_cash) : "—"}
-              </td>
-              <td className="px-4 py-3 text-right">
-                {s.counted_cash !== null ? fmt(s.counted_cash) : "—"}
-              </td>
-              <td className="px-4 py-3 text-right">
-                {s.cash_difference !== null ? (
-                  <span
-                    className={
-                      s.cash_difference === 0
-                        ? "text-slate-500"
-                        : s.cash_difference > 0
-                          ? "font-bold text-emerald-700"
-                          : "font-bold text-red-700"
-                    }
-                  >
-                    {fmt(s.cash_difference)}
-                  </span>
-                ) : (
-                  "—"
-                )}
-              </td>
-              <td className="px-4 py-3">
-                {s.status === "open" ? (
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
-                    Open
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
-                    Closed
-                  </span>
-                )}
-              </td>
+    <>
+      <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 shadow-sm">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <tr>
+              <th className="px-4 py-3">ID</th>
+              <th className="px-4 py-3">Opened</th>
+              <th className="px-4 py-3">By</th>
+              <th className="px-4 py-3 text-right">Start</th>
+              <th className="px-4 py-3 text-right">Expected</th>
+              <th className="px-4 py-3 text-right">Counted</th>
+              <th className="px-4 py-3 text-right">Diff</th>
+              <th className="px-4 py-3">Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {shifts.map((s) => (
+              <tr key={s.id} className="border-b border-slate-100 dark:border-slate-800/60">
+                <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
+                  {fmtShortId(s.id)}
+                </td>
+                <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-305 font-medium">
+                  {fmtTime(s.opened_at)}
+                </td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-305">{s.opened_by_name ?? "—"}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-305">{fmt(s.starting_cash)}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-305">
+                  {s.status === "closed" ? fmt(s.expected_cash) : "—"}
+                </td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-305">
+                  {s.counted_cash !== null ? fmt(s.counted_cash) : "—"}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {s.cash_difference !== null ? (
+                    <span
+                      className={
+                        s.cash_difference === 0
+                          ? "text-slate-500 dark:text-slate-400"
+                          : s.cash_difference > 0
+                            ? "font-bold text-emerald-700 dark:text-emerald-400"
+                            : "font-bold text-red-700 dark:text-red-400"
+                      }
+                    >
+                      {fmt(s.cash_difference)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {s.status === "open" ? (
+                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
+                      Open
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                      Closed
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="space-y-3 md:hidden">
+        {shifts.map((s) => (
+          <div key={s.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Shift #{fmtShortId(s.id)}
+              </span>
+              {s.status === "open" ? (
+                <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
+                  Open
+                </span>
+              ) : (
+                <span className="rounded-full bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                  Closed
+                </span>
+              )}
+            </div>
+            
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block">Opened</span>
+                <span className="font-medium text-slate-900 dark:text-slate-200">{fmtTime(s.opened_at)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block">Opened By</span>
+                <span className="font-medium text-slate-900 dark:text-slate-200">{s.opened_by_name ?? "—"}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block">Starting Cash</span>
+                <span className="font-medium text-slate-900 dark:text-slate-200">{fmt(s.starting_cash)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block">Expected Cash</span>
+                <span className="font-medium text-slate-900 dark:text-slate-200">
+                  {s.status === "closed" ? fmt(s.expected_cash) : "—"}
+                </span>
+              </div>
+              {s.status === "closed" && (
+                <>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block">Counted Cash</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-200">
+                      {s.counted_cash !== null ? fmt(s.counted_cash) : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block">Difference</span>
+                    <span className={`font-bold ${
+                      s.cash_difference === 0
+                        ? "text-slate-500 dark:text-slate-400"
+                        : s.cash_difference! > 0
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-red-700 dark:text-red-400"
+                    }`}>
+                      {s.cash_difference !== null ? fmt(s.cash_difference) : "—"}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -421,17 +487,19 @@ export function ShiftStaffSummary({
   if (staff.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-5 shadow-sm">
       <div className="flex items-center gap-2">
         <User className="size-5 text-slate-400" />
-        <h2 className="text-base font-black text-slate-950">Staff activity (this shift)</h2>
+        <h2 className="text-base font-black text-slate-950 dark:text-slate-100">Staff activity (this shift)</h2>
       </div>
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         Payments received grouped by staff member.
       </p>
-      <div className="mt-3 overflow-x-auto">
+
+      {/* Desktop view */}
+      <div className="mt-3 hidden md:block overflow-x-auto">
         <table className="w-full min-w-[400px] text-left text-sm">
-          <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             <tr>
               <th className="py-2">Staff</th>
               <th className="py-2 text-right">Total</th>
@@ -441,26 +509,62 @@ export function ShiftStaffSummary({
           </thead>
           <tbody>
             {staff.map((s) => (
-              <tr key={s.user_id} className="border-b border-slate-100">
+              <tr key={s.user_id} className="border-b border-slate-100 dark:border-slate-800/60">
                 <td className="py-2">
                   {s.user_name ? (
-                    <span className="font-semibold text-slate-900">{s.user_name}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-200">{s.user_name}</span>
                   ) : (
-                    <span className="italic text-slate-400">Unassigned</span>
+                    <span className="italic text-slate-400 dark:text-slate-500 font-medium">Unassigned</span>
                   )}
                   {s.role && (
-                    <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                    <span className="ml-2 rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-450">
                       {s.role}
                     </span>
                   )}
                 </td>
-                <td className="py-2 text-right font-bold">{fmt(s.paymentsTotal)}</td>
-                <td className="py-2 text-right">{fmt(s.paymentsCash)}</td>
-                <td className="py-2 text-right">{fmt(s.paymentsDigital)}</td>
+                <td className="py-2 text-right font-bold text-slate-900 dark:text-slate-100">{fmt(s.paymentsTotal)}</td>
+                <td className="py-2 text-right text-slate-705 dark:text-slate-305">{fmt(s.paymentsCash)}</td>
+                <td className="py-2 text-right text-slate-705 dark:text-slate-305">{fmt(s.paymentsDigital)}</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile view */}
+      <div className="mt-3 space-y-3 md:hidden">
+        {staff.map((s) => (
+          <div key={s.user_id} className="rounded-xl border border-slate-100 dark:border-slate-800/80 p-3 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                {s.user_name ? (
+                  <span className="font-semibold text-slate-900 dark:text-slate-200 text-sm block truncate">{s.user_name}</span>
+                ) : (
+                  <span className="italic text-slate-400 dark:text-slate-500 text-sm block">Unassigned</span>
+                )}
+                {s.role && (
+                  <span className="inline-block mt-0.5 rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                    {s.role}
+                  </span>
+                )}
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Total</span>
+                <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{fmt(s.paymentsTotal)}</span>
+              </div>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-slate-100/50 dark:border-slate-800/30 pt-2 text-xs">
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block">Cash</span>
+                <span className="font-medium text-slate-700 dark:text-slate-305">{fmt(s.paymentsCash)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block">Digital</span>
+                <span className="font-medium text-slate-700 dark:text-slate-305">{fmt(s.paymentsDigital)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -618,15 +722,15 @@ function StatBox({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-500">{label}</p>
-          <p className="mt-1 text-sm font-black text-slate-950">{value}</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+          <p className="mt-1 text-sm font-black text-slate-950 dark:text-slate-100">{value}</p>
         </div>
-        <div className="shrink-0 rounded-lg bg-blue-50 p-2 text-blue-700">{icon}</div>
+        <div className="shrink-0 rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2 text-blue-700 dark:text-blue-400">{icon}</div>
       </div>
-      <p className="mt-2 text-[10px] text-slate-500">{detail}</p>
+      <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">{detail}</p>
     </div>
   );
 }

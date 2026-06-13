@@ -268,51 +268,51 @@ export default async function RepairsPage({
             </div>
 
             {/* Mobile Card List View */}
-            <div className="block md:hidden divide-y divide-slate-100 p-4 space-y-4">
+            <div className="block md:hidden p-4 space-y-3">
               {repairs.map((r) => {
                 const balance = Math.max(r.estimated_cost - r.advance_paid, 0);
 
                 return (
-                  <div key={r.id} className="pt-4 first:pt-0 space-y-3">
+                  <div key={r.id} className="rounded-2xl border border-slate-200 bg-[#fff] p-4 shadow-sm space-y-3 dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-black text-slate-900">{r.job_no}</span>
+                      <span className="text-sm font-black text-slate-900 dark:text-slate-50">{r.job_no}</span>
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                         r.status === "delivered"
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                           : r.status === "completed"
-                          ? "bg-blue-50 text-blue-700"
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
                           : r.status === "cancelled"
-                          ? "bg-rose-50 text-rose-700"
-                          : "bg-amber-50 text-amber-700"
+                          ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
                       }`}>
                         {STATUS_LABELS[r.status] || r.status}
                       </span>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-800">{r.customer_name}</h4>
-                      {r.customer_phone && <p className="text-xs text-slate-500">{r.customer_phone}</p>}
+                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{r.customer_name}</h4>
+                      {r.customer_phone && <p className="text-xs text-slate-500 dark:text-slate-400">{r.customer_phone}</p>}
                     </div>
 
-                    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs space-y-1.5">
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-950/40 p-3 text-xs space-y-1.5">
                       <p>
-                        <span className="font-bold text-slate-600">Device:</span> {r.device_type} {r.device_model && `(${r.device_model})`}
+                        <span className="font-bold text-slate-600 dark:text-slate-400">Device:</span> {r.device_type} {r.device_model && `(${r.device_model})`}
                       </p>
-                      <p className="text-slate-500">
-                        <span className="font-bold text-slate-600">Fault:</span> {r.problem_description}
+                      <p className="text-slate-500 dark:text-slate-400">
+                        <span className="font-bold text-slate-600 dark:text-slate-400">Fault:</span> {r.problem_description}
                       </p>
-                      <div className="grid gap-2 border-t border-slate-100 pt-2 mt-2 font-bold min-[380px]:grid-cols-3">
+                      <div className="grid gap-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2 font-bold min-[380px]:grid-cols-3">
                         <div>
                           <p className="text-[10px] text-slate-400">Est. Cost</p>
-                          <p className="text-slate-700">{formatCurrency(r.estimated_cost, currency)}</p>
+                          <p className="text-slate-700 dark:text-slate-300">{formatCurrency(r.estimated_cost, currency)}</p>
                         </div>
                         <div>
                           <p className="text-[10px] text-slate-400">Paid Adv</p>
-                          <p className="text-slate-500">{formatCurrency(r.advance_paid, currency)}</p>
+                          <p className="text-slate-500 dark:text-slate-400">{formatCurrency(r.advance_paid, currency)}</p>
                         </div>
                         <div>
                           <p className="text-[10px] text-slate-400">Bal Due</p>
-                          <p className="text-rose-700">{formatCurrency(balance, currency)}</p>
+                          <p className="text-rose-700 dark:text-rose-400">{formatCurrency(balance, currency)}</p>
                         </div>
                       </div>
                     </div>
@@ -320,7 +320,7 @@ export default async function RepairsPage({
                     <div className="flex gap-2">
                       <Link
                         href={`/repairs/${r.id}`}
-                        className="flex-1 inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50"
+                        className="flex-1 inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                       >
                         <Eye className="size-3.5" /> View Workflow & Receipts
                       </Link>

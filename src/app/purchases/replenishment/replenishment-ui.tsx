@@ -247,34 +247,68 @@ function ProductRow({
   currency: string;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2 px-4 py-2.5 text-xs sm:grid-cols-12 sm:gap-2">
-      <div className="col-span-2 min-w-0 sm:col-span-4">
-        <p className="truncate font-semibold text-slate-950 dark:text-white">{suggestion.productName}</p>
+    <div className="px-4 py-3 text-xs sm:grid sm:grid-cols-12 sm:gap-2 sm:py-2.5 align-middle border-b border-slate-50 dark:border-slate-800 last:border-b-0">
+      {/* Product Name & SKU */}
+      <div className="min-w-0 sm:col-span-4 mb-2 sm:mb-0">
+        <p className="font-semibold text-slate-955 dark:text-white truncate">{suggestion.productName}</p>
         {suggestion.sku && (
-          <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">SKU: {suggestion.sku}</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">SKU: {suggestion.sku}</p>
         )}
+        <span
+          className={`sm:hidden mt-1 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-tight ${priorityColor[suggestion.priority]}`}
+        >
+          {priorityLabel[suggestion.priority]}
+        </span>
       </div>
-      <div className="text-right text-slate-700 sm:col-span-1 dark:text-slate-300">
+
+      {/* Mobile-only grid block */}
+      <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-400 sm:hidden bg-slate-50/60 dark:bg-slate-950/40 p-2 rounded-lg mb-2">
+        <div>
+          <span className="block text-[9px] text-slate-400 font-bold uppercase">Stock</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">{formatNumber(suggestion.currentStock)}</span>
+        </div>
+        <div>
+          <span className="block text-[9px] text-slate-400 font-bold uppercase">Min / Target</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">{formatNumber(suggestion.minimumStock)} / {formatNumber(suggestion.targetStock)}</span>
+        </div>
+        <div>
+          <span className="block text-[9px] text-slate-400 font-bold uppercase">To Order</span>
+          <span className="font-bold text-slate-950 dark:text-white">{formatNumber(suggestion.suggestedQuantity)}</span>
+        </div>
+        <div>
+          <span className="block text-[9px] text-slate-400 font-bold uppercase">Unit Cost</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(suggestion.purchasePrice, currency)}</span>
+        </div>
+        <div className="col-span-2 text-right">
+          <span className="block text-[9px] text-slate-400 font-bold uppercase">Est. Cost</span>
+          <span className="font-bold text-slate-955 dark:text-white">
+            {suggestion.estimatedCost !== null ? formatCurrency(suggestion.estimatedCost, currency) : "—"}
+          </span>
+        </div>
+      </div>
+
+      {/* Desktop Column Views */}
+      <div className="hidden sm:block text-right text-slate-700 sm:col-span-1 dark:text-slate-300">
         {formatNumber(suggestion.currentStock)}
       </div>
-      <div className="text-right text-slate-700 sm:col-span-1 dark:text-slate-300">
+      <div className="hidden sm:block text-right text-slate-700 sm:col-span-1 dark:text-slate-300">
         {formatNumber(suggestion.minimumStock)}
       </div>
-      <div className="text-right text-slate-700 sm:col-span-1 dark:text-slate-300">
+      <div className="hidden sm:block text-right text-slate-700 sm:col-span-1 dark:text-slate-300">
         {formatNumber(suggestion.targetStock)}
       </div>
-      <div className="text-right font-bold text-slate-950 sm:col-span-1 dark:text-white">
+      <div className="hidden sm:block text-right font-bold text-slate-950 sm:col-span-1 dark:text-white">
         {formatNumber(suggestion.suggestedQuantity)}
       </div>
-      <div className="text-right text-slate-700 sm:col-span-2 dark:text-slate-300">
+      <div className="hidden sm:block text-right text-slate-700 sm:col-span-2 dark:text-slate-300">
         {formatCurrency(suggestion.purchasePrice, currency)}
       </div>
-      <div className="text-right font-semibold text-slate-950 sm:col-span-1 dark:text-white">
+      <div className="hidden sm:block text-right font-semibold text-slate-950 sm:col-span-1 dark:text-white">
         {suggestion.estimatedCost !== null
           ? formatCurrency(suggestion.estimatedCost, currency)
           : "—"}
       </div>
-      <div className="sm:col-span-1">
+      <div className="hidden sm:col-span-1 sm:block text-right">
         <span
           className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${priorityColor[suggestion.priority]}`}
         >

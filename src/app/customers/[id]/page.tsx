@@ -293,57 +293,107 @@ export default async function CustomerDetailPage({
                   No ledger entries recorded for this customer yet.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm min-w-[700px]">
-                    <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
-                      <tr>
-                        <th className="px-3 py-3">Date</th>
-                        <th className="px-3 py-3">Type</th>
-                        <th className="px-3 py-3">Description</th>
-                        <th className="px-3 py-3">Reference No</th>
-                        <th className="px-3 py-3 text-right">Debit (Debt +)</th>
-                        <th className="px-3 py-3 text-right">Credit (Debt −)</th>
-                        <th className="px-3 py-3 text-right">Balance After</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ledger.map((l) => (
-                        <tr key={l.id} className="border-b border-slate-100 hover:bg-slate-50/55">
-                          <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(l.created_at)}</td>
-                          <td className="px-3 py-3">
-                            <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
-                              l.entry_type === "invoice_credit"
-                                ? "bg-red-50 text-red-700 border border-red-100"
-                                :                                l.entry_type === "credit_payment"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                : l.entry_type === "write_off"
-                                ? "bg-rose-50 text-rose-700 border border-rose-100"
-                                : "bg-blue-50 text-blue-700 border border-blue-100"
-                            }`}>
-                              {l.entry_type.replace("_", " ")}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 font-semibold text-slate-800">
-                            {l.description}
-                            {l.invoice_no && (
-                              <Link href={`/invoices/${l.id}`} className="ml-1 text-xs text-blue-700 hover:underline">
-                                ({l.invoice_no})
-                              </Link>
-                            )}
-                          </td>
-                          <td className="px-3 py-3 text-xs text-slate-500">{l.reference_number ?? "—"}</td>
-                          <td className="px-3 py-3 text-right font-bold text-red-600">
-                            {l.direction === "debit" ? formatCurrency(l.amount, currency) : "—"}
-                          </td>
-                          <td className="px-3 py-3 text-right font-bold text-emerald-700">
-                            {l.direction === "credit" ? formatCurrency(l.amount, currency) : "—"}
-                          </td>
-                          <td className="px-3 py-3 text-right font-black text-slate-900">{formatCurrency(l.balance_after, currency)}</td>
+                <>
+                  {/* Desktop view */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left text-sm min-w-[700px]">
+                      <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
+                        <tr>
+                          <th className="px-3 py-3">Date</th>
+                          <th className="px-3 py-3">Type</th>
+                          <th className="px-3 py-3">Description</th>
+                          <th className="px-3 py-3">Reference No</th>
+                          <th className="px-3 py-3 text-right">Debit (Debt +)</th>
+                          <th className="px-3 py-3 text-right">Credit (Debt −)</th>
+                          <th className="px-3 py-3 text-right">Balance After</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {ledger.map((l) => (
+                          <tr key={l.id} className="border-b border-slate-100 hover:bg-slate-50/55">
+                            <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(l.created_at)}</td>
+                            <td className="px-3 py-3">
+                              <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
+                                l.entry_type === "invoice_credit"
+                                  ? "bg-red-50 text-red-700 border border-red-100"
+                                  : l.entry_type === "credit_payment"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                  : l.entry_type === "write_off"
+                                  ? "bg-rose-50 text-rose-700 border border-rose-100"
+                                  : "bg-blue-50 text-blue-700 border border-blue-100"
+                              }`}>
+                                {l.entry_type.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 font-semibold text-slate-800">
+                              {l.description}
+                              {l.invoice_no && (
+                                <Link href={`/invoices/${l.id}`} className="ml-1 text-xs text-blue-700 hover:underline">
+                                  ({l.invoice_no})
+                                </Link>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-xs text-slate-500">{l.reference_number ?? "—"}</td>
+                            <td className="px-3 py-3 text-right font-bold text-red-600">
+                              {l.direction === "debit" ? formatCurrency(l.amount, currency) : "—"}
+                            </td>
+                            <td className="px-3 py-3 text-right font-bold text-emerald-700">
+                              {l.direction === "credit" ? formatCurrency(l.amount, currency) : "—"}
+                            </td>
+                            <td className="px-3 py-3 text-right font-black text-slate-900">{formatCurrency(l.balance_after, currency)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile view */}
+                  <div className="space-y-2 md:hidden">
+                    {ledger.map((l) => (
+                      <div key={l.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
+                            l.entry_type === "invoice_credit"
+                              ? "bg-red-50 text-red-700 border border-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50"
+                              : l.entry_type === "credit_payment"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
+                              : l.entry_type === "write_off"
+                              ? "bg-rose-50 text-rose-700 border border-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50"
+                              : "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50"
+                          }`}>
+                            {l.entry_type.replace("_", " ")}
+                          </span>
+                          <span className="text-[11px] text-slate-500">{fmtDate(l.created_at)}</span>
+                        </div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200 text-sm mb-1">
+                          {l.description}
+                          {l.invoice_no && (
+                            <Link href={`/invoices/${l.id}`} className="ml-1 text-xs text-blue-700 dark:text-blue-400 hover:underline">
+                              ({l.invoice_no})
+                            </Link>
+                          )}
+                        </div>
+                        {l.reference_number && (
+                          <div className="text-xs text-slate-500 mb-2">
+                            Ref: {l.reference_number}
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                          <div>
+                            {l.direction === "debit" ? (
+                              <span className="font-bold text-red-600 dark:text-red-400">Debit: {formatCurrency(l.amount, currency)}</span>
+                            ) : (
+                              <span className="font-bold text-emerald-700 dark:text-emerald-400">Credit: {formatCurrency(l.amount, currency)}</span>
+                            )}
+                          </div>
+                          <div className="text-slate-500">
+                            Bal: <span className="font-black text-slate-900 dark:text-slate-100">{formatCurrency(l.balance_after, currency)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -357,57 +407,109 @@ export default async function CustomerDetailPage({
                   No invoices created for this customer yet.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm min-w-[600px]">
-                    <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
-                      <tr>
-                        <th className="px-3 py-3">Invoice No</th>
-                        <th className="px-3 py-3">Date</th>
-                        <th className="px-3 py-3 text-right">Grand Total</th>
-                        <th className="px-3 py-3 text-right">Amount Paid</th>
-                        <th className="px-3 py-3 text-right">Balance Due</th>
-                        <th className="px-3 py-3">Status</th>
-                        <th className="px-3 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoices.map((inv) => (
-                        <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/55">
-                          <td className="px-3 py-3 font-bold text-blue-700">
-                            <Link href={`/invoices/${inv.id}`} className="hover:underline">{inv.invoice_no}</Link>
-                          </td>
-                          <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(inv.invoice_date)}</td>
-                          <td className="px-3 py-3 text-right font-semibold text-slate-700">{formatCurrency(inv.grand_total, currency)}</td>
-                          <td className="px-3 py-3 text-right text-emerald-700">{formatCurrency(inv.amount_paid, currency)}</td>
-                          <td className={`px-3 py-3 text-right font-bold ${inv.balance_due > 0 ? "text-red-600" : "text-slate-500"}`}>
-                            {formatCurrency(inv.balance_due, currency)}
-                          </td>
-                          <td className="px-3 py-3">
-                            <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                              inv.status === "paid"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : inv.status === "partial"
-                                ? "bg-amber-100 text-amber-800"
-                                : inv.status === "unpaid"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-slate-200 text-slate-700"
-                            }`}>
-                              {inv.status}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-right">
-                            <Link
-                              href={`/invoices/${inv.id}`}
-                              className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              View invoice
-                            </Link>
-                          </td>
+                <>
+                  {/* Desktop view */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left text-sm min-w-[600px]">
+                      <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
+                        <tr>
+                          <th className="px-3 py-3">Invoice No</th>
+                          <th className="px-3 py-3">Date</th>
+                          <th className="px-3 py-3 text-right">Grand Total</th>
+                          <th className="px-3 py-3 text-right">Amount Paid</th>
+                          <th className="px-3 py-3 text-right">Balance Due</th>
+                          <th className="px-3 py-3">Status</th>
+                          <th className="px-3 py-3 text-right">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {invoices.map((inv) => (
+                          <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/55">
+                            <td className="px-3 py-3 font-bold text-blue-700">
+                              <Link href={`/invoices/${inv.id}`} className="hover:underline">{inv.invoice_no}</Link>
+                            </td>
+                            <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(inv.invoice_date)}</td>
+                            <td className="px-3 py-3 text-right font-semibold text-slate-700">{formatCurrency(inv.grand_total, currency)}</td>
+                            <td className="px-3 py-3 text-right text-emerald-700">{formatCurrency(inv.amount_paid, currency)}</td>
+                            <td className={`px-3 py-3 text-right font-bold ${inv.balance_due > 0 ? "text-red-600" : "text-slate-500"}`}>
+                              {formatCurrency(inv.balance_due, currency)}
+                            </td>
+                            <td className="px-3 py-3">
+                              <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                                inv.status === "paid"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : inv.status === "partial"
+                                  ? "bg-amber-100 text-amber-800"
+                                  : inv.status === "unpaid"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-slate-200 text-slate-700"
+                              }`}>
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-right">
+                              <Link
+                                href={`/invoices/${inv.id}`}
+                                className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                View invoice
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile view */}
+                  <div className="space-y-2 md:hidden">
+                    {invoices.map((inv) => (
+                      <div key={inv.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between mb-2">
+                          <Link href={`/invoices/${inv.id}`} className="font-bold text-blue-700 dark:text-blue-400 text-sm hover:underline">
+                            {inv.invoice_no}
+                          </Link>
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                            inv.status === "paid"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : inv.status === "partial"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                              : inv.status === "unpaid"
+                              ? "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300"
+                              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          }`}>
+                            {inv.status}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mb-2">{fmtDate(inv.invoice_date)}</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-100 dark:border-slate-800 pt-2">
+                          <div>
+                            <span className="text-slate-500">Total:</span>{" "}
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(inv.grand_total, currency)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500">Paid:</span>{" "}
+                            <span className="font-semibold text-emerald-700 dark:text-emerald-400">{formatCurrency(inv.amount_paid, currency)}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center mt-2 pt-2 border-t border-dashed border-slate-100 dark:border-slate-800 text-xs">
+                          <div>
+                            <span className="text-slate-500">Due:</span>{" "}
+                            <span className={`font-bold ${inv.balance_due > 0 ? "text-red-600 dark:text-red-400" : "text-slate-500"}`}>
+                              {formatCurrency(inv.balance_due, currency)}
+                            </span>
+                          </div>
+                          <Link
+                            href={`/invoices/${inv.id}`}
+                            className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          >
+                            View
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -421,38 +523,74 @@ export default async function CustomerDetailPage({
                   No settlements recorded yet.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm min-w-[600px]">
-                    <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
-                      <tr>
-                        <th className="px-3 py-3">Date</th>
-                        <th className="px-3 py-3 text-right">Amount Settled</th>
-                        <th className="px-3 py-3">Method</th>
-                        <th className="px-3 py-3">Reference No</th>
-                        <th className="px-3 py-3">Received By</th>
-                        <th className="px-3 py-3">Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payments.map((pmt) => (
-                        <tr key={pmt.id} className="border-b border-slate-100 hover:bg-slate-50/55">
-                          <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(pmt.created_at)}</td>
-                          <td className="px-3 py-3 text-right font-black text-emerald-700">{formatCurrency(pmt.amount, currency)}</td>
-                          <td className="px-3 py-3">
-                            <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 uppercase">
-                              {pmt.method.replace("_", " ")}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-xs text-slate-500">{pmt.reference_number ?? "—"}</td>
-                          <td className="px-3 py-3 text-xs text-slate-700">{pmt.received_by_name ?? "—"}</td>
-                          <td className="px-3 py-3 text-xs text-slate-600 max-w-[200px] truncate" title={pmt.notes ?? ""}>
-                            {pmt.notes ?? "—"}
-                          </td>
+                <>
+                  {/* Desktop view */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left text-sm min-w-[600px]">
+                      <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
+                        <tr>
+                          <th className="px-3 py-3">Date</th>
+                          <th className="px-3 py-3 text-right">Amount Settled</th>
+                          <th className="px-3 py-3">Method</th>
+                          <th className="px-3 py-3">Reference No</th>
+                          <th className="px-3 py-3">Received By</th>
+                          <th className="px-3 py-3">Notes</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {payments.map((pmt) => (
+                          <tr key={pmt.id} className="border-b border-slate-100 hover:bg-slate-50/55">
+                            <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(pmt.created_at)}</td>
+                            <td className="px-3 py-3 text-right font-black text-emerald-700">{formatCurrency(pmt.amount, currency)}</td>
+                            <td className="px-3 py-3">
+                              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 uppercase">
+                                {pmt.method.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-xs text-slate-500">{pmt.reference_number ?? "—"}</td>
+                            <td className="px-3 py-3 text-xs text-slate-700">{pmt.received_by_name ?? "—"}</td>
+                            <td className="px-3 py-3 text-xs text-slate-600 max-w-[200px] truncate" title={pmt.notes ?? ""}>
+                              {pmt.notes ?? "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile view */}
+                  <div className="space-y-2 md:hidden">
+                    {payments.map((pmt) => (
+                      <div key={pmt.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-slate-500">{fmtDate(pmt.created_at)}</span>
+                          <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase">
+                            {pmt.method.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mb-2">
+                          <span className="text-slate-500 text-xs">Amount Settled:</span>
+                          <span className="font-black text-emerald-700 dark:text-emerald-400">{formatCurrency(pmt.amount, currency)}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-2 mb-1">
+                          <div>
+                            <span>Ref:</span>{" "}
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{pmt.reference_number ?? "—"}</span>
+                          </div>
+                          <div>
+                            <span>Received by:</span>{" "}
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{pmt.received_by_name ?? "—"}</span>
+                          </div>
+                        </div>
+                        {pmt.notes && (
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-2 rounded-lg leading-relaxed">
+                            {pmt.notes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -460,63 +598,109 @@ export default async function CustomerDetailPage({
           {activeTab === "repairs" && (
             <div className="space-y-4">
               <h4 className="text-sm font-bold text-slate-800">Repair History</h4>
-
               {repairs.length === 0 ? (
                 <div className="py-8 text-center text-sm text-slate-500">
                   No repair jobs recorded yet.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm min-w-[700px]">
-                    <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
-                      <tr>
-                        <th className="px-3 py-3">Job No</th>
-                        <th className="px-3 py-3">Device</th>
-                        <th className="px-3 py-3">Problem</th>
-                        <th className="px-3 py-3 text-right">Estimated Cost</th>
-                        <th className="px-3 py-3 text-right">Advance Paid</th>
-                        <th className="px-3 py-3">Status</th>
-                        <th className="px-3 py-3">Expected Delivery</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {repairs.map((rep) => (
-                        <tr key={rep.id} className="border-b border-slate-100 hover:bg-slate-50/55">
-                          <td className="px-3 py-3 font-bold text-slate-900">
-                            <Link href={`/repairs/${rep.id}`} className="text-blue-700 hover:underline">
-                              {rep.job_no}
-                            </Link>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="font-semibold text-slate-800">{rep.device_type}</span>
-                            {rep.device_model && <span className="text-xs text-slate-500 ml-1">({rep.device_model})</span>}
-                          </td>
-                          <td className="px-3 py-3 text-xs text-slate-600 max-w-[200px] truncate" title={rep.problem_description}>
-                            {rep.problem_description}
-                          </td>
-                          <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatCurrency(rep.estimated_cost, currency)}</td>
-                          <td className="px-3 py-3 text-right font-semibold text-slate-700">{formatCurrency(rep.advance_paid, currency)}</td>
-                          <td className="px-3 py-3">
-                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                              rep.status === "delivered"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : rep.status === "completed"
-                                ? "bg-blue-50 text-blue-700"
-                                : rep.status === "cancelled"
-                                ? "bg-rose-50 text-rose-700"
-                                : "bg-amber-50 text-amber-700"
-                            }`}>
-                              {rep.status.replace(/_/g, " ")}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">
-                            {rep.expected_delivery_at ? fmtDate(rep.expected_delivery_at) : "—"}
-                          </td>
+                <>
+                  {/* Desktop view */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left text-sm min-w-[700px]">
+                      <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50">
+                        <tr>
+                          <th className="px-3 py-3">Job No</th>
+                          <th className="px-3 py-3">Device</th>
+                          <th className="px-3 py-3">Problem</th>
+                          <th className="px-3 py-3 text-right">Estimated Cost</th>
+                          <th className="px-3 py-3 text-right">Advance Paid</th>
+                          <th className="px-3 py-3">Status</th>
+                          <th className="px-3 py-3">Expected Delivery</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {repairs.map((rep) => (
+                          <tr key={rep.id} className="border-b border-slate-100 hover:bg-slate-50/55">
+                            <td className="px-3 py-3 font-bold text-slate-900">
+                              <Link href={`/repairs/${rep.id}`} className="text-blue-700 hover:underline">
+                                {rep.job_no}
+                              </Link>
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              <span className="font-semibold text-slate-800">{rep.device_type}</span>
+                              {rep.device_model && <span className="text-xs text-slate-500 ml-1">({rep.device_model})</span>}
+                            </td>
+                            <td className="px-3 py-3 text-xs text-slate-600 max-w-[200px] truncate" title={rep.problem_description}>
+                              {rep.problem_description}
+                            </td>
+                            <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatCurrency(rep.estimated_cost, currency)}</td>
+                            <td className="px-3 py-3 text-right font-semibold text-slate-700">{formatCurrency(rep.advance_paid, currency)}</td>
+                            <td className="px-3 py-3">
+                              <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                                rep.status === "delivered"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : rep.status === "completed"
+                                  ? "bg-blue-50 text-blue-700"
+                                  : rep.status === "cancelled"
+                                  ? "bg-rose-50 text-rose-700"
+                                  : "bg-amber-50 text-amber-700"
+                              }`}>
+                                {rep.status.replace(/_/g, " ")}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">
+                              {rep.expected_delivery_at ? fmtDate(rep.expected_delivery_at) : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile view */}
+                  <div className="space-y-2 md:hidden">
+                    {repairs.map((rep) => (
+                      <div key={rep.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center justify-between mb-2">
+                          <Link href={`/repairs/${rep.id}`} className="font-bold text-blue-700 dark:text-blue-400 text-sm hover:underline">
+                            {rep.job_no}
+                          </Link>
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            rep.status === "delivered"
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : rep.status === "completed"
+                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                              : rep.status === "cancelled"
+                              ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                              : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                          }`}>
+                            {rep.status.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200 text-sm mb-1">
+                          {rep.device_type}
+                          {rep.device_model && <span className="text-xs text-slate-500 ml-1">({rep.device_model})</span>}
+                        </div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400 mb-2 truncate max-w-[300px]">
+                          {rep.problem_description}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-100 dark:border-slate-800 pt-2 mb-1">
+                          <div>
+                            <span className="text-slate-500">Est. Cost:</span>{" "}
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(rep.estimated_cost, currency)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500">Advance Paid:</span>{" "}
+                            <span className="font-semibold text-emerald-700 dark:text-emerald-400">{formatCurrency(rep.advance_paid, currency)}</span>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-dashed border-slate-100 dark:border-slate-800">
+                          Expected Delivery: <span className="font-medium text-slate-800 dark:text-slate-200">{rep.expected_delivery_at ? fmtDate(rep.expected_delivery_at) : "—"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}

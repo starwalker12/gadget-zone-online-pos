@@ -304,19 +304,19 @@ export default async function ExpensesPage({
               </div>
               <ul className="space-y-3 md:hidden">
                 {expenses.map((e) => (
-                  <li key={e.id} className="rounded-xl border border-slate-200 p-4">
+                  <li key={e.id} className="rounded-xl border border-slate-200 bg-[#fff] p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-bold text-slate-900">{e.category}</p>
-                        <p className="text-xs text-slate-500">{fmtDate(e.spent_at)}</p>
-                        <p className="text-xs text-slate-500">{PAYMENT_LABELS[e.payment_method] ?? e.payment_method}{e.vendor_name ? ` · ${e.vendor_name}` : ""}</p>
+                        <p className="font-bold text-slate-900 dark:text-slate-100">{e.category}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{fmtDate(e.spent_at)}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{PAYMENT_LABELS[e.payment_method] ?? e.payment_method}{e.vendor_name ? ` · ${e.vendor_name}` : ""}</p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-lg font-black text-slate-950">{formatCurrency(e.amount, currency)}</p>
+                        <p className="text-lg font-black text-slate-950 dark:text-slate-50">{formatCurrency(e.amount, currency)}</p>
                         <StatusPill status={e.status} />
                       </div>
                     </div>
-                    {e.notes && <p className="mt-2 text-xs text-slate-600">{e.notes}</p>}
+                    {e.notes && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{e.notes}</p>}
                     {canWrite && (
                       <div className="mt-3 flex justify-end">
                         <ExpenseActions id={e.id} status={e.status} />

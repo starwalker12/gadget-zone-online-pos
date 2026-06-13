@@ -87,9 +87,9 @@ export function ReturnForm({
         <form action={action} className="mt-5 space-y-4">
           <input type="hidden" name="invoice_id" value={invoiceId} />
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full min-w-[680px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 md:border block md:table w-full">
+            <table className="w-full block md:table md:min-w-[680px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500 hidden md:table-header-group">
                 <tr>
                   <th className="px-3 py-2">Item</th>
                   <th className="px-3 py-2 text-right">Sold</th>
@@ -99,22 +99,29 @@ export function ReturnForm({
                   <th className="px-3 py-2 text-right">Refund value</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block md:table-row-group space-y-3 md:space-y-0 p-3 md:p-0">
                 {items.map((item) => {
                   const qty = quantities[item.id] ?? 0;
                   return (
-                    <tr key={item.id} className="border-t border-slate-100">
-                      <td className="px-3 py-3">
+                    <tr key={item.id} className="border-t border-slate-100 block md:table-row bg-[#fff] dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 md:p-0 md:border-0 md:border-t mb-3 md:mb-0 shadow-sm md:shadow-none">
+                      <td className="px-3 py-2 md:py-3 block md:table-cell border-b md:border-b-0 border-slate-100 dark:border-slate-800 pb-2 md:pb-3">
                         <input type="hidden" name="invoice_item_id" value={item.id} />
-                        <div className="font-bold text-slate-900">{item.item_name}</div>
-                        <div className="text-xs text-slate-500">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">{item.item_name}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {item.item_type === "service" ? "Service" : "Product"} ·{" "}
                           {formatCurrency(item.return_unit_total, currency)} per returned unit
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-right">{item.quantity_sold}</td>
-                      <td className="px-3 py-3 text-right">{item.quantity_returned}</td>
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-3 py-1.5 md:py-3 block md:table-cell text-left md:text-right text-xs md:text-sm text-slate-500 dark:text-slate-400 before:content-['Sold:_'] before:font-bold before:text-slate-600 dark:before:text-slate-400 md:before:content-none flex justify-between items-center md:block">
+                        <span className="md:hidden">Sold:</span>
+                        <span>{item.quantity_sold}</span>
+                      </td>
+                      <td className="px-3 py-1.5 md:py-3 block md:table-cell text-left md:text-right text-xs md:text-sm text-slate-500 dark:text-slate-400 before:content-['Returned:_'] before:font-bold before:text-slate-600 dark:before:text-slate-400 md:before:content-none flex justify-between items-center md:block">
+                        <span className="md:hidden">Returned:</span>
+                        <span>{item.quantity_returned}</span>
+                      </td>
+                      <td className="px-3 py-1.5 md:py-3 block md:table-cell text-left md:text-right flex justify-between items-center md:table-cell">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 md:hidden">Return Qty:</span>
                         <input
                           name="quantity"
                           type="number"
@@ -132,28 +139,30 @@ export function ReturnForm({
                               ),
                             }))
                           }
-                          className="h-10 w-24 rounded-lg border border-slate-200 px-3 text-right outline-none focus:border-blue-600 disabled:bg-slate-50"
+                          className="h-10 w-24 rounded-lg border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3 text-right outline-none focus:border-blue-600 disabled:bg-slate-50"
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-1.5 md:py-3 block md:table-cell text-left flex justify-between items-center md:table-cell">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 md:hidden">Restock:</span>
                         {item.item_type === "product" ? (
-                          <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
                             <input
                               type="checkbox"
                               name="restock_item_id"
                               value={item.id}
                               defaultChecked
                               disabled={pending || item.quantity_returnable === 0}
-                              className="size-4 rounded border-slate-300"
+                              className="size-4 rounded border-slate-300 dark:border-slate-800 bg-[#fff] dark:bg-slate-900"
                             />
                             Restore stock
                           </label>
                         ) : (
-                          <span className="text-xs font-semibold text-slate-500">No stock</span>
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">No stock</span>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-right font-bold">
-                        {formatCurrency(qty * item.return_unit_total, currency)}
+                      <td className="px-3 py-1.5 md:py-3 block md:table-cell text-right flex justify-between items-center md:table-cell font-bold text-slate-900 dark:text-slate-100">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 md:hidden">Refund Value:</span>
+                        <span>{formatCurrency(qty * item.return_unit_total, currency)}</span>
                       </td>
                     </tr>
                   );

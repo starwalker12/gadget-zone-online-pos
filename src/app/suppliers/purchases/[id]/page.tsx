@@ -116,36 +116,67 @@ export default async function SupplierPurchaseDetailPage({
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="mb-3 text-base font-black text-slate-950">Items received ({items.length})</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-left text-sm">
-                <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-2 py-2">Product</th>
-                    <th className="px-2 py-2 text-right">Qty</th>
-                    <th className="px-2 py-2 text-right">Unit cost</th>
-                    <th className="px-2 py-2 text-right">Line total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((it) => (
-                    <tr key={it.id} className="border-b border-slate-100 align-top">
-                      <td className="px-2 py-2">
-                        <p className="font-bold text-slate-900">{it.product_name}</p>
-                        {it.notes && <p className="text-xs text-slate-500">{it.notes}</p>}
-                        {it.stock_lot_id && (
-                          <p className="text-[10px] uppercase text-slate-400">Lot {it.stock_lot_id.slice(0, 8)}</p>
-                        )}
-                      </td>
-                      <td className="px-2 py-2 text-right font-semibold">{it.quantity}</td>
-                      <td className="px-2 py-2 text-right text-slate-700">{formatCurrency(it.unit_cost, currency)}</td>
-                      <td className="px-2 py-2 text-right font-bold text-slate-900">
-                        {formatCurrency(it.line_total, currency)}
-                      </td>
+            <>
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-2 py-2">Product</th>
+                      <th className="px-2 py-2 text-right">Qty</th>
+                      <th className="px-2 py-2 text-right">Unit cost</th>
+                      <th className="px-2 py-2 text-right">Line total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {items.map((it) => (
+                      <tr key={it.id} className="border-b border-slate-100 align-top">
+                        <td className="px-2 py-2">
+                          <p className="font-bold text-slate-900">{it.product_name}</p>
+                          {it.notes && <p className="text-xs text-slate-500">{it.notes}</p>}
+                          {it.stock_lot_id && (
+                            <p className="text-[10px] uppercase text-slate-400">Lot {it.stock_lot_id.slice(0, 8)}</p>
+                          )}
+                        </td>
+                        <td className="px-2 py-2 text-right font-semibold">{it.quantity}</td>
+                        <td className="px-2 py-2 text-right text-slate-700">{formatCurrency(it.unit_cost, currency)}</td>
+                        <td className="px-2 py-2 text-right font-bold text-slate-900">
+                          {formatCurrency(it.line_total, currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile View */}
+              <div className="space-y-2 md:hidden">
+                {items.map((it) => (
+                  <div key={it.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex justify-between items-start mb-1.5">
+                      <div>
+                        <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight">
+                          {it.product_name}
+                        </h4>
+                        {it.notes && <p className="text-xs text-slate-550 mt-0.5">{it.notes}</p>}
+                        {it.stock_lot_id && (
+                          <p className="text-[10px] uppercase text-slate-400 dark:text-slate-500 mt-1">Lot {it.stock_lot_id.slice(0, 8)}</p>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500">Qty: {it.quantity}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-500">
+                        Unit Cost: <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(it.unit_cost, currency)}</span>
+                      </span>
+                      <span className="text-sm font-black text-slate-900 dark:text-slate-50">
+                        {formatCurrency(it.line_total, currency)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -155,30 +186,55 @@ export default async function SupplierPurchaseDetailPage({
                 No payments recorded against this purchase yet.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    <tr>
-                      <th className="px-2 py-2">Date</th>
-                      <th className="px-2 py-2">Method</th>
-                      <th className="px-2 py-2">Reference</th>
-                      <th className="px-2 py-2 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((p) => (
-                      <tr key={p.id} className="border-b border-slate-100">
-                        <td className="px-2 py-2 text-slate-700">{fmtTime(p.paid_at)}</td>
-                        <td className="px-2 py-2 text-slate-700">{PAYMENT_LABELS[p.method] ?? p.method}</td>
-                        <td className="px-2 py-2 text-slate-500">{p.reference_no ?? "—"}</td>
-                        <td className="px-2 py-2 text-right font-bold text-emerald-700">
-                          {formatCurrency(p.amount, currency)}
-                        </td>
+              <>
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-left text-sm">
+                    <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-2 py-2">Date</th>
+                        <th className="px-2 py-2">Method</th>
+                        <th className="px-2 py-2">Reference</th>
+                        <th className="px-2 py-2 text-right">Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {payments.map((p) => (
+                        <tr key={p.id} className="border-b border-slate-100">
+                          <td className="px-2 py-2 text-slate-700">{fmtTime(p.paid_at)}</td>
+                          <td className="px-2 py-2 text-slate-700">{PAYMENT_LABELS[p.method] ?? p.method}</td>
+                          <td className="px-2 py-2 text-slate-500">{p.reference_no ?? "—"}</td>
+                          <td className="px-2 py-2 text-right font-bold text-emerald-700">
+                            {formatCurrency(p.amount, currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="space-y-2 md:hidden">
+                  {payments.map((p) => (
+                    <div key={p.id} className="rounded-xl border border-slate-200 bg-[#fff] dark:border-slate-800 dark:bg-slate-900 p-3 shadow-sm">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-[11px] text-slate-550">{fmtTime(p.paid_at)}</span>
+                        <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase">
+                          {PAYMENT_LABELS[p.method] ?? p.method}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-500">
+                          Ref: <span className="font-semibold text-slate-800 dark:text-slate-200">{p.reference_no ?? "—"}</span>
+                        </span>
+                        <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">
+                          {formatCurrency(p.amount, currency)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         </div>

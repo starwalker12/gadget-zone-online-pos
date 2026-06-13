@@ -481,52 +481,52 @@ export default async function DailyClosingPage({
           </div>
           <div className="space-y-3 md:hidden">
             {recent.map((r) => (
-              <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4">
+              <div key={r.id} className="rounded-xl border border-slate-200 bg-[#fff] p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900">{fmtDay(r.closing_date)}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{fmtDay(r.closing_date)}</p>
                   </div>
                   {r.is_closed ? (
                     <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
                       Closed
                     </span>
                   ) : (
-                    <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
+                    <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                       Draft
                     </span>
                   )}
                 </div>
                 <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <dt className="text-xs text-slate-500">Bills</dt>
-                    <dd className="font-semibold text-slate-900">{formatNumber(r.bills_count)}</dd>
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">Bills</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-200">{formatNumber(r.bills_count)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500">Cash sales</dt>
-                    <dd className="font-semibold text-slate-900">{formatCurrency(r.cash_sales, currency)}</dd>
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">Cash sales</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-200">{formatCurrency(r.cash_sales, currency)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500">Expected</dt>
-                    <dd className="font-semibold text-slate-900">{formatCurrency(r.expected_closing_cash, currency)}</dd>
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">Expected</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-200">{formatCurrency(r.expected_closing_cash, currency)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500">Counted</dt>
-                    <dd className="font-semibold text-slate-900">{formatCurrency(r.actual_closing_cash, currency)}</dd>
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">Counted</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-200">{formatCurrency(r.actual_closing_cash, currency)}</dd>
                   </div>
                 </dl>
                 <div className="mt-2 flex items-center justify-between">
                   <span className={`text-sm font-bold ${
                     r.cash_difference === 0
-                      ? "text-slate-500"
+                      ? "text-slate-500 dark:text-slate-400"
                       : r.cash_difference > 0
-                        ? "text-emerald-700"
-                        : "text-red-700"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-red-700 dark:text-red-400"
                   }`}>
                     Diff: {formatCurrency(r.cash_difference, currency)}
                   </span>
                   <Link
                     href={`/daily-closing?date=${r.closing_date}`}
-                    className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-305 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Open
                   </Link>

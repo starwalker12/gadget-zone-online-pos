@@ -235,8 +235,8 @@ export default async function InvoiceDetailPage({
           </div>
         </section>
 
-        {/* ── Items table ── */}
-        <div className="overflow-x-auto px-6 py-5 sm:px-8 print:px-0 print:py-4">
+        {/* ── Items table (Desktop/Print) ── */}
+        <div className="hidden md:block print:block overflow-x-auto px-6 py-5 sm:px-8 print:px-0 print:py-4">
           <table className="w-full min-w-[480px] text-left text-sm print:min-w-0">
             <thead>
               <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-400 dark:border-slate-700 dark:text-slate-500">
@@ -288,6 +288,63 @@ export default async function InvoiceDetailPage({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Items cards (Mobile only) ── */}
+        <div className="md:hidden print:hidden space-y-3 px-6 py-4">
+          {invoice.items.map((it) => (
+            <div key={it.id} className="rounded-xl border border-slate-100 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <div>
+                  <h4 className="font-bold text-slate-950 dark:text-slate-50 text-sm leading-tight">
+                    {it.product_name}
+                  </h4>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {it.product_type === "service" ? "Service" : "Product"}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold text-slate-500">Qty: {it.quantity}</span>
+                </div>
+              </div>
+
+              {it.product_type === "service" && hasServiceSplit(it) && (
+                <div className="mb-2 bg-slate-50 dark:bg-slate-950 p-2 rounded-lg text-[11px] text-slate-500 space-y-0.5 leading-relaxed">
+                  {it.service_provider && <p>Provider: {it.service_provider}</p>}
+                  {it.service_transaction_amount > 0 && (
+                    <p>Principal: {formatCurrency(it.service_transaction_amount, currency)}</p>
+                  )}
+                  {it.service_commission > 0 && (
+                    <p>Commission: {formatCurrency(it.service_commission, currency)}</p>
+                  )}
+                  {it.service_reference_no && <p>Ref: {it.service_reference_no}</p>}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center text-xs border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div className="space-y-0.5 text-slate-500">
+                  <div>
+                    Unit Price: <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(it.unit_price, currency)}</span>
+                  </div>
+                  {it.item_discount > 0 && (
+                    <div>
+                      Discount: <span className="font-semibold text-red-600 dark:text-red-400">-{formatCurrency(it.item_discount, currency)}</span>
+                    </div>
+                  )}
+                  {isPrivileged && (
+                    <div className="text-[10px]">
+                      Cost: <span>{formatCurrency(it.purchase_price, currency)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black text-slate-900 dark:text-slate-100">
+                    {formatCurrency(it.line_total, currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* ── Totals ── */}

@@ -17,7 +17,7 @@ export default function UsersLoading() {
         {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[...Array(4)].map((_, index) => (
-            <div key={index} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div key={index} className="rounded-2xl border border-slate-200 bg-[#fff] p-5 dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="size-6 rounded-lg" />
@@ -36,7 +36,7 @@ export default function UsersLoading() {
         </div>
 
         {/* Users table */}
-        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200 bg-[#fff] dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 p-4 dark:border-slate-800">
             <Skeleton className="h-5 w-24" />
           </div>

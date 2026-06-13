@@ -257,76 +257,150 @@ export default async function SupplierStatementPage({
             <p className="text-sm font-semibold text-slate-600">No entries in this period.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto px-6 py-5 sm:px-8 print:px-0 print:py-4">
-            <table className="w-full min-w-[640px] text-left text-sm print:min-w-0">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-400 dark:border-slate-700 dark:text-slate-500">
-                  <th className="pb-3 pr-3">Date</th>
-                  <th className="pb-3 px-2">Type</th>
-                  <th className="pb-3 px-2">Reference</th>
-                  <th className="pb-3 px-2 text-right">Credit</th>
-                  <th className="pb-3 px-2 text-right">Debit</th>
-                  <th className="pb-3 pl-3 text-right">Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-slate-100 dark:border-slate-800">
-                  <td className="py-3 pr-3 text-xs italic text-slate-400">Before {fmtDate(fromStr)}</td>
-                  <td className="py-3 px-2" colSpan={3} />
-                  <td className="py-3 px-2" />
-                  <td className="py-3 pl-3 text-right font-semibold text-slate-700">
-                    {formatCurrency(openingBalance, currency)}
-                  </td>
-                </tr>
-                {entries.map((e) => {
-                  const typeLabel =
-                    e.entry_type === "purchase_credit"
-                      ? "Purchase"
-                      : e.entry_type === "payment_debit"
-                        ? "Payment"
-                        : "Adjustment";
-                  const ref = e.reference_number ?? "—";
-                  const isCredit = e.direction === "credit";
-                  const isDebit = e.direction === "debit";
-                  return (
-                    <tr key={e.id} className="border-b border-slate-100 align-top dark:border-slate-800">
-                      <td className="py-3 pr-3 text-slate-700 dark:text-slate-300">{fmtDateFull(e.created_at)}</td>
-                      <td className="py-3 px-2 text-xs uppercase text-slate-500">{typeLabel}</td>
-                      <td className="py-3 px-2 text-xs text-slate-600 dark:text-slate-400">
-                        {e.purchase_id ? (
-                          <Link
-                            href={`/suppliers/purchases/${e.purchase_id}`}
-                            className="font-semibold text-blue-700 underline dark:text-blue-400"
-                          >
-                            {ref}
-                          </Link>
-                        ) : (
-                          ref
-                        )}
-                      </td>
-                      <td className="py-3 px-2 text-right text-rose-700 tabular-nums">
-                        {isCredit ? formatCurrency(e.amount, currency) : "—"}
-                      </td>
-                      <td className="py-3 px-2 text-right text-emerald-700 tabular-nums">
-                        {isDebit ? formatCurrency(e.amount, currency) : "—"}
-                      </td>
-                      <td className="py-3 pl-3 text-right font-bold text-slate-900 tabular-nums dark:text-slate-100 print:text-slate-900">
-                        {formatCurrency(e.balance_after, currency)}
-                      </td>
-                    </tr>
-                  );
-                })}
-                <tr className="border-t-2 border-slate-300 dark:border-slate-600">
-                  <td className="py-3 pr-3 font-bold text-slate-900 dark:text-slate-100">Closing balance</td>
-                  <td className="py-3 px-2" colSpan={3} />
-                  <td className="py-3 px-2" />
-                  <td className={`py-3 pl-3 text-right font-black tabular-nums ${closingBalance > 0 ? "text-rose-700" : "text-emerald-700"}`}>
-                    {formatCurrency(closingBalance, currency)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Statement Entries (Desktop/Print) */}
+            <div className="hidden md:block print:block overflow-x-auto px-6 py-5 sm:px-8 print:px-0 print:py-4">
+              <table className="w-full min-w-[640px] text-left text-sm print:min-w-0">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                    <th className="pb-3 pr-3">Date</th>
+                    <th className="pb-3 px-2">Type</th>
+                    <th className="pb-3 px-2">Reference</th>
+                    <th className="pb-3 px-2 text-right">Credit</th>
+                    <th className="pb-3 px-2 text-right">Debit</th>
+                    <th className="pb-3 pl-3 text-right">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <td className="py-3 pr-3 text-xs italic text-slate-400">Before {fmtDate(fromStr)}</td>
+                    <td className="py-3 px-2" colSpan={3} />
+                    <td className="py-3 px-2" />
+                    <td className="py-3 pl-3 text-right font-semibold text-slate-700">
+                      {formatCurrency(openingBalance, currency)}
+                    </td>
+                  </tr>
+                  {entries.map((e) => {
+                    const typeLabel =
+                      e.entry_type === "purchase_credit"
+                        ? "Purchase"
+                        : e.entry_type === "payment_debit"
+                          ? "Payment"
+                          : "Adjustment";
+                    const ref = e.reference_number ?? "—";
+                    const isCredit = e.direction === "credit";
+                    const isDebit = e.direction === "debit";
+                    return (
+                      <tr key={e.id} className="border-b border-slate-100 align-top dark:border-slate-800">
+                        <td className="py-3 pr-3 text-slate-700 dark:text-slate-300">{fmtDateFull(e.created_at)}</td>
+                        <td className="py-3 px-2 text-xs uppercase text-slate-500">{typeLabel}</td>
+                        <td className="py-3 px-2 text-xs text-slate-600 dark:text-slate-400">
+                          {e.purchase_id ? (
+                            <Link
+                              href={`/suppliers/purchases/${e.purchase_id}`}
+                              className="font-semibold text-blue-700 underline dark:text-blue-400"
+                            >
+                              {ref}
+                            </Link>
+                          ) : (
+                            ref
+                          )}
+                        </td>
+                        <td className="py-3 px-2 text-right text-rose-700 tabular-nums">
+                          {isCredit ? formatCurrency(e.amount, currency) : "—"}
+                        </td>
+                        <td className="py-3 px-2 text-right text-emerald-700 tabular-nums">
+                          {isDebit ? formatCurrency(e.amount, currency) : "—"}
+                        </td>
+                        <td className="py-3 pl-3 text-right font-bold text-slate-900 tabular-nums dark:text-slate-100 print:text-slate-900">
+                          {formatCurrency(e.balance_after, currency)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t-2 border-slate-300 dark:border-slate-600">
+                    <td className="py-3 pr-3 font-bold text-slate-900 dark:text-slate-100">Closing balance</td>
+                    <td className="py-3 px-2" colSpan={3} />
+                    <td className="py-3 px-2" />
+                    <td className={`py-3 pl-3 text-right font-black tabular-nums ${closingBalance > 0 ? "text-rose-700" : "text-emerald-700"}`}>
+                      {formatCurrency(closingBalance, currency)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Statement Entries (Mobile View) */}
+            <div className="md:hidden print:hidden space-y-3 px-6 py-4">
+              <div className="rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 p-3 flex justify-between items-center text-xs">
+                <span className="font-semibold text-slate-505">Opening balance (before period)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrency(openingBalance, currency)}</span>
+              </div>
+
+              {entries.map((e) => {
+                const typeLabel =
+                  e.entry_type === "purchase_credit"
+                    ? "Purchase"
+                    : e.entry_type === "payment_debit"
+                      ? "Payment"
+                      : "Adjustment";
+                const ref = e.reference_number ?? "—";
+                const isCredit = e.direction === "credit";
+                const isDebit = e.direction === "debit";
+
+                return (
+                  <div key={e.id} className="rounded-xl border border-slate-100 bg-[#fff] dark:border-slate-800 dark:bg-slate-900 p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] text-slate-500">{fmtDateFull(e.created_at)}</span>
+                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                        e.entry_type === "purchase_credit"
+                          ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                          : e.entry_type === "payment_debit"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      }`}>
+                        {typeLabel}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs mb-2">
+                      <span className="text-slate-500">Ref:</span>
+                      {e.purchase_id ? (
+                        <Link
+                          href={`/suppliers/purchases/${e.purchase_id}`}
+                          className="font-bold text-blue-700 dark:text-blue-400 hover:underline"
+                        >
+                          {ref}
+                        </Link>
+                      ) : (
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{ref}</span>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div>
+                        {isCredit ? (
+                          <span className="font-bold text-rose-700 dark:text-rose-400">Credit: {formatCurrency(e.amount, currency)}</span>
+                        ) : isDebit ? (
+                          <span className="font-bold text-emerald-700 dark:text-emerald-400">Debit: {formatCurrency(e.amount, currency)}</span>
+                        ) : null}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 font-medium">
+                        Bal: <span className="font-black text-slate-900 dark:text-slate-100">{formatCurrency(e.balance_after, currency)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 p-3 flex justify-between items-center text-xs font-bold">
+                <span className="text-slate-700 dark:text-slate-300">Closing balance (end of period)</span>
+                <span className={closingBalance > 0 ? "text-rose-700 dark:text-rose-400" : "text-emerald-700 dark:text-emerald-400"}>
+                  {formatCurrency(closingBalance, currency)}
+                </span>
+              </div>
+            </div>
+          </>
         )}
 
         <footer className="border-t border-slate-200 px-6 py-5 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500 print:px-0">

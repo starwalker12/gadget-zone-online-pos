@@ -141,7 +141,8 @@ export default async function ReturnDetailPage({
           </div>
         </section>
 
-        <div className="overflow-x-auto">
+        {/* Returned Items (Desktop/Print) */}
+        <div className="hidden md:block print:block overflow-x-auto">
           <table className="w-full min-w-[500px] text-left text-sm md:min-w-0">
             <thead className="border-y border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
               <tr>
@@ -181,6 +182,49 @@ export default async function ReturnDetailPage({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Returned Items (Mobile screen only) */}
+        <div className="md:hidden print:hidden space-y-3 pt-3">
+          {ret.items.map((it) => (
+            <div key={it.id} className="rounded-xl border border-slate-100 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <div>
+                  <h4 className="font-bold text-slate-950 dark:text-slate-50 text-sm leading-tight">
+                    {it.item_name}
+                  </h4>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {it.item_type === "service" ? "Service" : "Product"}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold text-slate-500">Qty: {it.quantity}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div className="space-y-1 text-slate-500">
+                  <div>
+                    Unit Price: <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(it.unit_price, currency)}</span>
+                  </div>
+                  <div>
+                    Restocked:{" "}
+                    <span
+                      className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                        it.restock
+                          ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50"
+                          : "bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                      }`}
+                    >
+                      {it.restock ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black text-slate-900 dark:text-slate-50">
+                    {formatCurrency(it.line_total, currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         <section className="mt-6 flex flex-col items-stretch gap-4 sm:flex-row sm:justify-between">
