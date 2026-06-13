@@ -59,15 +59,15 @@ export function StatCard({
   const toneStyles = tone ? STAT_CARD_TONE_STYLES[tone] : null;
 
   return (
-    <div className={`rounded-2xl border p-5 shadow-sm ${toneStyles?.card ?? "border-slate-200 bg-[#fff] dark:bg-[#0b1220]"}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className={`text-sm font-semibold ${toneStyles?.label ?? "text-slate-500"}`}>{label}</p>
-          <p className={`mt-2 text-2xl font-black ${toneStyles?.value ?? "text-slate-950"}`}>{value}</p>
+    <div className={`rounded-xl border p-3 shadow-sm md:rounded-2xl md:p-5 ${toneStyles?.card ?? "border-slate-200 bg-[#fff] dark:bg-[#0b1220]"}`}>
+      <div className="flex min-w-0 items-start justify-between gap-2 md:gap-4">
+        <div className="min-w-0">
+          <p className={`truncate text-xs font-semibold md:text-sm ${toneStyles?.label ?? "text-slate-500"}`}>{label}</p>
+          <p className={`mt-1 break-words text-lg font-black leading-tight md:mt-2 md:text-2xl ${toneStyles?.value ?? "text-slate-950"}`}>{value}</p>
         </div>
-        <div className={`rounded-xl p-3 ${toneStyles?.icon ?? "bg-[#eff6ff] text-blue-700 dark:bg-[rgba(255,255,255,0.08)] dark:text-[#22d3ee]"}`}>{icon}</div>
+        <div className={`shrink-0 rounded-lg p-2 md:rounded-xl md:p-3 ${toneStyles?.icon ?? "bg-[#eff6ff] text-blue-700 dark:bg-[rgba(255,255,255,0.08)] dark:text-[#22d3ee]"}`}>{icon}</div>
       </div>
-      <p className={`mt-4 text-sm ${toneStyles?.detail ?? "text-slate-500"}`}>{detail}</p>
+      <p className={`mt-2 text-xs leading-snug md:mt-4 md:text-sm ${toneStyles?.detail ?? "text-slate-500"}`}>{detail}</p>
     </div>
   );
 }

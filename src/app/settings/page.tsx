@@ -78,7 +78,7 @@ export default async function SettingsPage({
         currentTab={currentTab}
         tabs={tabs}
         heading="Settings"
-        description="Configure organizational credentials, manage demonstration databases, or package offline backup archives."
+        description="Manage shop profile, connected accounts, privacy, security, help, and backups."
       >
         {currentTab === "general" && (
           <SettingsForm
@@ -143,7 +143,7 @@ export default async function SettingsPage({
 
 function AccessDeniedView() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center space-y-4">
+    <div className="space-y-4 rounded-2xl border border-slate-200 bg-[#fff] p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <AlertTriangle className="mx-auto size-12 text-amber-500" />
       <h3 className="text-lg font-black text-slate-950">Access Denied</h3>
       <p className="text-sm text-slate-500 max-w-md mx-auto leading-6">

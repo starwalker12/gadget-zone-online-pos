@@ -73,7 +73,7 @@ export default async function ProductsPage({
 
   return (
     <AppShell pageTitle="Catalog">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
         <StatCard
           label="Active products"
           value={formatNumber(counts.productsActive)}
@@ -100,7 +100,7 @@ export default async function ProductsPage({
         />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-[#fff] shadow-sm md:mt-6 md:rounded-2xl">
         <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 py-2">
           {TABS.map((t) => {
             const active = t.id === tab;
@@ -110,7 +110,7 @@ export default async function ProductsPage({
                 key={t.id}
                 href={href}
                 className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold transition ${
-                  active ? "bg-white text-blue-700 shadow" : "text-slate-600 hover:text-slate-900"
+                  active ? "bg-[#fff] text-blue-700 shadow" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {t.label}
@@ -119,7 +119,7 @@ export default async function ProductsPage({
           })}
         </nav>
 
-        <div className="p-5 sm:p-6">
+        <div className="p-3 md:p-6">
           {!canWrite && (
             <p className="mb-5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
               Your role ({profile.role}) can view the catalog but cannot create or edit items.
@@ -187,14 +187,16 @@ async function ProductsTab({
   const isEdit = Boolean(editing);
   const prefillBarcode = params.barcode?.trim();
   const showForm = isEdit || Boolean(prefillBarcode);
+  const hasProductFilters = Boolean(params.q || params.category || params.lowstock || params.inactive);
   const createInitial = prefillBarcode && !isEdit ? { barcode: prefillBarcode } as Partial<ProductRow> : editing;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 md:space-y-5">
       {canWrite && (
-        <details open={showForm} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <summary className="cursor-pointer text-sm font-bold text-slate-800">
-            {isEdit ? `Edit product: ${editing!.name}` : "Add a new product"}
+        <details id="product-form" open={showForm} className="rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg bg-[var(--primary-accent-bg)] px-3 py-2 text-sm font-black text-[var(--primary-accent-text)] outline-none md:min-h-0 md:bg-transparent md:px-0 md:py-0 md:text-slate-800 [&::-webkit-details-marker]:hidden">
+            <span>{isEdit ? `Edit product: ${editing!.name}` : "Add product"}</span>
+            <span className="text-[11px] font-bold opacity-80 md:hidden">Tap to open</span>
           </summary>
           <div className="mt-4">
             <ProductForm
@@ -214,7 +216,62 @@ async function ProductsTab({
         </details>
       )}
 
-      <form className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/products">
+      <form className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden" action="/products">
+        <input type="hidden" name="tab" value="products" />
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <label className="block min-w-0">
+            <span className="sr-only">Search products</span>
+            <input
+              name="q"
+              defaultValue={params.q ?? ""}
+              placeholder="Search products"
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-600"
+            />
+          </label>
+          <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white">
+            Apply
+          </button>
+        </div>
+        <details open={hasProductFilters} className="mt-2 rounded-lg bg-slate-50 px-3 py-2">
+          <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600">
+            Filters
+          </summary>
+          <div className="mt-3 grid gap-3">
+            <label className="block min-w-0">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Category</span>
+              <select
+                name="category"
+                defaultValue={params.category ?? ""}
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600"
+              >
+                <option value="">All</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="grid gap-2">
+              <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3">
+                <input type="checkbox" name="lowstock" value="1" defaultChecked={params.lowstock === "1"} className="size-4" />
+                <span className="text-sm font-semibold text-slate-700">Low stock only</span>
+              </label>
+              <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3">
+                <input type="checkbox" name="inactive" value="1" defaultChecked={params.inactive === "1"} className="size-4" />
+                <span className="text-sm font-semibold text-slate-700">Show archived</span>
+              </label>
+            </div>
+          </div>
+        </details>
+        {hasProductFilters && (
+          <Link href="/products?tab=products" className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-slate-600 underline">
+            Reset filters
+          </Link>
+        )}
+      </form>
+
+      <form className="hidden gap-3 md:grid md:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" action="/products">
         <input type="hidden" name="tab" value="products" />
         <label className="block min-w-0">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</span>
@@ -311,7 +368,7 @@ function lowStockBadge(p: ProductRow) {
   if (p.type === "service") return null;
   if (p.stock_quantity <= p.minimum_stock) {
     return (
-      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800 md:ml-2">
         Low
       </span>
     );
@@ -322,7 +379,7 @@ function lowStockBadge(p: ProductRow) {
 function lossAllowedBadge(p: ProductRow) {
   if (p.allow_sell_at_loss) {
     return (
-      <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-800" title={`Override Reason: ${p.sell_at_loss_reason}`}>
+      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-800 md:ml-2" title={`Override Reason: ${p.sell_at_loss_reason}`}>
         Loss Allowed
       </span>
     );
@@ -400,11 +457,11 @@ function ProductCard({
   suppliers: SupplierRow[];
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-bold text-slate-900">
-            {p.name}
+    <div className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5 font-bold leading-snug text-slate-900">
+            <span className="min-w-0 break-words">{p.name}</span>
             {lowStockBadge(p)}
             {lossAllowedBadge(p)}
           </div>
@@ -422,29 +479,29 @@ function ProductCard({
         </span>
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
           <dt className="text-xs text-slate-500">Sale</dt>
-          <dd className="font-bold text-slate-900">{formatCurrency(p.sale_price, currency)}</dd>
+          <dd className="break-words font-bold leading-tight text-slate-900">{formatCurrency(p.sale_price, currency)}</dd>
         </div>
-        <div>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
           <dt className="text-xs text-slate-500">Cost</dt>
-          <dd>{formatCurrency(p.purchase_price, currency)}</dd>
+          <dd className="break-words leading-tight">{formatCurrency(p.purchase_price, currency)}</dd>
         </div>
-        <div>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
           <dt className="text-xs text-slate-500">Stock</dt>
-          <dd>{p.type === "service" ? "—" : formatNumber(p.stock_quantity)}</dd>
+          <dd className="break-words leading-tight">{p.type === "service" ? "—" : formatNumber(p.stock_quantity)}</dd>
         </div>
-        <div>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
           <dt className="text-xs text-slate-500">Reorder</dt>
-          <dd>{p.type === "service" ? "—" : formatNumber(p.minimum_stock)}</dd>
+          <dd className="break-words leading-tight">{p.type === "service" ? "—" : formatNumber(p.minimum_stock)}</dd>
         </div>
-        <div>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
           <dt className="text-xs text-slate-500">Category</dt>
-          <dd>{p.category_name ?? "—"}</dd>
+          <dd className="truncate">{p.category_name ?? "—"}</dd>
         </div>
-        <div>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
           <dt className="text-xs text-slate-500">Supplier</dt>
-          <dd>{p.supplier_name ?? "—"}</dd>
+          <dd className="truncate">{p.supplier_name ?? "—"}</dd>
         </div>
       </dl>
       {p.type === "product" && p.is_active && (
@@ -456,7 +513,7 @@ function ProductCard({
           canWrite={canWrite}
         />
       )}
-      <div className="mt-3 flex justify-end">
+      <div className="mt-3 flex justify-end border-t border-slate-100 pt-2">
         <ProductActions p={p} canWrite={canWrite} />
       </div>
     </div>
@@ -466,24 +523,24 @@ function ProductCard({
 function ProductActions({ p, canWrite }: { p: ProductRow; canWrite: boolean }) {
   if (!canWrite) return <span className="text-xs text-slate-400">View only</span>;
   return (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       <Link
         href={`/products?tab=products&edit=${p.id}`}
-        className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
       >
         Edit
       </Link>
       {p.is_active ? (
         <ConfirmForm action={archiveProductAction} message="Archive this product? You can restore it later.">
           <input type="hidden" name="id" value={p.id} />
-          <button type="submit" className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+          <button type="submit" className="inline-flex min-h-9 items-center rounded-md border border-red-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
             Archive
           </button>
         </ConfirmForm>
       ) : (
         <form action={unarchiveProductAction}>
           <input type="hidden" name="id" value={p.id} />
-          <button type="submit" className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+          <button type="submit" className="inline-flex min-h-9 items-center rounded-md border border-emerald-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
             Restore
           </button>
         </form>
@@ -600,7 +657,7 @@ function CategoriesTab({
 
 function CategoryCard({ category, canWrite }: { category: CategoryRow; canWrite: boolean }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4">
+    <article className="rounded-xl border border-slate-200 bg-[#fff] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words font-black text-slate-950">{category.name}</h3>
@@ -767,7 +824,7 @@ function SuppliersTab({
 
 function SupplierCard({ supplier, canWrite }: { supplier: SupplierRow; canWrite: boolean }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4">
+    <article className="rounded-xl border border-slate-200 bg-[#fff] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words font-black text-slate-950">{supplier.name}</h3>

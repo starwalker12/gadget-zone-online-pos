@@ -30,10 +30,10 @@ export function CustomerForm({
     "mt-1 h-11 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 disabled:bg-slate-50 disabled:text-slate-500";
 
   return (
-    <form ref={formRef} action={action} className="grid gap-3 sm:grid-cols-2">
+    <form ref={formRef} action={action} className="grid gap-3 md:grid-cols-2">
       {initialValues?.id && <input type="hidden" name="id" value={initialValues.id} />}
 
-      <label className="block sm:col-span-2">
+      <label className="block md:col-span-2">
         <span className="text-sm font-semibold text-slate-700">Full Name</span>
         <input
           required
@@ -68,7 +68,7 @@ export function CustomerForm({
         />
       </label>
 
-      <label className="block sm:col-span-2">
+      <label className="block md:col-span-2">
         <span className="text-sm font-semibold text-slate-700">Address (optional)</span>
         <input
           name="address"
@@ -105,7 +105,7 @@ export function CustomerForm({
         </label>
       </div>
 
-      <label className="block sm:col-span-2">
+      <label className="block md:col-span-2">
         <span className="text-sm font-semibold text-slate-700">Notes (optional)</span>
         <textarea
           name="notes"
@@ -118,21 +118,21 @@ export function CustomerForm({
       </label>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 sm:col-span-2">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 md:col-span-2">
           {state.error}
         </p>
       )}
       {state.success && (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 sm:col-span-2">
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 md:col-span-2">
           {state.success}
         </p>
       )}
 
-      <div className="sm:col-span-2">
+      <div className="md:col-span-2">
         <button
           type="submit"
           disabled={pending || !canWrite}
-          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 cursor-pointer"
+          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 md:h-10 md:w-auto cursor-pointer"
         >
           {pending ? (
             <>

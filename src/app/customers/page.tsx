@@ -65,7 +65,7 @@ export default async function CustomersPage({
   return (
     <AppShell pageTitle="Customers">
       {/* Dynamic Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 xl:grid-cols-4">
         <StatCard
           label="Total customers"
           value={formatNumber(totalCount)}
@@ -92,13 +92,13 @@ export default async function CustomersPage({
         />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-[#fff] shadow-sm md:mt-6 md:rounded-2xl">
+        <div className="border-b border-slate-200 bg-slate-50 px-3 py-3 md:px-5 md:py-4">
           <h2 className="text-base font-black text-slate-950">Customer Management</h2>
           <p className="text-xs text-slate-500">Create, edit, archive profiles and manage active credit lines.</p>
         </div>
 
-        <div className="p-5 sm:p-6">
+        <div className="p-3 md:p-6">
           {!canWrite && (
             <p className="mb-5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
               Your role ({profile.role}) can view customers but cannot edit profiles or record settlements.
@@ -107,9 +107,10 @@ export default async function CustomersPage({
 
           {/* Form Block */}
           {canWrite && (
-            <details open={isEdit} className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <summary className="cursor-pointer text-sm font-bold text-slate-800 outline-none">
+            <details open={isEdit} className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3 md:mb-6 md:p-4">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg bg-[var(--primary-accent-bg)] px-3 py-2 text-sm font-black text-[var(--primary-accent-text)] outline-none md:min-h-0 md:bg-transparent md:px-0 md:py-0 md:text-slate-800 [&::-webkit-details-marker]:hidden">
                 {isEdit ? `Edit customer: ${editing!.name}` : "Create a new customer profile"}
+                <span className="text-[11px] opacity-80 md:hidden">Tap to open</span>
               </summary>
               <div className="mt-4">
                 <CustomerForm key={editing?.id ?? "new"} initialValues={editing} canWrite={canWrite} />
@@ -123,18 +124,23 @@ export default async function CustomersPage({
           )}
 
           {/* Search Filters */}
-          <form className="flex flex-wrap items-end gap-3 mb-6" action="/customers">
-            <label className="block">
+          <form className="mb-4 grid gap-2 rounded-xl border border-slate-200 bg-[#fff] p-3 md:mb-6 md:flex md:flex-wrap md:items-end md:border-0 md:p-0" action="/customers">
+            <div className="grid grid-cols-[1fr_auto] gap-2 md:contents">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</span>
               <input
                 name="q"
                 defaultValue={params.q ?? ""}
                 placeholder="Name or phone number"
-                className="mt-1 h-10 w-64 max-w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 md:w-64"
               />
             </label>
+            <button type="submit" className="mt-5 h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800 md:mt-0">
+              Apply
+            </button>
+            </div>
 
-            <label className="flex items-center gap-2 pb-2">
+            <label className="flex min-h-10 items-center gap-2 rounded-lg bg-slate-50 px-3 md:bg-transparent md:px-0 md:pb-2">
               <input
                 type="checkbox"
                 name="inactive"
@@ -145,12 +151,8 @@ export default async function CustomersPage({
               <span className="text-sm font-semibold text-slate-700">Show archived</span>
             </label>
 
-            <button type="submit" className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800">
-              Apply
-            </button>
-
             {(params.q || params.inactive) && (
-              <Link href="/customers" className="pb-2 text-xs font-semibold text-slate-600 underline">
+              <Link href="/customers" className="inline-flex min-h-9 items-center text-xs font-semibold text-slate-600 underline md:pb-2">
                 Reset filters
               </Link>
             )}
@@ -215,12 +217,12 @@ export default async function CustomersPage({
               </div>
 
               {/* Mobile Card View */}
-              <div className="space-y-3 lg:hidden">
+              <div className="space-y-2 lg:hidden">
                 {filteredCustomers.map((c) => (
-                  <div key={c.id} className="rounded-xl border border-slate-200 p-4 bg-white shadow-sm hover:border-slate-300">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <Link href={`/customers/${c.id}`} className="font-bold text-blue-700 hover:underline text-base">
+                  <div key={c.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm hover:border-slate-300">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link href={`/customers/${c.id}`} className="break-words text-sm font-bold leading-snug text-blue-700 hover:underline">
                           {c.name}
                         </Link>
                         <div className="text-xs text-slate-500">{c.phone ?? "No phone"}</div>
@@ -232,21 +234,21 @@ export default async function CustomersPage({
                       </span>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm border-t border-slate-100 pt-3">
-                      <div>
+                    <div className="mt-2 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-sm">
+                      <div className="rounded-lg bg-slate-50 p-2">
                         <span className="text-xs text-slate-400">Balance Due</span>
                         <div className={`font-bold ${c.outstanding_balance > 0 ? "text-red-600" : "text-emerald-700"}`}>
                           {formatCurrency(c.outstanding_balance, currency)}
                         </div>
                       </div>
-                      <div>
+                      <div className="rounded-lg bg-slate-50 p-2">
                         <span className="text-xs text-slate-400">Credit Limit</span>
                         <div className="font-semibold text-slate-700">{formatCurrency(c.credit_limit, currency)}</div>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <Link href={`/customers/${c.id}`} className="text-xs font-bold text-blue-700 hover:underline">
+                    <div className="mt-2 grid gap-2 border-t border-slate-100 pt-2">
+                      <Link href={`/customers/${c.id}`} className="inline-flex min-h-9 items-center text-xs font-bold text-blue-700 hover:underline">
                         View profile & ledger →
                       </Link>
                       <CustomerActions c={c} canWrite={canWrite} />
@@ -264,10 +266,10 @@ export default async function CustomersPage({
 
 function CustomerActions({ c, canWrite }: { c: CustomerRow; canWrite: boolean }) {
   return (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       <Link
         href={`/customers?edit=${c.id}`}
-        className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 bg-white"
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
       >
         Edit
       </Link>
@@ -278,7 +280,7 @@ function CustomerActions({ c, canWrite }: { c: CustomerRow; canWrite: boolean })
               <input type="hidden" name="id" value={c.id} />
               <button
                 type="submit"
-                className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 bg-white"
+                className="inline-flex min-h-9 items-center rounded-md border border-emerald-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
               >
                 Restore
               </button>
@@ -288,7 +290,7 @@ function CustomerActions({ c, canWrite }: { c: CustomerRow; canWrite: boolean })
               <input type="hidden" name="id" value={c.id} />
               <button
                 type="submit"
-                className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 bg-white"
+                className="inline-flex min-h-9 items-center rounded-md border border-red-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
               >
                 Archive
               </button>

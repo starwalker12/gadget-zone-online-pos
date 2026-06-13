@@ -102,18 +102,23 @@ export function InventorySection({ productId, productName, suppliers, currency, 
   };
 
   return (
-    <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
+    <div className="mt-2 border-t border-slate-100 pt-2 md:mt-4 md:pt-3 dark:border-slate-800">
       <button
         onClick={handleToggle}
-        className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-700 hover:underline outline-none dark:text-slate-200"
+        className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 text-xs font-bold text-blue-700 outline-none hover:bg-blue-100 md:bg-transparent md:px-0 md:uppercase md:tracking-wider md:hover:underline dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 md:dark:bg-transparent"
       >
         <ArrowUpDown className="size-3.5" />
-        {open ? "Hide Inventory Ledger" : "Manage Stock lots & FIFO FIFO Ledger"}
+        {open ? "Hide Inventory Ledger" : (
+          <>
+            <span className="md:hidden">Stock lots &amp; FIFO</span>
+            <span className="hidden md:inline">Manage Stock lots &amp; FIFO Ledger</span>
+          </>
+        )}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl overflow-y-auto max-h-[90vh] dark:border-slate-800 dark:bg-slate-950 text-left">
+          <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-[#fff] p-4 shadow-2xl overflow-y-auto max-h-[90vh] md:p-6 dark:border-slate-800 dark:bg-slate-950 text-left">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 dark:border-slate-800">
               <div>
@@ -142,19 +147,19 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                 {/* Cost & Summary Header */}
                 {summary && (
                   <div className="grid gap-3 grid-cols-2 md:grid-cols-4 mb-4">
-                    <div className="rounded-lg bg-white border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
+                    <div className="rounded-lg bg-[#fff] border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Total remaining</span>
                       <strong className="block mt-1 text-sm font-black text-slate-900 dark:text-white">{formatNumber(summary.totalRemaining)} items</strong>
                     </div>
-                    <div className="rounded-lg bg-white border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
+                    <div className="rounded-lg bg-[#fff] border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">FIFO Weighted Cost</span>
                       <strong className="block mt-1 text-sm font-black text-slate-900 dark:text-white">{formatCurrency(summary.weightedAverageCost, currency)}</strong>
                     </div>
-                    <div className="rounded-lg bg-white border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
+                    <div className="rounded-lg bg-[#fff] border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Cost Batches</span>
                       <strong className="block mt-1 text-sm font-black text-slate-900 dark:text-white">{formatNumber(summary.activeLotsCount)} lots</strong>
                     </div>
-                    <div className="rounded-lg bg-white border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
+                    <div className="rounded-lg bg-[#fff] border border-slate-100 p-3 shadow-xs dark:bg-slate-900 dark:border-slate-800">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Last restock cost</span>
                       <strong className="block mt-1 text-sm font-black text-slate-900 dark:text-white">{formatCurrency(summary.lastPurchaseCost, currency)}</strong>
                     </div>
@@ -166,7 +171,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                   <button
                     onClick={() => setActiveSubTab("lots")}
                     className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                      activeSubTab === "lots" ? "bg-white text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      activeSubTab === "lots" ? "bg-[#fff] text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                     }`}
                   >
                     Active Lots
@@ -174,7 +179,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                   <button
                     onClick={() => setActiveSubTab("movements")}
                     className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                      activeSubTab === "movements" ? "bg-white text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      activeSubTab === "movements" ? "bg-[#fff] text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                     }`}
                   >
                     Movement ledger
@@ -184,7 +189,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                       <button
                         onClick={() => setActiveSubTab("restock")}
                         className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                          activeSubTab === "restock" ? "bg-white text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                          activeSubTab === "restock" ? "bg-[#fff] text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                         }`}
                       >
                         <PlusCircle className="size-3" />
@@ -193,7 +198,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                       <button
                         onClick={() => setActiveSubTab("adjust")}
                         className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                          activeSubTab === "adjust" ? "bg-white text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                          activeSubTab === "adjust" ? "bg-[#fff] text-blue-700 shadow-xs border border-slate-200 dark:bg-slate-900 dark:text-white dark:border-slate-800" : "text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                         }`}
                       >
                         <ArrowUpDown className="size-3" />
@@ -226,7 +231,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                           </thead>
                           <tbody>
                             {lots.map((l) => (
-                              <tr key={l.id} className="border-b border-slate-100 hover:bg-white/50">
+                              <tr key={l.id} className="border-b border-slate-100 hover:bg-[#fff]/50">
                                 <td className="px-2.5 py-2 font-mono font-bold text-slate-800">{l.lot_number ?? "—"}</td>
                                 <td className="px-2.5 py-2 text-slate-600">{fmtDate(l.purchase_date)}</td>
                                 <td className="px-2.5 py-2 text-right text-slate-600">{formatNumber(l.quantity_received)}</td>
@@ -270,7 +275,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                           </thead>
                           <tbody>
                             {movements.map((m) => (
-                              <tr key={m.id} className="border-b border-slate-100 hover:bg-white/50">
+                              <tr key={m.id} className="border-b border-slate-100 hover:bg-[#fff]/50">
                                 <td className="px-2.5 py-2 text-slate-500 whitespace-nowrap">{fmtDate(m.created_at)}</td>
                                 <td className="px-2.5 py-2">
                                   <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
@@ -304,7 +309,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
 
                 {/* 3. Restock Form */}
                 {activeSubTab === "restock" && (
-                  <form action={lotAction} className="rounded-lg bg-white border border-slate-200 p-4 space-y-3">
+                  <form action={lotAction} className="rounded-lg bg-[#fff] border border-slate-200 p-4 space-y-3">
                     <h5 className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                       <PlusCircle className="size-3.5 text-blue-700" />
                       Add restock cost batch lot for {productName}
@@ -343,7 +348,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                         Supplier (Optional)
                         <select
                           name="supplier_id"
-                          className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600 text-sm font-semibold bg-white"
+                          className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600 text-sm font-semibold bg-[#fff]"
                         >
                           <option value="">No supplier</option>
                           {suppliers.map((s) => (
@@ -395,7 +400,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
 
                 {/* 4. Manual Stock Adjustment Form */}
                 {activeSubTab === "adjust" && (
-                  <form action={adjustAction} className="rounded-lg bg-white border border-slate-200 p-4 space-y-3">
+                  <form action={adjustAction} className="rounded-lg bg-[#fff] border border-slate-200 p-4 space-y-3">
                     <h5 className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                       <ArrowUpDown className="size-3.5 text-blue-700" />
                       Perform Manual Inventory Audit/Adjustment for {productName}
@@ -421,7 +426,7 @@ export function InventorySection({ productId, productName, suppliers, currency, 
                         <select
                           name="adjustment_type"
                           required
-                          className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600 text-sm font-semibold bg-white"
+                          className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 outline-none focus:border-blue-600 text-sm font-semibold bg-[#fff]"
                         >
                           <option value="in">Adjustment IN (+ Stock)</option>
                           <option value="out">Adjustment OUT (- Stock)</option>

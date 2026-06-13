@@ -42,10 +42,10 @@ export function ProductForm({
   const activeSuppliers = suppliers.filter((s) => s.is_active || s.id === initialValues?.supplier_id);
 
   return (
-    <form ref={formRef} action={action} className="grid gap-3 sm:grid-cols-2">
+    <form ref={formRef} action={action} className="grid gap-3 md:grid-cols-2">
       {initialValues?.id && <input type="hidden" name="id" value={initialValues.id} />}
 
-      <label className="block sm:col-span-2">
+      <label className="block md:col-span-2">
         <span className="text-sm font-semibold text-slate-700">Name</span>
         <input required name="name" defaultValue={initialValues?.name ?? ""} disabled={!canWrite} className={input} />
       </label>
@@ -56,7 +56,7 @@ export function ProductForm({
       </label>
       <div className="block">
         <span className="text-sm font-semibold text-slate-700">Barcode (optional)</span>
-        <div className="mt-1 flex gap-2">
+        <div className="mt-1 flex min-w-0 gap-2">
           <input
             ref={barcodeRef}
             name="barcode"
@@ -163,7 +163,7 @@ export function ProductForm({
         />
       </label>
 
-      <label className="block sm:col-span-2">
+      <label className="block md:col-span-2">
         <span className="text-sm font-semibold text-slate-700">Notes (optional)</span>
         <textarea
           name="notes"
@@ -197,7 +197,7 @@ export function ProductForm({
       </label>
 
       {!isService && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2 space-y-3">
+        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3 md:col-span-2 md:p-4">
           <label className="flex items-start gap-2">
             <input
               type="checkbox"
@@ -237,16 +237,16 @@ export function ProductForm({
       )}
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 sm:col-span-2">{state.error}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 md:col-span-2">{state.error}</p>
       )}
       {state.success && (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 sm:col-span-2">{state.success}</p>
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 md:col-span-2">{state.success}</p>
       )}
-      <div className="sm:col-span-2">
+      <div className="md:col-span-2">
         <button
           type="submit"
           disabled={pending || !canWrite}
-          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 cursor-pointer"
+          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60 md:h-10 md:w-auto cursor-pointer"
         >
           {pending ? (
             <>

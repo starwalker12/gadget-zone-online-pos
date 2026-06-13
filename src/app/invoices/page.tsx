@@ -43,15 +43,15 @@ export default async function InvoicesPage() {
 
   return (
     <AppShell pageTitle="Invoices">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-[#fff] shadow-sm dark:border-white/[0.07] dark:bg-[#060f20]">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-white/[0.07]">
-          <div>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#fff] shadow-sm md:rounded-2xl dark:border-white/[0.07] dark:bg-[#060f20]">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-3 md:px-5 md:py-4 dark:border-white/[0.07]">
+          <div className="min-w-0">
             <h2 className="text-base font-black text-slate-950 dark:text-slate-50">All invoices</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Most recent first.</p>
           </div>
           <Link
             href="/pos"
-            className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 cursor-pointer"
+            className="inline-flex min-h-10 shrink-0 items-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-bold text-white hover:bg-blue-800 md:px-4 cursor-pointer"
           >
             New sale
           </Link>
@@ -108,31 +108,37 @@ export default async function InvoicesPage() {
                 </tbody>
               </table>
             </div>
-            <ul className="divide-y divide-slate-100 dark:divide-white/[0.05] md:hidden">
+            <ul className="space-y-2 p-2 pb-[calc(1rem+env(safe-area-inset-bottom))] md:hidden">
               {invoices.map((inv) => (
-                <li key={inv.id} className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-slate-100">{inv.invoice_no}</p>
+                <li key={inv.id} className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-white/[0.07] dark:bg-slate-950">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-slate-900 dark:text-slate-100">{inv.invoice_no}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{fmtDate(inv.invoice_date)}</p>
-                      <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{inv.customer_name ?? "Walk-in"}</p>
+                      <p className="mt-0.5 truncate text-sm text-slate-700 dark:text-slate-300">{inv.customer_name ?? "Walk-in"}</p>
                     </div>
                     <StatusPill status={inv.status} />
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-sm">
-                    <div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                    <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-white/[0.04]">
                       <p className="text-xs text-slate-500 dark:text-slate-400">Total</p>
-                      <p className="font-bold text-slate-900 dark:text-slate-100">{formatCurrency(inv.grand_total, currency)}</p>
+                      <p className="break-words text-[11px] font-bold leading-tight text-slate-900 min-[380px]:text-xs dark:text-slate-100">{formatCurrency(inv.grand_total, currency)}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-white/[0.04]">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Paid</p>
+                      <p className="break-words text-[11px] font-semibold leading-tight text-slate-700 min-[380px]:text-xs dark:text-slate-300">{formatCurrency(inv.amount_paid, currency)}</p>
+                    </div>
+                    <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-white/[0.04]">
                       <p className="text-xs text-slate-500 dark:text-slate-400">Due</p>
-                      <p className={inv.balance_due > 0 ? "font-bold text-red-700 dark:text-red-400" : "font-semibold text-slate-500 dark:text-slate-400"}>
+                      <p className={inv.balance_due > 0 ? "break-words text-[11px] font-bold leading-tight text-red-700 min-[380px]:text-xs dark:text-red-400" : "break-words text-[11px] font-semibold leading-tight text-slate-500 min-[380px]:text-xs dark:text-slate-400"}>
                         {formatCurrency(inv.balance_due, currency)}
                       </p>
                     </div>
+                  </div>
+                  <div className="mt-2 flex justify-end border-t border-slate-100 pt-2 dark:border-white/[0.05]">
                     <Link
                       href={`/invoices/${inv.id}`}
-                      className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
+                      className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
                     >
                       View
                     </Link>
