@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { saveSidebarPreferences, useUIPreferencesSync } from "@/lib/use-ui-preferences";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard,
@@ -132,6 +133,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
   useUIPreferencesSync();
   const pathname = usePathname();
   const { dict } = useLanguage();
+  const confirm = useConfirmDialog();
   const [rearrangeMode, setRearrangeMode] = useState(false);
   const logoUrl = appLogoUrl || "/saledock-logo-mark.png";
   const sidebarDict = dict.sidebar as Record<string, string> | undefined;
@@ -284,7 +286,17 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
     writeStoredPreferences(next);
   };
 
-  const resetSidebar = () => {
+  const resetSidebar = async () => {
+    const shouldReset = await confirm({
+      title: "Reset sidebar?",
+      message: "Are you sure you want to reset the sidebar and bottom tabs to their default setup?",
+      confirmLabel: "Reset",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+
+    if (!shouldReset) return;
+
     clearStoredPreferences();
     setArchiveOpen(false);
   };
@@ -667,7 +679,7 @@ export function SidebarNav({ items, appLogoUrl }: { items: NavItem[]; appLogoUrl
                     <li key={item.href} className="flex items-center gap-2 rounded-xl p-1">
                       <Link
                         href={item.href}
-                        onClick={() => unarchiveItem(item.href)}
+                        onClick={() => setArchiveOpen(false)}
                         className="flex min-h-10 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[var(--sidebar-inactive)] transition hover:bg-[var(--sidebar-hover-overlay)] hover:text-[var(--sidebar-active-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-active-accent)]"
                       >
                         {Icon && <Icon className="size-4 shrink-0" />}

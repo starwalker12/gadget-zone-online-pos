@@ -30,6 +30,17 @@ export function ReturnForm({
 }) {
   const [state, action, pending] = useActionState(createInvoiceReturnAction, initial);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [localSuccess, setLocalSuccess] = useState<ReturnActionState | null>(null);
+  const [prevSuccess, setPrevSuccess] = useState<string | null>(null);
+
+  if (state.success !== prevSuccess) {
+    setPrevSuccess(state.success);
+    if (state.success) {
+      setLocalSuccess(state);
+    }
+  }
+
+  const successData = state.success ? state : localSuccess;
 
   const refundTotal = useMemo(
     () =>
@@ -53,7 +64,7 @@ export function ReturnForm({
     );
   }
 
-  if (state.success) {
+  if (successData?.success) {
     return (
       <section className="print-hidden mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 dark:border-emerald-800 dark:bg-emerald-950/20 text-center flex flex-col items-center">
         <div className="flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 mb-3">
@@ -61,28 +72,28 @@ export function ReturnForm({
         </div>
         <h2 className="text-lg font-black text-slate-950 dark:text-slate-50">Return Processed</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {state.success}
+          {successData.success}
         </p>
 
-        {state.returnNo && (
+        {successData.returnNo && (
           <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-[#fff] dark:bg-slate-900 p-4 text-left w-full max-w-sm space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 dark:text-slate-400">Return No:</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">{state.returnNo}</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{successData.returnNo}</span>
             </div>
-            {state.refundAmount !== undefined && state.refundAmount !== null && (
+            {successData.refundAmount !== undefined && successData.refundAmount !== null && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500 dark:text-slate-400">Refund Amount:</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100">{formatCurrency(state.refundAmount, currency)}</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">{formatCurrency(successData.refundAmount, currency)}</span>
               </div>
             )}
           </div>
         )}
 
         <div className="mt-6 flex flex-col sm:flex-row gap-2 w-full max-w-sm">
-          {state.returnId && (
+          {successData.returnId && (
             <a
-              href={`/returns/${state.returnId}`}
+              href={`/returns/${successData.returnId}`}
               className="flex-1 inline-flex h-11 items-center justify-center rounded-xl bg-blue-700 font-bold text-[#fff] hover:bg-blue-800 transition cursor-pointer select-none"
             >
               View return
