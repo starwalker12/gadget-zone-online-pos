@@ -93,7 +93,7 @@ export function ReturnForm({
             onClick={() => {
               window.location.reload();
             }}
-            className="flex-1 inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-[#fff] dark:border-slate-800 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer select-none"
+            className="flex-1 inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-[#fff] dark:border-slate-800 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer select-none"
           >
             Refresh invoice
           </button>
