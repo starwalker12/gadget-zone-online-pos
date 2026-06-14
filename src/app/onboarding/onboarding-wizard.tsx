@@ -328,8 +328,8 @@ export function OnboardingWizard({
                   isActive
                     ? "text-slate-900 dark:text-white"
                     : isCompleted
-                      ? "text-slate-600 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200"
-                      : "text-slate-400 dark:text-slate-650"
+                      ? "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                      : "text-slate-400 dark:text-slate-600"
                 }`}
               >
                 {STEP_LABELS[s]}
@@ -741,7 +741,7 @@ function ShopStep({
             type="checkbox"
             checked={data.showMap === "true"}
             onChange={(e) => onChange("showMap", e.target.checked ? "true" : "false")}
-            className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-teal-650 focus:ring-teal-500"
+            className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-teal-600 focus:ring-teal-500"
           />
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Show map on receipts and profile</span>
         </label>
@@ -810,7 +810,7 @@ function BranchStep({
           type="checkbox"
           checked={useShopDetails}
           onChange={(e) => handleUseShopDetails(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-teal-650 focus:ring-teal-500"
+          className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-teal-600 focus:ring-teal-500"
         />
         <div>
           <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Use same details as shop profile</span>

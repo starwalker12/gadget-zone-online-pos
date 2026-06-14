@@ -397,7 +397,7 @@ export default async function SupplierPurchasesPage({
                       className={`shrink-0 rounded-full px-2.5 py-1 transition-colors ${
                         isCurrent
                           ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 font-bold"
-                          : "bg-slate-100 text-slate-650 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
                       }`}
                       aria-label={`Sort by ${label} ${isCurrent && dir === "asc" ? "descending" : "ascending"}`}
                     >

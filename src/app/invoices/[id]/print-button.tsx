@@ -300,7 +300,7 @@ export function PrintButton({ invoiceNo, customerPhone, invoice, shopName }: Pri
               <h3 className="mt-4 text-lg font-black text-slate-900 dark:text-white">
                 Share Invoice
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-650 dark:text-slate-400">
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                 We have attempted to open WhatsApp with the text invoice. If it did not open, you can click the button below or copy the message.
               </p>
             </div>
