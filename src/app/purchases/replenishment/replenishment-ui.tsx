@@ -33,8 +33,8 @@ function ReplenishmentHeader({
     <button
       onClick={() => onSort(columnKey)}
       aria-label={ariaLabel}
-      className={`group flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 font-bold uppercase transition-colors cursor-pointer select-none ${
-        align === "right" ? "justify-end text-right w-full" : "justify-start text-left"
+      className={`group flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 font-bold uppercase transition-colors cursor-pointer select-none w-full ${
+        align === "right" ? "justify-end text-right" : "justify-start text-left"
       } ${className}`}
     >
       <span>{label}</span>
@@ -336,8 +336,8 @@ function SupplierGroupCard({
             <div className="col-span-1 text-right">
               <ReplenishmentHeader label="Total" columnKey="estimatedCost" currentSortKey={sortBy} direction={sortDir} onSort={onSort} align="right" />
             </div>
-            <div className="col-span-1">
-              <ReplenishmentHeader label="Priority" columnKey="priority" currentSortKey={sortBy} direction={sortDir} onSort={onSort} />
+            <div className="col-span-1 text-right">
+              <ReplenishmentHeader label="Priority" columnKey="priority" currentSortKey={sortBy} direction={sortDir} onSort={onSort} align="right" />
             </div>
           </div>
 

@@ -393,7 +393,7 @@ export default async function AuditLogPage({
                   {sortedLogs.map((log) => {
                     const severity = actionSeverity(log.action);
                     return (
-                      <tr key={log.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                      <tr key={log.id} className="border-b border-slate-100 hover:bg-slate-50/50 dark:hover:bg-white/[0.03]">
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-xs text-slate-500">
                             <Clock className="size-3.5 shrink-0" />
