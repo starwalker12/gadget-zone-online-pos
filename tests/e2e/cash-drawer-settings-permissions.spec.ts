@@ -56,6 +56,13 @@ test.describe("Cash Drawer, Settings, and Permissions Smoke Tests", () => {
         .or(page.locator("text=User Accounts"))
     ).toBeVisible({ timeout: 10000 });
 
+    // Verify sorting exists if staff access is allowed
+    const staffAccessHeader = page.locator("text=Staff access");
+    if (await staffAccessHeader.count() > 0) {
+      const sortBtnStaff = page.locator("button[aria-label^='Sort by Staff']").first();
+      await expect(sortBtnStaff).toBeVisible();
+    }
+
     // Visit staff permissions page
     await page.goto("/settings/permissions");
     await expect(

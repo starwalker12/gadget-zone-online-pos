@@ -112,7 +112,7 @@ export default async function CustomersPage({
 
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-[#fff] dark:border-white/[0.07] dark:bg-[#060f20] shadow-sm md:mt-6 md:rounded-2xl">
         <div className="border-b border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.02] px-3 py-3 md:px-5 md:py-4">
-          <h2 className="text-base font-black text-slate-950 dark:text-slate-55">Customer Management</h2>
+          <h2 className="text-base font-black text-slate-950 dark:text-slate-100">Customer Management</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">Create, edit, archive profiles and manage active credit lines.</p>
         </div>
 

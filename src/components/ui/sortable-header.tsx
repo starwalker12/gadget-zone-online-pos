@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 export function SortableHeader({
   label,
@@ -43,12 +43,21 @@ export function SortableHeader({
     ? `Sort by ${label} ${nextDir === "asc" ? "ascending" : "descending"}`
     : `Sort by ${label} ascending`;
 
+  const ariaSort = isSorted
+    ? direction === "asc"
+      ? "ascending"
+      : "descending"
+    : "none";
+
   return (
-    <th className={`${className} p-0 select-none border-b border-slate-200 dark:border-white/[0.07]`}>
+    <th
+      aria-sort={ariaSort}
+      className={`${className} p-0 select-none border-b border-slate-200 dark:border-white/[0.07]`}
+    >
       <Link
         href={href}
         aria-label={ariaLabel}
-        className={`flex items-center gap-1 px-4 py-3 font-bold uppercase transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04] cursor-pointer w-full ${alignClass}`}
+        className={`group flex items-center gap-1 px-4 py-3 font-bold uppercase transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04] cursor-pointer w-full ${alignClass}`}
       >
         <span>{label}</span>
         {isSorted ? (
@@ -58,9 +67,7 @@ export function SortableHeader({
             <ArrowDown className="size-3.5 shrink-0 text-blue-700 dark:text-blue-400" />
           )
         ) : (
-          <span className="size-3.5 shrink-0 opacity-20 group-hover:opacity-100 transition-opacity">
-            {/* Very subtle neutral indicator */}
-          </span>
+          <ArrowUpDown className="size-3.5 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity text-slate-400 dark:text-slate-500" />
         )}
       </Link>
     </th>

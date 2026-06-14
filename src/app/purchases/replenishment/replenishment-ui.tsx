@@ -24,20 +24,28 @@ function ReplenishmentHeader({
   className?: string;
 }) {
   const isSorted = currentSortKey === columnKey;
+  const nextDir = isSorted && direction === "asc" ? "desc" : "asc";
+  const ariaLabel = isSorted
+    ? `Sort by ${label} ${nextDir === "asc" ? "ascending" : "descending"}`
+    : `Sort by ${label} ascending`;
+
   return (
     <button
       onClick={() => onSort(columnKey)}
-      className={`flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 font-bold uppercase transition-colors cursor-pointer select-none ${
+      aria-label={ariaLabel}
+      className={`group flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 font-bold uppercase transition-colors cursor-pointer select-none ${
         align === "right" ? "justify-end text-right w-full" : "justify-start text-left"
       } ${className}`}
     >
       <span>{label}</span>
-      {isSorted && (
+      {isSorted ? (
         direction === "asc" ? (
           <ArrowUp className="size-3 shrink-0 text-blue-700 dark:text-blue-400" />
         ) : (
           <ArrowDown className="size-3 shrink-0 text-blue-700 dark:text-blue-400" />
         )
+      ) : (
+        <ArrowUpDown className="size-3 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity text-slate-400 dark:text-slate-500" />
       )}
     </button>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useMemo } from "react";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   deactivateUserAction,
   inviteUserAction,
@@ -111,6 +111,11 @@ function SortableHeader({
   className?: string;
 }) {
   const isSorted = currentSortKey === columnKey;
+  const nextDir = isSorted && direction === "asc" ? "desc" : "asc";
+  const ariaLabel = isSorted
+    ? `Sort by ${label} ${nextDir === "asc" ? "ascending" : "descending"}`
+    : `Sort by ${label} ascending`;
+
   const alignClass =
     align === "right"
       ? "justify-end text-right"
@@ -123,15 +128,18 @@ function SortableHeader({
       <button
         type="button"
         onClick={() => onSort(columnKey)}
-        className={`flex items-center gap-1 px-4 py-3 font-bold uppercase transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04] cursor-pointer w-full ${alignClass}`}
+        aria-label={ariaLabel}
+        className={`group flex items-center gap-1 px-4 py-3 font-bold uppercase transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04] cursor-pointer w-full ${alignClass}`}
       >
         <span>{label}</span>
-        {isSorted && (
+        {isSorted ? (
           direction === "asc" ? (
             <ArrowUp className="size-3.5 shrink-0 text-blue-700 dark:text-blue-400" />
           ) : (
             <ArrowDown className="size-3.5 shrink-0 text-blue-700 dark:text-blue-400" />
           )
+        ) : (
+          <ArrowUpDown className="size-3.5 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity text-slate-400 dark:text-slate-500" />
         )}
       </button>
     </th>
@@ -270,7 +278,7 @@ export function UserManagementClient({
                   <td className="px-4 py-3"><RoleBadge role={user.role} /></td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{user.branch_name ?? "No branch"}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${user.is_active ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-205 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${user.is_active ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
                       {user.is_active ? "Active" : "Inactive"}
                     </span>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{user.invite_status}</p>

@@ -69,8 +69,33 @@ test.describe("Customers, Products, Expenses, and Suppliers Smoke Tests", () => 
     await page.goto("/suppliers/dues");
     await expect(page.locator("text=Total supplier dues").or(page.locator("text=Supplier dues"))).toBeVisible({ timeout: 10000 });
 
+    // Verify accessible Sort link on Dues
+    const sortLinkSupplier = page.locator("a[aria-label^='Sort by Supplier']").first();
+    await expect(sortLinkSupplier).toBeVisible();
+
     // Visit Purchases page
     await page.goto("/suppliers/purchases");
     await expect(page.locator("text=Purchases this month").or(page.locator("text=Supplier Purchases"))).toBeVisible({ timeout: 10000 });
+
+    // Verify accessible Sort link on Purchases
+    const sortLinkDate = page.locator("a[aria-label^='Sort by Date']").first();
+    await expect(sortLinkDate).toBeVisible();
+  });
+
+  test("Replenishment Section Smoke Test", async ({ page }) => {
+    await page.goto("/purchases/replenishment");
+    await expect(page.locator("text=Replenishment").or(page.locator("text=Suggested Orders")).or(page.locator("text=Reorder"))).toBeVisible({ timeout: 10000 });
+
+    // Verify sorting select is present
+    const sortSelect = page.locator("select").first();
+    await expect(sortSelect).toBeVisible();
+  });
+
+  test("Customers Dark Mode Smoke Test", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("theme", "dark");
+    });
+    await page.goto("/customers");
+    await expect(page.locator("text=Customer Management")).toBeVisible({ timeout: 10000 });
   });
 });

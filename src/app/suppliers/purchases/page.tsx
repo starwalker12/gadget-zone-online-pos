@@ -366,6 +366,46 @@ export default async function SupplierPurchasesPage({
               </table>
             </div>
             <div className="space-y-3 md:hidden">
+              {/* Mobile Sort Controls */}
+              <div className="flex flex-nowrap overflow-x-auto items-center gap-2 pb-3 text-xs font-semibold text-slate-500 border-b border-slate-100 dark:border-slate-800 scrollbar-none">
+                <span className="shrink-0">Sort by:</span>
+                {(
+                  [
+                    { key: "purchase_date", label: "Date" },
+                    { key: "purchase_no", label: "Purchase #" },
+                    { key: "supplier_name", label: "Supplier" },
+                    { key: "grand_total", label: "Total" },
+                    { key: "amount_paid", label: "Paid" },
+                    { key: "balance_due", label: "Balance" },
+                    { key: "status", label: "Status" },
+                  ] as const
+                ).map(({ key, label }) => {
+                  const isCurrent = sort === key;
+                  const activeDir = isCurrent && dir === "asc" ? "desc" : "asc";
+                  const newParams = new URLSearchParams();
+                  Object.entries(params).forEach(([k, v]) => {
+                    if (v != null && v !== "") newParams.set(k, String(v));
+                  });
+                  newParams.set("sort", key);
+                  newParams.set("dir", activeDir);
+                  const href = `?${newParams.toString()}`;
+
+                  return (
+                    <Link
+                      key={key}
+                      href={href}
+                      className={`shrink-0 rounded-full px-2.5 py-1 transition-colors ${
+                        isCurrent
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 font-bold"
+                          : "bg-slate-100 text-slate-650 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                      }`}
+                      aria-label={`Sort by ${label} ${isCurrent && dir === "asc" ? "descending" : "ascending"}`}
+                    >
+                      {label} {isCurrent && (dir === "asc" ? "↑" : "↓")}
+                    </Link>
+                  );
+                })}
+              </div>
               {sortedPurchases.map((p) => (
                 <div key={p.id} className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
