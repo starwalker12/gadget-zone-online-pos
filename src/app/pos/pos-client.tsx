@@ -449,6 +449,7 @@ export function PosClient({ products: initialProducts, customers: initialCustome
                 <button
                   type="button"
                   key={p.id}
+                  data-testid="pos-product-btn"
                   onClick={() => addToCart(p)}
                   disabled={outOfStock || !canCheckout}
                   className={`flex min-h-36 h-full flex-col rounded-xl border p-3 text-left transition ${
@@ -718,6 +719,7 @@ export function PosClient({ products: initialProducts, customers: initialCustome
                 type="number"
                 min={0}
                 step="0.01"
+                data-testid="pos-amount-tendered-input"
                 value={paymentMethod === "customer_credit" ? "0" : amountPaid}
                 disabled={paymentMethod === "customer_credit"}
                 onChange={(e) => setAmountPaid(e.target.value)}
@@ -725,6 +727,7 @@ export function PosClient({ products: initialProducts, customers: initialCustome
               />
               <button
                 type="button"
+                data-testid="pos-exact-tender-btn"
                 disabled={paymentMethod === "customer_credit"}
                 onClick={() => setAmountPaid(String(grandTotal))}
                 className="h-10 shrink-0 rounded-lg border border-slate-200 bg-[#fff] dark:bg-slate-900 px-3 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-transparent"
@@ -761,6 +764,7 @@ export function PosClient({ products: initialProducts, customers: initialCustome
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
+              data-testid="pos-note-input"
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-blue-600"
             />
           </label>
@@ -795,6 +799,7 @@ export function PosClient({ products: initialProducts, customers: initialCustome
           <button
             type="button"
             onClick={checkout}
+            data-testid="pos-checkout-btn"
             disabled={!canCheckout || pending || cart.length === 0 || isCreditAndMissingCustomer}
             className="h-12 rounded-lg bg-blue-700 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-60"
           >

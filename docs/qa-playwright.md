@@ -45,7 +45,9 @@ npm run qa:e2e:ui
 
 ## Important Testing Rules & Safety
 
-1. **Target Previews/Staging Only**: Never run mutation tests against a live production database with real shop data by default. The config defaults to `http://localhost:3000`.
-2. **Missing Credentials (Skip Behavior)**: If `PLAYWRIGHT_TEST_EMAIL` or `PLAYWRIGHT_TEST_PASSWORD` are missing from the environment, the tests will skip automatically and print a warning message instead of failing the run.
-3. **Data Mutation Warnings**: The POS sale and return smoke test will add a test transaction to the active shop and process a refund/return item. Always run tests using a **staging, sandbox, or test account** to avoid cluttering real business reports.
-4. **Zero Impact on Production**: The E2E tests are external scripts that interact with the UI. They do not change any of the application business logic, calculations, database triggers, or Supabase configurations.
+1. **Target Previews/Staging Only**: Never run mutating tests against a live production database with real shop data by default. The config defaults to `http://localhost:3000`.
+2. **Production Mutation Guard**: If the `PLAYWRIGHT_BASE_URL` contains `saledock.site` or `saledock-cloud-pos.vercel.app`, any POS checkouts or returns (mutations) will be **blocked by default** and skip automatically. To override this guard (e.g. on a dedicated test account on production), set `PLAYWRIGHT_ALLOW_PRODUCTION_MUTATIONS=true`.
+3. **Missing Credentials (Skip Behavior)**: If `PLAYWRIGHT_TEST_EMAIL` or `PLAYWRIGHT_TEST_PASSWORD` are missing from the environment, the tests will skip automatically and print a warning message instead of failing the run.
+4. **Data Mutation Warnings**: The POS sale and return smoke test will add a test transaction to the active shop and process a refund/return item. Always run tests using a **staging, sandbox, or test account** to avoid cluttering real business reports. Test transactions will be automatically tagged in the invoice note with a `TEST-PLAYWRIGHT-` prefix.
+5. **Serial Execution**: Tests run serially with a single worker (`workers: 1`) to prevent checkout collision when executing on a single test account/shop.
+6. **Zero Impact on Production**: The E2E tests are external scripts that interact with the UI. They do not change any of the application business logic, calculations, database triggers, or Supabase configurations.

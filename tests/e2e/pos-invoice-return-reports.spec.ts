@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { hasCredentials } from "./helpers/env";
+import { hasCredentials, allowProductionMutations } from "./helpers/env";
 import { login } from "./helpers/auth";
+import { getUniqueName } from "./helpers/test-data";
 
 test.describe("SaleDock POS, Invoice, Return, and Reports Smoke Tests", () => {
   test.beforeEach(async ({ page }) => {
@@ -25,11 +26,21 @@ test.describe("SaleDock POS, Invoice, Return, and Reports Smoke Tests", () => {
   });
 
   test("Full POS Sale, Invoice, and Return flow", async ({ page }) => {
-    // 1. Go to POS
+    // 1. Production Mutation Guard
+    if (!allowProductionMutations()) {
+      console.log("Mutation test skipped: points to production and PLAYWRIGHT_ALLOW_PRODUCTION_MUTATIONS is not true.");
+      test.skip(
+        true,
+        "Skipping mutation smoke test because PLAYWRIGHT_BASE_URL points to production. Set PLAYWRIGHT_ALLOW_PRODUCTION_MUTATIONS=true only for a safe test account."
+      );
+      return;
+    }
+
+    // 2. Go to POS
     await page.goto("/pos");
 
     // Check if there are any products to sell
-    const productGrid = page.locator("button:has-text('Product'), button:has-text('Service')");
+    const productGrid = page.locator('[data-testid="pos-product-btn"]');
     const count = await productGrid.count();
     if (count === 0) {
       console.log("No products or services available in the POS grid. Skipping sale/return test.");
@@ -58,8 +69,31 @@ test.describe("SaleDock POS, Invoice, Return, and Reports Smoke Tests", () => {
     // Wait for item to appear in the cart list
     await expect(page.locator("button:has-text('Clear')")).not.toBeDisabled();
 
+    // Click "Exact" cash tender button if present (manual QA simulation)
+    const exactBtn = page.locator('[data-testid="pos-exact-tender-btn"]');
+    if (await exactBtn.isVisible() && !(await exactBtn.isDisabled())) {
+      await exactBtn.click();
+    } else {
+      const tenderInput = page.locator('[data-testid="pos-amount-tendered-input"]');
+      if (await tenderInput.isVisible() && !(await tenderInput.isDisabled())) {
+        await tenderInput.fill("10000");
+      }
+    }
+
+    // Enter a TEST reference tag in the Note textarea
+    const noteInput = page.locator('[data-testid="pos-note-input"]');
+    if (await noteInput.isVisible()) {
+      const testTag = getUniqueName("TEST-PLAYWRIGHT");
+      await noteInput.fill(testTag);
+    }
+
     // Click checkout button
-    const checkoutBtn = page.locator("button:has-text('Checkout')");
+    const checkoutBtn = page.locator('[data-testid="pos-checkout-btn"]');
+    if (await checkoutBtn.isDisabled()) {
+      console.log("Checkout button remains disabled. Skipping checkout flow.");
+      test.skip(true, "Checkout button is disabled, cannot complete the sale.");
+      return;
+    }
     await checkoutBtn.click();
 
     // Wait for the success state
@@ -80,17 +114,19 @@ test.describe("SaleDock POS, Invoice, Return, and Reports Smoke Tests", () => {
     await expect(page.locator("text=Invoice")).toBeVisible();
     await expect(page.locator("button:has-text('Print')")).toBeVisible();
 
-    // 2. Return & Refund Flow on the Invoice Page
+    // 3. Return & Refund Flow on the Invoice Page
     // Check if the form is already disabled or if there are no returnable items
     const noReturnableItems = await page.locator("text=All items on this invoice have already been returned").count();
     if (noReturnableItems > 0) {
       console.log("No returnable items on this invoice. Skipping return test.");
+      test.skip(true, "No returnable items on this invoice.");
       return;
     }
 
     const qtyInput = page.locator("input[name='quantity']").first();
     if (await qtyInput.count() === 0) {
       console.log("No quantity inputs found for return. Skipping return test.");
+      test.skip(true, "No quantity inputs found for return.");
       return;
     }
 
@@ -103,10 +139,26 @@ test.describe("SaleDock POS, Invoice, Return, and Reports Smoke Tests", () => {
       await refundAmtInput.fill(maxRefund);
     }
 
-    // Select the first refund method if options exist
+    // Select the first non-empty enabled refund method option
     const refundMethodSelect = page.locator("select[name='refund_method']");
     if (await refundMethodSelect.count() > 0) {
-      await refundMethodSelect.selectOption({ index: 1 }); // select first active refund method (e.g. Cash)
+      const options = await refundMethodSelect.locator("option").all();
+      let selectedOptionValue = "";
+      for (const opt of options) {
+        const value = await opt.getAttribute("value");
+        if (value && value !== "") {
+          selectedOptionValue = value;
+          break;
+        }
+      }
+
+      if (selectedOptionValue) {
+        await refundMethodSelect.selectOption(selectedOptionValue);
+      } else {
+        console.log("No non-empty refund method options found. Skipping return test.");
+        test.skip(true, "No non-empty refund method options found.");
+        return;
+      }
     }
 
     // Click "Process return" button
