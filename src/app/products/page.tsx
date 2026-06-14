@@ -105,8 +105,8 @@ export default async function ProductsPage({
         />
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-[#fff] shadow-sm md:mt-6 md:rounded-2xl">
-        <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 py-2">
+      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-[#fff] shadow-sm md:mt-6 md:rounded-2xl dark:border-slate-800 dark:bg-slate-950">
+        <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-800 dark:bg-slate-900/50">
           {TABS.map((t) => {
             const active = t.id === tab;
             const href = `/products?tab=${t.id}`;
@@ -115,7 +115,7 @@ export default async function ProductsPage({
                 key={t.id}
                 href={href}
                 className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold transition ${
-                  active ? "bg-[#fff] text-blue-700 shadow" : "text-slate-600 hover:text-slate-900"
+                  active ? "bg-[#fff] text-blue-700 shadow dark:bg-slate-950 dark:text-blue-400" : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                 }`}
               >
                 {t.label}
@@ -126,7 +126,7 @@ export default async function ProductsPage({
 
         <div className="p-3 md:p-6">
           {!canWrite && (
-            <p className="mb-5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+            <p className="mb-5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
               Your role ({profile.role}) can view the catalog but cannot create or edit items.
             </p>
           )}
@@ -213,8 +213,8 @@ async function ProductsTab({
   return (
     <div className="space-y-3 md:space-y-5">
       {canWrite && (
-        <details id="product-form" open={showForm} className="rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg bg-[var(--primary-accent-bg)] px-3 py-2 text-sm font-black text-[var(--primary-accent-text)] outline-none md:min-h-0 md:bg-transparent md:px-0 md:py-0 md:text-slate-800 [&::-webkit-details-marker]:hidden">
+        <details id="product-form" open={showForm} className="rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4 dark:border-slate-800 dark:bg-slate-900">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg bg-[var(--primary-accent-bg)] px-3 py-2 text-sm font-black text-[var(--primary-accent-text)] outline-none md:min-h-0 md:bg-transparent md:px-0 md:py-0 md:text-slate-800 dark:md:text-slate-200 [&::-webkit-details-marker]:hidden">
             <span>{isEdit ? `Edit product: ${editing!.name}` : "Add product"}</span>
             <span className="text-[11px] font-bold opacity-80 md:hidden">Tap to open</span>
           </summary>
@@ -236,7 +236,7 @@ async function ProductsTab({
         </details>
       )}
 
-      <form className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden" action="/products">
+      <form className="rounded-xl border border-slate-200 bg-[#fff] p-3 md:hidden dark:border-slate-800 dark:bg-slate-950" action="/products">
         <input type="hidden" name="tab" value="products" />
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <label className="block min-w-0">
@@ -245,15 +245,15 @@ async function ProductsTab({
               name="q"
               defaultValue={params.q ?? ""}
               placeholder="Search products"
-              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-600"
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
             />
           </label>
-          <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white">
+          <button type="submit" className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900">
             Apply
           </button>
         </div>
-        <details open={hasProductFilters} className="mt-2 rounded-lg bg-slate-50 px-3 py-2">
-          <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600">
+        <details open={hasProductFilters} className="mt-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
+          <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400">
             Filters
           </summary>
           <div className="mt-3 grid gap-3">
@@ -262,7 +262,7 @@ async function ProductsTab({
               <select
                 name="category"
                 defaultValue={params.category ?? ""}
-                className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600"
+                className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-[#fff] px-3 text-sm outline-none focus:border-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
               >
                 <option value="">All</option>
                 {categories.map((c) => (
@@ -273,13 +273,13 @@ async function ProductsTab({
               </select>
             </label>
             <div className="grid gap-2">
-              <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3">
+              <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3 dark:bg-slate-900">
                 <input type="checkbox" name="lowstock" value="1" defaultChecked={params.lowstock === "1"} className="size-4" />
-                <span className="text-sm font-semibold text-slate-700">Low stock only</span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Low stock only</span>
               </label>
-              <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3">
+              <label className="flex min-h-10 items-center gap-2 rounded-lg bg-[#fff] px-3 dark:bg-slate-900">
                 <input type="checkbox" name="inactive" value="1" defaultChecked={params.inactive === "1"} className="size-4" />
-                <span className="text-sm font-semibold text-slate-700">Show archived</span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Show archived</span>
               </label>
             </div>
           </div>
@@ -299,7 +299,7 @@ async function ProductsTab({
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Name, SKU, barcode"
-            className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-64"
+            className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-64 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
           />
         </label>
         <label className="block min-w-0">
@@ -307,7 +307,7 @@ async function ProductsTab({
           <select
             name="category"
             defaultValue={params.category ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-48"
+            className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 outline-none focus:border-blue-600 lg:w-48 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
           >
             <option value="">All</option>
             {categories.map((c) => (
@@ -319,13 +319,13 @@ async function ProductsTab({
         </label>
         <label className="flex min-h-10 items-center gap-2">
           <input type="checkbox" name="lowstock" value="1" defaultChecked={params.lowstock === "1"} className="size-4" />
-          <span className="text-sm font-semibold text-slate-700">Low stock only</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Low stock only</span>
         </label>
         <label className="flex min-h-10 items-center gap-2">
           <input type="checkbox" name="inactive" value="1" defaultChecked={params.inactive === "1"} className="size-4" />
-          <span className="text-sm font-semibold text-slate-700">Show archived</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Show archived</span>
         </label>
-        <button type="submit" className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white">
+        <button type="submit" className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900">
           Apply
         </button>
         {(params.q || params.category || params.lowstock || params.inactive) && (
@@ -393,7 +393,7 @@ function lowStockBadge(p: ProductRow) {
   if (p.type === "service") return null;
   if (p.stock_quantity <= p.minimum_stock) {
     return (
-      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800 md:ml-2">
+      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800 md:ml-2 dark:bg-amber-900/30 dark:text-amber-300">
         Low
       </span>
     );
@@ -404,7 +404,7 @@ function lowStockBadge(p: ProductRow) {
 function lossAllowedBadge(p: ProductRow) {
   if (p.allow_sell_at_loss) {
     return (
-      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-800 md:ml-2" title={`Override Reason: ${p.sell_at_loss_reason}`}>
+      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-800 md:ml-2 dark:bg-rose-900/30 dark:text-rose-300" title={`Override Reason: ${p.sell_at_loss_reason}`}>
         Loss Allowed
       </span>
     );
@@ -424,7 +424,7 @@ function ProductRowDesktop({
   suppliers: SupplierRow[];
 }) {
   return (
-    <tr className="border-b border-slate-100 align-top">
+    <tr className="border-b border-slate-100 align-top dark:border-slate-800">
       <td className="px-3 py-3">
         <div className="font-bold text-slate-900">{p.name} {lossAllowedBadge(p)}</div>
         <div className="text-xs text-slate-500">
@@ -458,9 +458,9 @@ function ProductRowDesktop({
       </td>
       <td className="px-3 py-3">
         {p.is_active ? (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">Active</span>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Active</span>
         ) : (
-          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">Archived</span>
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-400">Archived</span>
         )}
       </td>
       <td className="px-3 py-3 text-right">
@@ -482,7 +482,7 @@ function ProductCard({
   suppliers: SupplierRow[];
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-[#fff] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5 font-bold leading-snug text-slate-900">
@@ -497,35 +497,35 @@ function ProductCard({
         </div>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-            p.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+            p.is_active ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
           }`}
         >
           {p.is_active ? "Active" : "Archived"}
         </span>
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
-          <dt className="text-xs text-slate-500">Sale</dt>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Sale</dt>
           <dd className="break-words font-bold leading-tight text-slate-900">{formatCurrency(p.sale_price, currency)}</dd>
         </div>
-        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
-          <dt className="text-xs text-slate-500">Cost</dt>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Cost</dt>
           <dd className="break-words leading-tight">{formatCurrency(p.purchase_price, currency)}</dd>
         </div>
-        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
-          <dt className="text-xs text-slate-500">Stock</dt>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Stock</dt>
           <dd className="break-words leading-tight">{p.type === "service" ? "—" : formatNumber(p.stock_quantity)}</dd>
         </div>
-        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
-          <dt className="text-xs text-slate-500">Reorder</dt>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Reorder</dt>
           <dd className="break-words leading-tight">{p.type === "service" ? "—" : formatNumber(p.minimum_stock)}</dd>
         </div>
-        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
-          <dt className="text-xs text-slate-500">Category</dt>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Category</dt>
           <dd className="truncate">{p.category_name ?? "—"}</dd>
         </div>
-        <div className="min-w-0 rounded-lg bg-slate-50 p-2">
-          <dt className="text-xs text-slate-500">Supplier</dt>
+        <div className="min-w-0 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
+          <dt className="text-xs text-slate-500 dark:text-slate-400">Supplier</dt>
           <dd className="truncate">{p.supplier_name ?? "—"}</dd>
         </div>
       </dl>
@@ -538,7 +538,7 @@ function ProductCard({
           canWrite={canWrite}
         />
       )}
-      <div className="mt-3 flex justify-end border-t border-slate-100 pt-2">
+      <div className="mt-3 flex justify-end border-t border-slate-100 pt-2 dark:border-slate-800">
         <ProductActions p={p} canWrite={canWrite} />
       </div>
     </div>
@@ -551,21 +551,21 @@ function ProductActions({ p, canWrite }: { p: ProductRow; canWrite: boolean }) {
     <div className="flex flex-wrap items-center justify-end gap-2">
       <Link
         href={`/products?tab=products&edit=${p.id}`}
-        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         Edit
       </Link>
       {p.is_active ? (
         <ConfirmForm action={archiveProductAction} message="Archive this product? You can restore it later.">
           <input type="hidden" name="id" value={p.id} />
-          <button type="submit" className="inline-flex min-h-9 items-center rounded-md border border-red-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+          <button type="submit" className="inline-flex min-h-9 items-center rounded-md border border-red-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900 dark:bg-slate-900 dark:text-red-400 dark:hover:bg-red-950">
             Archive
           </button>
         </ConfirmForm>
       ) : (
         <form action={unarchiveProductAction}>
           <input type="hidden" name="id" value={p.id} />
-          <button type="submit" className="inline-flex min-h-9 items-center rounded-md border border-emerald-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+          <button type="submit" className="inline-flex min-h-9 items-center rounded-md border border-emerald-200 bg-[#fff] px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-950">
             Restore
           </button>
         </form>
@@ -601,7 +601,7 @@ function CategoriesTab({
   return (
     <div className="space-y-5">
       {canWrite && (
-        <details open={isEdit} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <details open={isEdit} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
           <summary className="cursor-pointer text-sm font-bold text-slate-800">
             {isEdit ? `Edit category: ${editing!.name}` : "Add a new category"}
           </summary>
@@ -637,15 +637,15 @@ function CategoriesTab({
             </thead>
             <tbody>
               {sortedCategories.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100 align-top">
+                <tr key={c.id} className="border-b border-slate-100 align-top dark:border-slate-800">
                   <td className="px-3 py-3 font-bold text-slate-900">{c.name}</td>
                   <td className="px-3 py-3 text-sm text-slate-600">{c.description ?? "—"}</td>
                   <td className="px-3 py-3 text-right text-sm text-slate-700">{formatNumber(c.product_count ?? 0)}</td>
                   <td className="px-3 py-3">
                     {c.is_active ? (
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">Active</span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Active</span>
                     ) : (
-                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">Archived</span>
+                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-400">Archived</span>
                     )}
                   </td>
                   <td className="px-3 py-3 text-right">
@@ -653,21 +653,21 @@ function CategoriesTab({
                       <div className="flex justify-end gap-2">
                         <Link
                            href={`/products?tab=categories&edit=${c.id}`}
-                          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                         >
                           Edit
                         </Link>
 {c.is_active ? (
   <ConfirmForm action={archiveCategoryAction} message="Archive this category? Products in this category won't be affected.">
     <input type="hidden" name="id" value={c.id} />
-    <button type="submit" className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+    <button type="submit" className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950">
       Archive
     </button>
   </ConfirmForm>
 ) : (
                           <form action={unarchiveCategoryAction}>
                             <input type="hidden" name="id" value={c.id} />
-                            <button type="submit" className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                            <button type="submit" className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950">
                               Restore
                             </button>
                           </form>
@@ -695,23 +695,23 @@ function CategoriesTab({
 
 function CategoryCard({ category, canWrite }: { category: CategoryRow; canWrite: boolean }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-[#fff] p-4">
+    <article className="rounded-xl border border-slate-200 bg-[#fff] p-4 dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words font-black text-slate-950">{category.name}</h3>
           <p className="mt-1 text-sm text-slate-600">{category.description ?? "No description"}</p>
         </div>
         {category.is_active ? (
-          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
             Active
           </span>
         ) : (
-          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
+          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-400">
             Archived
           </span>
         )}
       </div>
-      <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+      <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-900 dark:text-slate-300">
         {formatNumber(category.product_count ?? 0)} products
       </div>
       <div className="mt-3">
@@ -727,21 +727,21 @@ function CategoryActions({ category, canWrite }: { category: CategoryRow; canWri
     <div className="flex flex-wrap justify-end gap-2">
       <Link
         href={`/products?tab=categories&edit=${category.id}`}
-        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         Edit
       </Link>
       {category.is_active ? (
         <ConfirmForm action={archiveCategoryAction} message="Archive this category? Products in this category won't be affected.">
           <input type="hidden" name="id" value={category.id} />
-          <button type="submit" className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50">
+          <button type="submit" className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950">
             Archive
           </button>
         </ConfirmForm>
       ) : (
         <form action={unarchiveCategoryAction}>
           <input type="hidden" name="id" value={category.id} />
-          <button type="submit" className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+          <button type="submit" className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950">
             Restore
           </button>
         </form>
@@ -779,7 +779,7 @@ function SuppliersTab({
   return (
     <div className="space-y-5">
       {canWrite && (
-        <details open={isEdit} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <details open={isEdit} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
           <summary className="cursor-pointer text-sm font-bold text-slate-800">
             {isEdit ? `Edit supplier: ${editing!.name}` : "Add a new supplier"}
           </summary>
@@ -817,7 +817,7 @@ function SuppliersTab({
             </thead>
             <tbody>
               {sortedSuppliers.map((s) => (
-                <tr key={s.id} className="border-b border-slate-100 align-top">
+                <tr key={s.id} className="border-b border-slate-100 align-top dark:border-slate-800">
                   <td className="px-3 py-3 font-bold text-slate-900">{s.name}</td>
                   <td className="px-3 py-3 text-sm text-slate-700">{s.company ?? "—"}</td>
                   <td className="px-3 py-3 text-sm text-slate-700">{s.phone ?? "—"}</td>
@@ -825,9 +825,9 @@ function SuppliersTab({
                   <td className="px-3 py-3 text-sm text-slate-700">{s.address ?? "—"}</td>
                   <td className="px-3 py-3">
                     {s.is_active ? (
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">Active</span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Active</span>
                     ) : (
-                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">Archived</span>
+                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-400">Archived</span>
                     )}
                   </td>
                   <td className="px-3 py-3 text-right">
@@ -835,21 +835,21 @@ function SuppliersTab({
                       <div className="flex justify-end gap-2">
                         <Link
                           href={`/products?tab=suppliers&edit=${s.id}`}
-                          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                         >
                           Edit
                         </Link>
 {s.is_active ? (
   <ConfirmForm action={archiveSupplierAction} message="Archive this supplier? Their purchase history will be preserved.">
     <input type="hidden" name="id" value={s.id} />
-    <button type="submit" className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+    <button type="submit" className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950">
       Archive
     </button>
   </ConfirmForm>
 ) : (
                           <form action={unarchiveSupplierAction}>
                             <input type="hidden" name="id" value={s.id} />
-                            <button type="submit" className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                            <button type="submit" className="rounded-md border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950">
                               Restore
                             </button>
                           </form>
@@ -877,18 +877,18 @@ function SuppliersTab({
 
 function SupplierCard({ supplier, canWrite }: { supplier: SupplierRow; canWrite: boolean }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-[#fff] p-4">
+    <article className="rounded-xl border border-slate-200 bg-[#fff] p-4 dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words font-black text-slate-950">{supplier.name}</h3>
           <p className="mt-1 text-sm text-slate-600">{supplier.company ?? "No company"}</p>
         </div>
         {supplier.is_active ? (
-          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
             Active
           </span>
         ) : (
-          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
+          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-400">
             Archived
           </span>
         )}
@@ -920,21 +920,21 @@ function SupplierActions({ supplier, canWrite }: { supplier: SupplierRow; canWri
     <div className="flex flex-wrap justify-end gap-2">
       <Link
         href={`/products?tab=suppliers&edit=${supplier.id}`}
-        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         Edit
       </Link>
       {supplier.is_active ? (
         <ConfirmForm action={archiveSupplierAction} message="Archive this supplier? Their purchase history will be preserved.">
           <input type="hidden" name="id" value={supplier.id} />
-          <button type="submit" className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50">
+          <button type="submit" className="min-h-9 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950">
             Archive
           </button>
         </ConfirmForm>
       ) : (
         <form action={unarchiveSupplierAction}>
           <input type="hidden" name="id" value={supplier.id} />
-          <button type="submit" className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+          <button type="submit" className="min-h-9 rounded-md border border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950">
             Restore
           </button>
         </form>
