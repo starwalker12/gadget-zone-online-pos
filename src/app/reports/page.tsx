@@ -4,9 +4,11 @@ import {
   Award,
   Boxes,
   CalendarCheck,
+  ChevronDown,
   CircleDollarSign,
   Coins,
   CreditCard,
+  HelpCircle,
   ReceiptText,
   RotateCcw,
   Scale,
@@ -274,6 +276,7 @@ export default async function ReportsPage({
             label="Gross sales"
             value={formatCurrency(data.sales.grossSales, currency)}
             detail={`${formatNumber(data.sales.invoiceCount)} active invoice${data.sales.invoiceCount === 1 ? "" : "s"}.`}
+            tooltip="Total sales billed before any order-level discounts, customer returns, or operating expenses are subtracted."
             icon={<ReceiptText className="size-5" />}
           />
         </div>
@@ -282,18 +285,27 @@ export default async function ReportsPage({
             label="Net Sales (Revenue)"
             value={formatCurrency(data.profit.salesRevenue, currency)}
             detail="Total sales after discounts, before cost deductions."
+            tooltip="Gross sales minus order-level discounts. This represents your actual sales revenue before cost deductions."
             icon={<CircleDollarSign className="size-5" />}
           />
         </div>
         {/* Highlighted Net Profit Card for wow factor */}
         <div className="col-span-2 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 p-4 md:p-5 shadow-sm flex items-start justify-between gap-3 dark:border-emerald-700/50 dark:bg-emerald-950/20 lg:col-span-1">
           <div>
-            <p className="text-xs md:text-sm font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Estimated Net Profit</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs md:text-sm font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Estimated Net Profit</p>
+              <div className="relative group/profittooltip inline-block shrink-0">
+                <HelpCircle className="size-3.5 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 cursor-help transition-colors" />
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 scale-95 opacity-0 transition-all duration-150 group-hover/profittooltip:translate-y-0 group-hover/profittooltip:scale-100 group-hover/profittooltip:opacity-100 bg-slate-900 px-2.5 py-1.5 text-[10px] md:text-xs font-bold text-white shadow-xl dark:bg-slate-800 dark:text-slate-100 border border-slate-700/50 rounded-lg text-center leading-relaxed normal-case tracking-normal">
+                  Remaining shop profit after subtracting product costs, operating expenses, customer refunds, and write-offs.
+                </div>
+              </div>
+            </div>
             <p className="mt-1 md:mt-2 text-2xl md:text-3xl font-black text-emerald-950 dark:text-emerald-50">
               {formatCurrency(data.profit.estimatedNetProfit, currency)}
             </p>
             <p className="mt-2 md:mt-3 text-[10px] md:text-xs font-semibold text-emerald-700 dark:text-emerald-400 leading-4 md:leading-5">
-              Gross Profit ({formatCurrency(data.profit.grossProfit, currency)}) − Expenses ({formatCurrency(data.expenses.totalExpenses, currency)}) − Refunds ({formatCurrency(data.returns.refundTotal, currency)})
+              Gross Profit ({formatCurrency(data.profit.grossProfit, currency)}) − Expenses ({formatCurrency(data.expenses.totalExpenses, currency)}) − Refunds ({formatCurrency(data.returns.refundTotal, currency)}){data.profit.creditWriteOffs > 0 ? ` − Write-offs (${formatCurrency(data.profit.creditWriteOffs, currency)})` : ""}
             </p>
           </div>
           <div className="rounded-xl bg-emerald-500 p-2 md:p-3 text-white shrink-0">
@@ -309,6 +321,7 @@ export default async function ReportsPage({
             label="Gross Profit Margin"
             value={`${formatNumber(data.profit.grossMarginPercent)}%`}
             detail={`Asset Cost of Sales: ${formatCurrency(data.profit.productCost, currency)}`}
+            tooltip="Direct profit percentage on product sales. Shows how much sales revenue is left after product purchase costs."
             icon={<Coins className="size-5" />}
           />
         </div>
@@ -317,6 +330,7 @@ export default async function ReportsPage({
             label="Service Revenue / Profit"
             value={formatCurrency(data.profit.serviceProfit, currency)}
             detail="Service billing total (assumes zero inventory cost)."
+            tooltip="Total income from repairs and service billing (assumed to have zero inventory cost)."
             icon={<Award className="size-5" />}
           />
         </div>
@@ -325,9 +339,69 @@ export default async function ReportsPage({
             label="Total Operating Expenses"
             value={formatCurrency(data.expenses.totalExpenses, currency)}
             detail="From active business expenses registry."
+            tooltip="The total sum of all recorded shop expenses (rent, salaries, utility bills, etc.) for this period."
             icon={<Wallet className="size-5" />}
           />
         </div>
+      </div>
+
+      {/* Report Reconciliation Helper / Connection Card */}
+      <div className="mt-4 print:hidden">
+        <details className="group rounded-2xl border border-blue-200 bg-blue-50/30 p-4 dark:border-blue-900/30 dark:bg-blue-950/10 transition-all">
+          <summary className="flex cursor-pointer items-center justify-between font-bold text-blue-900 dark:text-blue-200 outline-none select-none list-none [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 text-sm">
+              <HelpCircle className="size-4 shrink-0" />
+              How do these numbers connect? (Report breakdown guide)
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 transition-colors group-open:bg-blue-200">
+              Show Details
+              <ChevronDown className="size-3.5 transition-transform duration-150 group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="mt-3 text-xs md:text-sm text-slate-600 dark:text-slate-350 space-y-3 border-t border-blue-100 dark:border-blue-900/30 pt-3">
+            <p className="font-semibold text-slate-700 dark:text-slate-300">
+              Understanding your shop&apos;s cash flow and margins:
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-xl border border-slate-100 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <span className="font-bold text-slate-900 dark:text-slate-200 block mb-0.5">Gross Sales</span>
+                Total billing before discounts, refunds, or expenses. Includes product sales ({formatCurrency(data.sales.grossSales - data.profit.serviceProfit, currency)}) and service charges ({formatCurrency(data.profit.serviceProfit, currency)}).
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <span className="font-bold text-slate-900 dark:text-slate-200 block mb-0.5">Discounts Applied</span>
+                Total discounts given to customers ({formatCurrency(data.sales.totalDiscounts, currency)}).
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <span className="font-bold text-slate-900 dark:text-slate-200 block mb-0.5">Net Sales (Revenue)</span>
+                Sales income after deducting order-level discounts:
+                <div className="mt-1 font-mono text-[11px] text-blue-800 dark:text-blue-300 font-bold bg-blue-50/50 dark:bg-blue-950/20 px-1.5 py-0.5 rounded inline-block">
+                  Gross Sales ({formatCurrency(data.sales.grossSales, currency)}) - Cart Discounts ({formatCurrency(data.sales.totalDiscounts, currency)})
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <span className="font-bold text-slate-900 dark:text-slate-200 block mb-0.5">Gross Profit</span>
+                Direct sales profit before expenses and refunds:
+                <div className="mt-1 font-mono text-[11px] text-blue-800 dark:text-blue-300 font-bold bg-blue-50/50 dark:bg-blue-950/20 px-1.5 py-0.5 rounded inline-block">
+                  Net Sales ({formatCurrency(data.profit.salesRevenue, currency)}) - Product Costs ({formatCurrency(data.profit.productCost, currency)})
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <span className="font-bold text-slate-900 dark:text-slate-200 block mb-0.5">Refunds / Expenses</span>
+                Money returned to customers ({formatCurrency(data.returns.refundTotal, currency)}) plus operating costs ({formatCurrency(data.expenses.totalExpenses, currency)}).
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <span className="font-bold text-slate-900 dark:text-slate-200 block mb-0.5">Estimated Net Profit</span>
+                Final remaining shop profit for the period:
+                <div className="mt-1 font-mono text-[11px] text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50/50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded inline-block">
+                  Gross Profit ({formatCurrency(data.profit.grossProfit, currency)}) - Expenses ({formatCurrency(data.expenses.totalExpenses, currency)}) - Refunds ({formatCurrency(data.returns.refundTotal, currency)}){data.profit.creditWriteOffs > 0 ? ` - Write-offs (${formatCurrency(data.profit.creditWriteOffs, currency)})` : ""}
+                </div>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+              * Note: These are report explanations only. SaleDock has not changed your totals.
+            </p>
+          </div>
+        </details>
       </div>
 
       {/* Main Breakdown Grids */}
@@ -468,6 +542,12 @@ export default async function ReportsPage({
           <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
             <RotateCcw className="size-5 text-blue-600" />
             Returns & Refunds Summary
+            <div className="relative group/returnstooltip inline-block shrink-0">
+              <HelpCircle className="size-3.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-400 cursor-help transition-colors" />
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 scale-95 opacity-0 transition-all duration-150 group-hover/returnstooltip:translate-y-0 group-hover/returnstooltip:scale-100 group-hover/returnstooltip:opacity-100 bg-slate-900 px-2.5 py-1.5 text-[10px] md:text-xs font-bold text-white shadow-xl dark:bg-slate-800 dark:text-slate-100 border border-slate-700/50 rounded-lg text-center leading-relaxed font-normal normal-case tracking-normal">
+                Money returned/refunded to customers for returned goods.
+              </div>
+            </div>
           </h3>
           <p className="text-xs text-slate-500 mt-1">Returned merchandise statistics and cash refunds.</p>
           <div className="mt-4 space-y-4">
